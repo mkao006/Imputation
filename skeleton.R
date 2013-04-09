@@ -4,6 +4,7 @@
 ## Date:  2013-03-12
 ########################################################################
 
+library(XML)
 library(FAOSTAT)
 library(reshape2)
 library(zoo)
@@ -30,32 +31,42 @@ tmp = c(cereals = c(15, 27, 44, 75, 56, 71, 79, 83, 89, 101, 92, 94,
         fruit = c(486, 489, 577, 569, 574, 572, 571, 603, 490, 495, 507,
                   497, 512, 560, 600, 515, 521, 523, 526, 530, 531, 534,
                   536, 544, 547, 552, 554, 558, 550, 549, 592, 587, 542,
-                  541, 591, 619, 461),
+                  541, 591, 619),
         stim_beve = c(656, 661, 667, 671, 674),
         spices = c(687, 689, 692, 693, 698, 702, 711, 720, 723),
         tobacco = c(826),
-        othr_crops = c(459, 677),
+        othr_crops = c(459, 461, 677),
         rubber = c(837, 836),
         leaves = c(748, 754),
         fibres = c(767, 780, 788, 800, 809, 821, 782, 987, 773, 1185, 789),
         othr_meat = c(867, 947, 1035, 977, 1017, 1127, 1097, 1108, 1111,
                       1163, 1166),
         poultry_meat = c(1058, 1069, 1073, 1080, 1141),
-        milk = c(882, 951, 982, 1020, 1130), eggs = c(1062, 1091))
+        milk = c(882, 951, 982, 1020, 1130), eggs = c(1062, 1091),
+        lvstk_prds = c(886, 901),
+        sugar = c(162, 163, 1182),
+        veg_oils = c(36, 60, 237, 244, 257, 258, 252, 261, 264, 266, 268,
+          271, 276, 281, 290, 293, 297, 331, 334, 337, 340, 1242, 278, 307, 313),
+        alch_bev = c(564, 51, 66, 82, 86)
+  )
 
 comGrp.df = melt(tmp)
 comGrp.df$Group = gsub("[0-9]", "", rownames(comGrp.df))
+comGrp.df$includeGroup = ifelse(comGrp.df$Group %in% c("lvstk_prds", "sugar",
+  "veg_oils", "alch_bev"), FALSE, TRUE)
 row.names(comGrp.df) = NULL
 comGrp.dt = data.table(comGrp.df)
 rm(comGrp.df)
-setnames(comGrp.dt, old = colnames(comGrp.dt), new = c("itemCode", "comGroup"))
+setnames(comGrp.dt, old = colnames(comGrp.dt),
+         new = c("itemCode", "comGroup", "includeGroup"))
 
-## These commodities were commented out.
-lvstk_prds = c(886, 901)
-sugar = c(162, 163, 1182)
-veg_oils = c(36, 60, 237, 244, 257, 258, 252, 261, 264, 266, 268, 271, 276, 281,
-             290, 293, 297, 331, 334, 337, 340, 1242, 278, 307, 313)
-alch_bev = c(564, 51, 66, 82, 86)
+## Extract the production commodity group from the FAOSTAT 2 website.
+doc = htmlParse("http://faostat.fao.org/site/384/default.aspx")
+test = getNodeSet(doc, path = "//table")
+prodTable.df = readHTMLTable(test[[10]],
+  header = c("Group Name", "Item FAO Code", "Item HS+ Code", "Item Name",
+    "Definition"), stringsAsFactors = FALSE, skip.rows = 1)
+tmp = prodTable.df[, c("Group Name", "Item FAO Code", "Item Name")]
 
 
 
@@ -65,6 +76,9 @@ test.dt = data.table(read.csv("nicola_ws_request_12yrsR.csv", header = TRUE,
     stringsAsFactors = FALSE))
 setnames(test.dt, old = c("ItemGroup", "AREA", "ITEM", "ELE"),
          new = c("itemGroup", "FAOST_CODE", "itemCode", "elementCode"))
+
+## Remove test area
+test.dt = subset(test.dt, FAOST_CODE != 298)
 
 ## These countries were excluded (from SAS code)
 FAOcountryProfile[FAOcountryProfile$FAOST_CODE %in%
@@ -88,12 +102,45 @@ rm(cprocess.df)
 ## TODO (Michael): Need to check for those that doesn't have a region
 ## TODO (Michael): Need to check the region used for imputation.
 cprocess.dt = merge(cprocess.dt,
-    data.table(FAOregionProfile[, c("FAOST_CODE", "FAO_MACRO_REG",
-                                    "FAO_SUB_REG")]),
+    data.table(FAOregionProfile[, c("FAOST_CODE", "UNSD_MACRO_REG_CODE",
+                                    "UNSD_SUB_REG_CODE")]),
     by = "FAOST_CODE", all.x = TRUE)
+
+
+## Countries/Territory that doesn't have a region under the official
+## UNSD definition
+FAOcountryProfile[FAOcountryProfile$FAOST_CODE %in%
+                  unique(cprocess.dt[is.na(UNSD_MACRO_REG_CODE), FAOST_CODE]),
+                  c("FAOST_CODE", "ABBR_FAO_NAME")]
+
+## Manucaly fill the countries which does not have a region based on
+## the FAO file from
+## (http://faostat.fao.org/site/371/DesktopDefault.aspx?PageID=371)
+cprocess.dt[FAOST_CODE == 43, UNSD_MACRO_REG_CODE := as.integer(9)]
+cprocess.dt[FAOST_CODE == 51, UNSD_MACRO_REG_CODE := as.integer(2)]
+cprocess.dt[FAOST_CODE == 164, UNSD_MACRO_REG_CODE := as.integer(9)]
+## No code for Yemen and Democratic Yemen
+## cprocess.dt[FAOST_CODE == 246, UNSD_MACRO_REG_CODE]
+## cprocess.dt[FAOST_CODE == 247, UNSD_MACRO_REG_CODE]
+
+cprocess.dt[FAOST_CODE == 43, UNSD_SUB_REG_CODE := as.integer(61)]
+cprocess.dt[FAOST_CODE == 51, UNSD_SUB_REG_CODE := as.integer(151)]
+cprocess.dt[FAOST_CODE == 164, UNSD_SUB_REG_CODE := as.integer(57)]
+## No code for Yemen and Democratic Yemen
+## cprocess.dt[FAOST_CODE == 246, UNSD_SUB_REG_CODE]
+## cprocess.dt[FAOST_CODE == 247, UNSD_SUB_REG_CODE]
+
 
 ## Merge with the commodity group
 cprocess.dt = merge(cprocess.dt, comGrp.dt, by = "itemCode", all.x = TRUE)
+
+
+## items which does not have a commodity group
+sort(unique(cprocess.dt[is.na(comGroup), itemCode]))
+
+## Remove entries with no commodity group or not included.
+cprocess.dt = subset(cprocess.dt, !is.na(comGroup) & includeGroup)
+
 
 ## Hack the character
 ## TODO (Michael): Fix this, check why it is converted to character
@@ -135,15 +182,20 @@ setkeyv(cprocess.dt, c("FAOST_CODE", "itemCode", "elementCode", "Year"))
 ## }
 
 
-  
+
+## Visualize the missing value
 image(data.matrix(is.na(cprocess.dt)))
-text(rep(0.5, 10), seq(0, 1, length = 10), labels = colnames(cprocess.dt))
+text(rep(0.5, NCOL(cprocess.dt)), seq(0, 1, length = NCOL(cprocess.dt)),
+     labels = paste(colnames(cprocess.dt), " (", round(sapply(X = cprocess.dt,
+       FUN = function(x) 100 * sum(is.na(x))/length(x)), 2), "%)", sep = ""))
+
+## Check the frequency of the symbols
+table(cprocess.dt$symb, useNA = "always")
 
 
-## Countries/Territory that doesn't have a region
-FAOcountryProfile[FAOcountryProfile$FAOST_CODE %in%
-                  unique(cprocess.dt[is.na(FAO_MACRO_REG), FAOST_CODE]),
-                  c("FAOST_CODE", "ABBR_FAO_NAME")]
+
+
+
 
 
 
@@ -245,28 +297,53 @@ cprocess.dt[, regComImp := c(NA, imp(num[-length(num)], regComGr[-1])),
 ## cprocess.dt[which(rawMin > regComImp), regComImp := NA]
 ## cprocess.dt[which(rawMax < regComImp), regComImp := NA]
 
-
+## Examine the imputation
 image(data.matrix(is.na(cprocess.dt)))
 text(rep(0.5, NCOL(cprocess.dt)), seq(0, 1, length = NCOL(cprocess.dt)),
-     labels = colnames(cprocess.dt))
+     labels = paste(colnames(cprocess.dt), " (", round(sapply(X = cprocess.dt,
+       FUN = function(x) 100 * sum(is.na(x))/length(x)), 2), "%)", sep = ""))
 
 
+
+## Check whether the imputation differ vastly with the original value
 impCheck.dt = subset(cprocess.dt,
   select = c("FAOST_CODE", "itemCode", "elementCode", "Year", "num",
     grep("Imp", colnames(cprocess.dt), value = TRUE)))
 impCheck.dt = subset(cprocess.dt,
   select = c("origVal", grep("Imp", colnames(cprocess.dt), value = TRUE)))
 impCheck.dt[impCheck.dt == 0] = NA
-
 impCheck.mat = na.omit(data.matrix(impCheck.dt))
 impCheck.mat = (impCheck.mat * 100)/impCheck.mat[, 1]
-
 image(impCheck.mat, col = heat.colors(3),
       breaks = quantile(impCheck.mat, probs = c(0, 0.01, 0.99, 1)))
 text(rep(0.5, NCOL(impCheck.dt)), seq(0, 1, length = NCOL(impCheck.dt)),
      labels = colnames(impCheck.dt))
 
 
+
+
+imped.dt = subset(cprocess.dt, select = c("FAOST_CODE", "itemCode", "elementCode",
+                                 "Year", "num", "symb", "origVal",
+                                 grep("Imp", colnames(cprocess.dt), value = TRUE)))
+area.dt = subset(imped.dt, elementCode == 31)
+oldName = c("origVal", "num", "symb", grep("Imp", colnames(cprocess.dt),
+  value = TRUE))
+setnames(area.dt, old = oldName, new = c(paste(oldName, "Area", sep = "")))
+area.dt$elementCode = NULL
+prod.dt = subset(imped.dt, elementCode == 51)
+setnames(prod.dt, old = oldName, new = c(paste(oldName, "Prod", sep = "")))
+prod.dt$elementCode = NULL
+final.dt = merge(area.dt, prod.dt,
+  by = intersect(colnames(area.dt), colnames(prod.dt)), all = TRUE)
+
+## Entries where there are mismatch between the production and the
+## area
+subset(final.dt, is.na(symbProd))
+subset(final.dt, is.na(symbArea))
+
+
+
+## Function to select between different method of imputation
 selectImp = function(data, impCol){
   for(i in 1:NROW(data)){
     ind = which(!is.na(data[i, impCol, with = FALSE]))[1]
@@ -278,29 +355,37 @@ selectImp = function(data, impCol){
   }
 }
 
-selectImp(data = cprocess.dt, impCol = grep("Imp", colnames(cprocess.dt),
-                                value = true))
+selectImp(data = final.dt, impCol = grep("ImpArea", colnames(final.dt),
+                                value = TRUE))
+setnames(final.dt, old = "finalImp", new = "finalImpArea")
+selectImp(data = final.dt, impCol = grep("ImpProd", colnames(final.dt),
+                                value = TRUE))
+setnames(final.dt, old = "finalImp", new = "finalImpProd")
 
-imped.dt = subset(cprocess.dt, select = c("FAOST_CODE", "itemCode",
-                                 "elementCode", "Year", "origVal", "num",
-                                 "symb", "finalImp"))
-area.dt = subset(imped.dt, elementCode == 31)
-oldName = c("origVal", "num", "symb", "finalImp")
-setnames(area.dt, old = oldName, new = c(paste(oldName, "Area", sep = "")))
-area.dt$elementCode = NULL
-prod.dt = subset(imped.dt, elementCode == 51)
-setnames(prod.dt, old = oldName, new = c(paste(oldName, "Prod", sep = "")))
-prod.dt$elementCode = NULL
-final.dt = merge(area.dt, prod.dt,
-  by = intersect(colnames(area.dt), colnames(prod.dt)), all = TRUE)
 
-final.dt$finalArea = final.dt$numArea
-final.dt$finalProd = final.dt$numProd
-final.dt[is.na(finalArea), finalArea := finalImpArea]
-final.dt[is.na(finalProd), finalProd := finalImpProd]
-final.dt$calcYield = with(final.dt, finalProd/finalArea)
-final.dt$bothMiss = with(final.dt, ifelse(is.na(finalProd) | is.na(finalArea),
-  NA, ""))
+
+## Percentage of the missing value imputed
+cprocess.dt[is.na(num), 1 - sum(is.na(finalImp))/length(finalImp)]
+
+
+## Take only the matching item
+matchAll.dt = subset(final.dt, !is.na(symbArea) & !is.na(symbProd))
+
+## Compute the yield
+matchAll.dt$finalArea = matchAll.dt$numArea
+matchAll.dt$finalProd = matchAll.dt$numProd
+matchAll.dt[is.na(finalArea), finalArea := finalImpArea]
+matchAll.dt[is.na(finalProd), finalProd := finalImpProd]
+matchAll.dt[, impYield := finalProd/finalArea]
+
+pdf(file = "yieldCheck.pdf")
+for(i in unique(matchAll.dt$itemCode)){
+  tmp = subset(matchAll.dt, itemCode == i)
+  print(ggplot(data = tmp, aes(x = impYield)) +
+        geom_histogram(aes(fill = is.na(numProd) | is.na(numArea))))
+}
+graphics.off()
+system("evince yieldCheck.pdf&")
 
 ## Visualise missingness
 image(data.matrix(is.na(final.dt)))
