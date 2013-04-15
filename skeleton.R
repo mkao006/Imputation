@@ -213,6 +213,119 @@ diffv = function(x){
     tmp
 }
 
+## Compute country and commodity specific growth rate
+cprocess.dt[, rawGr := c(NA, diffv(num)),
+     by = c("FAOST_CODE", "itemCode", "elementCode")]
+## cprocess.dt[, rawMin := min(num, na.rm = !all(is.na(num))),
+##             by = c("FAOST_CODE", "itemCode", "elementCode")]
+## cprocess.dt[, rawMax := max(num, na.rm = !all(is.na(num))),
+##             by = c("FAOST_CODE", "itemCode", "elementCode")]
+
+## Country commodity group
+cprocess.dt[, countryComSum := sum(num, na.rm = !all(is.na(num))),
+     by = c("FAOST_CODE", "Year", "comGroup", "elementCode")]
+cprocess.dt[, countryComGr := c(NA, diffv(countryComSum)),
+            by = c("FAOST_CODE", "comGroup", "elementCode")]
+## cprocess.dt[, countryComImp := c(NA, imp(num[-length(num)], countryComGr[-1])),
+##             by = c("FAOST_CODE", "itemCode", "elementCode")]
+## cprocess.dt[which(rawMin > countryComImp), countryComImp := NA]
+## cprocess.dt[which(rawMax < countryComImp), countryComImp := NA]
+
+
+## Sub-regional item
+cprocess.dt[, subregItemSum := sum(num, na.rm = !all(is.na(num))),
+     by = c("UNSD_SUB_REG_CODE", "Year", "itemCode", "elementCode")]
+cprocess.dt[, subregItemGr := c(NA, diffv(subregItemSum)),
+            by = c("UNSD_SUB_REG_CODE", "itemCode", "elementCode")]
+## cprocess.dt[, subregItemImp := c(NA, imp(num[-length(num)],  subregItemGr[-1])),
+##             by = c("FAOST_CODE", "itemCode", "elementCode")]
+## cprocess.dt[which(rawMin > subregItemImp), subregItemImp := NA]
+## cprocess.dt[which(rawMax < subregItemImp), subregItemImp := NA]
+
+
+## Sub-regional commodity group
+cprocess.dt[, subregComSum := sum(num, na.rm = !all(is.na(num))),
+     by = c("UNSD_SUB_REG_CODE", "Year", "comGroup", "elementCode")]
+cprocess.dt[, subregComGr := c(NA, diffv(subregComSum)),
+            by = c("UNSD_SUB_REG_CODE", "comGroup", "elementCode")]
+## cprocess.dt[, subregComImp := c(NA, imp(num[-length(num)], subregComGr[-1])),
+##             by = c("FAOST_CODE", "itemCode", "elementCode")]
+## cprocess.dt[which(rawMin > subregComImp), subregComImp := NA]
+## cprocess.dt[which(rawMax < subregComImp), subregComImp := NA]
+
+
+## Regional item
+cprocess.dt[, regItemSum := sum(num, na.rm = !all(is.na(num))),
+     by = c("UNSD_MACRO_REG_CODE", "Year", "itemCode", "elementCode")]
+cprocess.dt[, regItemGr := c(NA, diffv(regItemSum)),
+            by = c("UNSD_MACRO_REG_CODE", "itemCode", "elementCode")]
+## cprocess.dt[, regItemImp := c(NA, imp(num[-length(num)], regItemGr[-1])),
+##             by = c("FAOST_CODE", "itemCode", "elementCode")]
+## cprocess.dt[which(rawMin > regItemImp), regItemImp := NA]
+## cprocess.dt[which(rawMax < regItemImp), regItemImp := NA]
+
+
+## Regional commodity group
+cprocess.dt[, regComSum := sum(num, na.rm = !all(is.na(num))),
+     by = c("UNSD_MACRO_REG_CODE", "Year", "comGroup", "elementCode")]
+cprocess.dt[, regComGr := c(NA, diffv(regComSum)),
+            by = c("UNSD_MACRO_REG_CODE", "comGroup", "elementCode")]
+## cprocess.dt[, regComImp := c(NA, imp(num[-length(num)], regComGr[-1])),
+##             by = c("FAOST_CODE", "itemCode", "elementCode")]
+## cprocess.dt[which(rawMin > regComImp), regComImp := NA]
+## cprocess.dt[which(rawMax < regComImp), regComImp := NA]
+
+bound = function(x, p = c(0.025, 0.975)){
+  if(!all(is.na(x))){
+    dist = try(fitdistr(na.omit(x), densfun = "cauchy"))
+    bound = qcauchy(p = p, location = dist$estimate[1], scale = dist$estimate[2])
+  } else {
+    bound = rep(NA, length(bound))
+  }
+  bound
+}
+
+lower.dt = cprocess.dt[!is.na(num), bound(rawGr, p = 0.025),
+  by = c("itemCode", "elementCode")]
+setnames(lower.dt, old = "V1", new = "lowerBound")
+cprocess.dt = merge(cprocess.dt, lower.dt, by = c("itemCode", "elementCode"),
+  all.x = TRUE)
+
+upper.dt = cprocess.dt[!is.na(num), bound(rawGr, p = 0.975),
+  by = c("itemCode", "elementCode")]
+setnames(upper.dt, old = "V1", new = "upperBound")
+cprocess.dt = merge(cprocess.dt, upper.dt, by = c("itemCode", "elementCode"),
+  all.x = TRUE)
+
+cprocess.dt[countryComGr < lowerBound | countryComGr > upperBound,
+            countryComGr := NA]
+cprocess.dt[subregItemGr < lowerBound | subregItemGr > upperBound,
+            subregItemGr := NA]
+cprocess.dt[subregComGr < lowerBound | subregComGr > upperBound,
+            subregComGr := NA]
+cprocess.dt[regItemGr < lowerBound | regItemGr > upperBound,
+            regItemGr := NA]
+cprocess.dt[regComGr < lowerBound | regComGr > upperBound,
+            regComGr := NA]
+
+
+## Function to select between different method of imputation
+selectImp = function(data, impCol){
+  for(i in 1:NROW(data)){
+    ind = which(!is.na(data[i, impCol, with = FALSE]))[1]
+    if(!is.na(ind)){
+      data[i, finalImp := as.numeric(data[i, impCol[ind], with = FALSE])]
+    } else {
+      data[i, finalImp := as.numeric(NA)]
+    }
+  }
+}
+
+grCol = grep("Gr$", colnames(cprocess.dt), value = TRUE)
+impGrCol = grCol[grCol != "rawGr"]
+selectImp(cprocess.dt, impCol = impGrCol)
+
+
 imp = function(value, gr){
   if(all(is.na(value) | value == 0)){
     tmp = value
@@ -235,67 +348,14 @@ imp = function(value, gr){
   tmp
 }
 
-## Compute country and commodity specific growth rate
-cprocess.dt[, rawGr := c(NA, diffv(num)),
-     by = c("FAOST_CODE", "itemCode", "elementCode")]
-## cprocess.dt[, rawMin := min(num, na.rm = !all(is.na(num))),
-##             by = c("FAOST_CODE", "itemCode", "elementCode")]
-## cprocess.dt[, rawMax := max(num, na.rm = !all(is.na(num))),
-##             by = c("FAOST_CODE", "itemCode", "elementCode")]
 
-## Country commodity group
-cprocess.dt[, countryComSum := sum(num, na.rm = !all(is.na(num))),
-     by = c("FAOST_CODE", "Year", "comGroup", "elementCode")]
-cprocess.dt[, countryComGr := c(NA, diffv(countryComSum)),
-            by = c("FAOST_CODE", "comGroup", "elementCode")]
-cprocess.dt[, countryComImp := c(NA, imp(num[-length(num)], countryComGr[-1])),
-            by = c("FAOST_CODE", "itemCode", "elementCode")]
-## cprocess.dt[which(rawMin > countryComImp), countryComImp := NA]
-## cprocess.dt[which(rawMax < countryComImp), countryComImp := NA]
+cprocess.dt[, final := c(NA, imp(num[-length(num)], finalImp[-1])),
+            by = c("FAOST_CODE", "itemCode")]
+cprocess.dt[, check := final/num]
+## TODO (Michael): Use the new data to do this.
+  
 
 
-## Sub-regional item
-cprocess.dt[, subregItemSum := sum(num, na.rm = !all(is.na(num))),
-     by = c("FAO_SUB_REG", "Year", "itemCode", "elementCode")]
-cprocess.dt[, subregItemGr := c(NA, diffv(subregItemSum)),
-            by = c("FAO_SUB_REG", "itemCode", "elementCode")]
-cprocess.dt[, subregItemImp := c(NA, imp(num[-length(num)],  subregItemGr[-1])),
-            by = c("FAOST_CODE", "itemCode", "elementCode")]
-## cprocess.dt[which(rawMin > subregItemImp), subregItemImp := NA]
-## cprocess.dt[which(rawMax < subregItemImp), subregItemImp := NA]
-
-
-## Sub-regional commodity group
-cprocess.dt[, subregComSum := sum(num, na.rm = !all(is.na(num))),
-     by = c("FAO_SUB_REG", "Year", "comGroup", "elementCode")]
-cprocess.dt[, subregComGr := c(NA, diffv(subregComSum)),
-            by = c("FAO_SUB_REG", "comGroup", "elementCode")]
-cprocess.dt[, subregComImp := c(NA, imp(num[-length(num)], subregComGr[-1])),
-            by = c("FAOST_CODE", "itemCode", "elementCode")]
-## cprocess.dt[which(rawMin > subregComImp), subregComImp := NA]
-## cprocess.dt[which(rawMax < subregComImp), subregComImp := NA]
-
-
-## Regional item
-cprocess.dt[, regItemSum := sum(num, na.rm = !all(is.na(num))),
-     by = c("FAO_MACRO_REG", "Year", "itemCode", "elementCode")]
-cprocess.dt[, regItemGr := c(NA, diffv(regItemSum)),
-            by = c("FAO_MACRO_REG", "itemCode", "elementCode")]
-cprocess.dt[, regItemImp := c(NA, imp(num[-length(num)], regItemGr[-1])),
-            by = c("FAOST_CODE", "itemCode", "elementCode")]
-## cprocess.dt[which(rawMin > regItemImp), regItemImp := NA]
-## cprocess.dt[which(rawMax < regItemImp), regItemImp := NA]
-
-
-## Regional commodity group
-cprocess.dt[, regComSum := sum(num, na.rm = !all(is.na(num))),
-     by = c("FAO_MACRO_REG", "Year", "comGroup", "elementCode")]
-cprocess.dt[, regComGr := c(NA, diffv(regComSum)),
-            by = c("FAO_MACRO_REG", "comGroup", "elementCode")]
-cprocess.dt[, regComImp := c(NA, imp(num[-length(num)], regComGr[-1])),
-            by = c("FAOST_CODE", "itemCode", "elementCode")]
-## cprocess.dt[which(rawMin > regComImp), regComImp := NA]
-## cprocess.dt[which(rawMax < regComImp), regComImp := NA]
 
 ## Examine the imputation
 image(data.matrix(is.na(cprocess.dt)))
@@ -305,19 +365,19 @@ text(rep(0.5, NCOL(cprocess.dt)), seq(0, 1, length = NCOL(cprocess.dt)),
 
 
 
-## Check whether the imputation differ vastly with the original value
-impCheck.dt = subset(cprocess.dt,
-  select = c("FAOST_CODE", "itemCode", "elementCode", "Year", "num",
-    grep("Imp", colnames(cprocess.dt), value = TRUE)))
-impCheck.dt = subset(cprocess.dt,
-  select = c("origVal", grep("Imp", colnames(cprocess.dt), value = TRUE)))
-impCheck.dt[impCheck.dt == 0] = NA
-impCheck.mat = na.omit(data.matrix(impCheck.dt))
-impCheck.mat = (impCheck.mat * 100)/impCheck.mat[, 1]
-image(impCheck.mat, col = heat.colors(3),
-      breaks = quantile(impCheck.mat, probs = c(0, 0.01, 0.99, 1)))
-text(rep(0.5, NCOL(impCheck.dt)), seq(0, 1, length = NCOL(impCheck.dt)),
-     labels = colnames(impCheck.dt))
+## ## Check whether the imputation differ vastly with the original value
+## impCheck.dt = subset(cprocess.dt,
+##   select = c("FAOST_CODE", "itemCode", "elementCode", "Year", "num",
+##     grep("Imp", colnames(cprocess.dt), value = TRUE)))
+## impCheck.dt = subset(cprocess.dt,
+##   select = c("origVal", grep("Imp", colnames(cprocess.dt), value = TRUE)))
+## impCheck.dt[impCheck.dt == 0] = NA
+## impCheck.mat = na.omit(data.matrix(impCheck.dt))
+## impCheck.mat = (impCheck.mat * 100)/impCheck.mat[, 1]
+## image(impCheck.mat, col = heat.colors(3),
+##       breaks = quantile(impCheck.mat, probs = c(0, 0.01, 0.99, 1)))
+## text(rep(0.5, NCOL(impCheck.dt)), seq(0, 1, length = NCOL(impCheck.dt)),
+##      labels = colnames(impCheck.dt))
 
 
 
@@ -340,20 +400,9 @@ final.dt = merge(area.dt, prod.dt,
 ## area
 subset(final.dt, is.na(symbProd))
 subset(final.dt, is.na(symbArea))
+subset(final.dt, !is.na(symbProd) & !is.na(symbArea))
 
 
-
-## Function to select between different method of imputation
-selectImp = function(data, impCol){
-  for(i in 1:NROW(data)){
-    ind = which(!is.na(data[i, impCol, with = FALSE]))[1]
-    if(!is.na(ind)){
-      data[i, finalImp := as.numeric(data[i, impCol[ind], with = FALSE])]
-    } else {
-      data[i, finalImp := as.numeric(NA)]
-    }
-  }
-}
 
 selectImp(data = final.dt, impCol = grep("ImpArea", colnames(final.dt),
                                 value = TRUE))
