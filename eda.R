@@ -188,11 +188,60 @@ final.dt[, yieldMax := min(final.dt[symbYield == "Y", valueYield], na.rm = TRUE)
          by = c("year","itemCode")]
 
 
-## Plot the distribution on the same range and redo the labels
+
+final.dt[, lvalueArea := log(valueArea)]
+final.dt[, lvalueProd := log(valueProd)]
+final.dt[, lvalueYield := log(valueYield)]
+
+
+plot.df = melt(final.dt[symbYield == "Y",
+  list(FAOST_CODE, itemCode, year, lvalueArea, lvalueProd, lvalueYield)],
+  id.var = c("FAOST_CODE", "itemCode", "year"))
+colnames(plot.df) = c("FAOST_CODE", "itemCode", "Year", "type", "value")
+plot.df$type = gsub("lvalue", "", plot.df$type)
+
+pdf(file = "crossCountryCompare.pdf")
+for(i in unique(plot.df$itemCode)){
+try(print(ggplot(data = plot.df[plot.df$itemCode == i, ],
+             aes(x = factor(Year), y = value)) +
+      geom_boxplot() +
+          facet_wrap(~type) + 
+      labs(x = NULL,
+           y = paste(unique(FAOmetaTable$itemTable[FAOmetaTable$itemTable$itemCode
+             == i, "itemName"]), "(",
+             unique(FAOmetaTable$itemTable[FAOmetaTable$itemTable$itemCode == i,
+                                           "itemCode"]), ")", sep = ""))))
+}
+graphics.off()
+system("evince crossCountryCompare.pdf&")
+
+
+pdf(file = "withinCountrycompare.pdf")
+for(i in unique(plot.df$itemCode)){
+  for(j in unique(plot.df$FAOST_CODE)){
+    tmp = try(ggplot(data = plot.df[plot.df$itemCode == i &
+                       plot.df$FAOST_CODE == j, ],
+                     aes(x = Year, y = value)) +
+              geom_line(aes(col = type)) + 
+              labs(x = NULL,
+           y = paste(unique(FAOmetaTable$itemTable[FAOmetaTable$itemTable$itemCode
+             == i, "itemName"]), "(",
+             unique(FAOmetaTable$itemTable[FAOmetaTable$itemTable$itemCode == i,
+                                                   "itemCode"]), ")", sep = ""),
+              title = FAOcountryProfile[which(FAOcountryProfile$FAOST_CODE == j),
+                     "LAB_NAME"]))
+    if(!inherits(tmp, "try-error"))
+      print(tmp)
+  }
+}
+graphics.off()
+system("evince withinCountrycompare.pdf&")
+
 pdf(file = "changeDist.pdf")
-par(mfrow = c(2, 1))
 for(i in unique(final.dt$itemCode)){
-try({hist(final.dt[!is.na(dvalueArea) & (abs(dvalueArea) != Inf &
+par(mfrow = c(3, 1))  
+try({
+  hist(final.dt[!is.na(dvalueArea) & (abs(dvalueArea) != Inf &
                      itemCode == i & symbArea == ""), dvalueArea],
             breaks = 300, xlim = c(-10, 10), freq = FALSE,
             xlab = "Distribution of change in area",
@@ -208,12 +257,41 @@ try({hist(final.dt[!is.na(dvalueArea) & (abs(dvalueArea) != Inf &
              add = TRUE, col = "red")
        abline(v = qcauchy(c(0.025, 0.975), location = areaDist$estimate[1],
                      scale = areaDist$estimate[2]))
-       abline(v = quantile(x = final.dt[!is.na(dvalueArea) &
-                         (abs(dvalueArea) != Inf &
-                         itemCode == i & symbArea == ""), dvalueArea],
-                       probs = c(0.025, 0.975), na.rm = TRUE), lty = 2)
-     })
-  try({hist(final.dt[!is.na(dvalueYield) & (abs(dvalueYield) != Inf &
+  pos = quantile(final.dt[!is.na(dvalueArea) & (abs(dvalueArea) != Inf &
+    itemCode == i & symbArea == ""), dvalueArea], probs = c(0.025, 0.5, 0.975),
+    na.rm = TRUE)
+  abline(v = c(pos[1] - (pos[2] - pos[1]), pos[3] + (pos[3] - pos[2])),
+         lty = 2)
+  m = mean(final.dt[!is.na(dvalueArea) & (abs(dvalueArea) != Inf &
+     itemCode == i & symbArea == ""), dvalueArea], na.rm = TRUE)
+  sd = sqrt(var(final.dt[!is.na(dvalueArea) & (abs(dvalueArea) != Inf &
+     itemCode == i & symbArea == ""), dvalueArea], na.rm = TRUE))
+  abline(v = c(m - 3 * sd, m + 3 * sd), lty = 3)
+  legend("topleft", legend = c("Cauchy", "Quantile", "Std"), lty = 1:3,
+         bty = "n")
+  hist(final.dt[!is.na(dvalueProd) & (abs(dvalueProd) != Inf &
+                     itemCode == i & symbProd == ""), dvalueProd],
+            breaks = 300, xlim = c(-10, 10), freq = FALSE,
+            xlab = "Distribution of change in Production", main = NULL);
+       areaDist = fitdistr(final.dt[!is.na(dvalueProd) &
+         (abs(dvalueProd) != Inf & itemCode == i & symbProd == ""), dvalueProd],
+         densfun = "cauchy");
+       curve(dcauchy(x, location = areaDist$estimate[1],
+                     scale = areaDist$estimate[2]),
+             add = TRUE, col = "red")
+       abline(v = qcauchy(c(0.025, 0.975), location = areaDist$estimate[1],
+                     scale = areaDist$estimate[2]))
+  pos = quantile(final.dt[!is.na(dvalueProd) & (abs(dvalueProd) != Inf &
+    itemCode == i & symbProd == ""), dvalueProd], probs = c(0.025, 0.5, 0.975),
+    na.rm = TRUE)
+  abline(v = c(pos[1] - (pos[2] - pos[1]), pos[3] + (pos[3] - pos[2])),
+         lty = 2)
+  m = mean(final.dt[!is.na(dvalueProd) & (abs(dvalueProd) != Inf &
+     itemCode == i & symbProd == ""), dvalueProd], na.rm = TRUE)
+  sd = sqrt(var(final.dt[!is.na(dvalueProd) & (abs(dvalueProd) != Inf &
+     itemCode == i & symbProd == ""), dvalueProd], na.rm = TRUE))
+  abline(v = c(m - 3 * sd, m + 3 * sd), lty = 3)  
+    hist(final.dt[!is.na(dvalueYield) & (abs(dvalueYield) != Inf &
                      itemCode == i & symbYield == "Y"), dvalueYield],
             breaks = 300, xlim = c(-10, 10), freq = FALSE,
             xlab = "Distribution of change in yield", main = NULL);
@@ -225,10 +303,16 @@ try({hist(final.dt[!is.na(dvalueArea) & (abs(dvalueArea) != Inf &
              add = TRUE, col = "red")
        abline(v = qcauchy(c(0.025, 0.975), location = yieldDist$estimate[1],
                      scale = yieldDist$estimate[2]))
-       abline(v = quantile(x = final.dt[!is.na(dvalueYield) &
-                         (abs(dvalueYield) != Inf &
-                         itemCode == i & symbYield == "Y"), dvalueYield],
-                       probs = c(0.025, 0.975), na.rm = TRUE), lty = 2)
+  pos = quantile(final.dt[!is.na(dvalueArea) & (abs(dvalueArea) != Inf &
+    itemCode == i & symbArea == ""), dvalueArea], probs = c(0.025, 0.5, 0.975),
+    na.rm = TRUE)
+  abline(v = c(pos[1] - (pos[2] - pos[1]), pos[3] + (pos[3] - pos[2])),
+         lty = 2)
+  m = mean(final.dt[!is.na(dvalueYield) & (abs(dvalueYield) != Inf &
+     itemCode == i & symbYield == "Y"), dvalueYield], na.rm = TRUE)
+  sd = sqrt(var(final.dt[!is.na(dvalueYield) & (abs(dvalueYield) != Inf &
+     itemCode == i & symbYield == "Y"), dvalueYield], na.rm = TRUE))
+  abline(v = c(m - 3 * sd, m + 3 * sd), lty = 3)
      })
 }
 graphics.off()
