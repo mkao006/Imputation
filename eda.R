@@ -219,7 +219,7 @@ system("evince crossCountryCompare.pdf&")
 pdf(file = "withinCountrycompare.pdf")
 for(i in unique(plot.df$itemCode)){
   for(j in unique(plot.df$FAOST_CODE)){
-    tmp = try(ggplot(data = plot.df[plot.df$itemCode == i &
+    try(print(ggplot(data = plot.df[plot.df$itemCode == i &
                        plot.df$FAOST_CODE == j, ],
                      aes(x = Year, y = value)) +
               geom_line(aes(col = type)) + 
@@ -229,9 +229,7 @@ for(i in unique(plot.df$itemCode)){
              unique(FAOmetaTable$itemTable[FAOmetaTable$itemTable$itemCode == i,
                                                    "itemCode"]), ")", sep = ""),
               title = FAOcountryProfile[which(FAOcountryProfile$FAOST_CODE == j),
-                     "LAB_NAME"]))
-    if(!inherits(tmp, "try-error"))
-      print(tmp)
+                     "LAB_NAME"])))
   }
 }
 graphics.off()
@@ -317,6 +315,8 @@ try({
 }
 graphics.off()
 system("evince changeDist.pdf&") 
+
+
 
 ## official.dt = data.table(subset(final.df, symbYield == "Y"))
 
