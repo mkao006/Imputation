@@ -1,0 +1,179 @@
+\documentclass{article}
+\usepackage{url}
+\usepackage[sc]{mathpazo}
+\usepackage{geometry}
+\geometry{verbose,tmargin=2.5cm,bmargin=2.5cm,lmargin=2.5cm,rmargin=2.5cm}
+\setcounter{secnumdepth}{2}
+\setcounter{tocdepth}{2}
+\usepackage{breakurl}
+\usepackage{hyperref}
+\usepackage{algorithm2e}
+\usepackage{algorithmicx}
+\usepackage{amsmath}
+\usepackage{draftwatermark}
+
+
+\begin{document}
+
+
+\title{\bf Imputation methodology}
+
+\author{Michael C. J. Kao\\ Food and Agriculture Organization \\ of
+  the United Nations}
+
+\date{}
+
+\maketitle
+\tableofcontents
+
+\section{Introduction}
+
+\section{Background}
+%% Divergence of area and production
+
+%% Instability of the regional aggregates
+
+%% Invalid validation methodology
+
+%% Inconsistent switching strategy
+
+\section{Exploratory Data Analysis}
+
+
+\section{Proposed changes}
+\subsection{Validation with official and semi-official data}
+It is statistically incorrect to validate against imputed value.
+
+\subsection{Validate the yield with other countries}
+Despite the fact that the yield can vary from country to country, but
+the variation is not extremely great (Need to prove this by showing
+the within country variance and cross country variance) because there
+is a physical constraint on how much wheat can be sowned and grown.
+
+\subsection{Validate the change in yield}
+This test is imposed not because we can not accept that the change
+from yield to be great, rather it is designed to safe guard the
+imputation against instable aggregated change ratio.
+
+\subsection{Impute the data over time first}
+The volatity of the aggregate change ratio partially results from the
+fact that the data are sparese accross region and sub-region. By
+making use of the time dimension, we will be able to generate more
+support points for the nearest neighbour approach.
+
+NOTE: Need to test the result with and without linear interpolation first.
+
+
+
+
+\section{Formula and Pseudo-code}
+The aggregated change ratio from one year to another is defined as:
+\begin{equation}
+  \label{eq:chratio}
+  \Delta{X_{s, t}} = \frac{\sum_{s \in S} X_{s, t}}{\sum_{s \in S} X_{s, t-1}}
+\end{equation}
+
+Where $X$ is the official series of production or area, and the set
+$S$ is defined as follow.
+
+
+
+%% The change ration of yield can be derived from the identity
+%% relationship after computing for the change ratio of area and
+%% production.
+%% \begin{equation}
+%%   \label{eq:impYieldCh}
+%%   \Delta{Y_{s,t}} = \frac{\Delta{A_{s,t}}}{\Delta{P_{s,t}}}
+%% \end{equation}
+
+
+The validation rule is applies to the imputed change of the yield, the
+bound can be computed as follow only on official and semi-official
+change ratio of yield computed above.
+\begin{align}
+  \label{eq:validBound}
+  L(X) &= Q(X, 0.25) - [Q(X, 0.5) - Q(X, 0.25)]\nonumber \\
+  U(X) &= Q(X, 0.75) + [Q(X, 0.75) - Q(X, 0.5)]
+\end{align}
+
+\begin{algorithm}[H]
+ \SetAlgoLined
+ \KwData{Production and Harvested area data}
+ \KwResult{Imputation}
+ Initialization\;
+ 
+ \ForAll{countries}{
+   \ForAll{commodities}{
+     \ForAll{Years}{
+       \ForAll{imputation group}{
+ 
+         (1a) Compute grouped change ratio in area ${\Delta{A_{c,t}}}$
+         by \ref{eq:chratio}\;
+
+         (1b) Compute imputation for area ${\hat{A}_{t+1} \leftarrow
+           A_{t} \times \Delta{A_t}}$\;
+         
+         (2a) Compute grouped change ratio in production
+         ${\Delta{P_{c,t}}}$ by \ref{eq:chratio}\; 
+         
+         (2b) Compute imputation for production ${\hat{P}_{t+1}
+           \leftarrow P_{t} \times \Delta{P_t}}$\;
+         
+         (3) Compute implied yield for imputed data ${\hat{Y}_{t} =
+           \hat{P}_{t}/\hat{A}_{t}}$ and official/semi-official
+         data ${Y_{t} = P_{t}/A_{t}}$\;
+         
+         (4) Compute validation bound ${L}$ and ${U}$ based on official
+         and semi-official data ${Y_{t}}$ by \ref{eq:validBound}\;
+         
+         \eIf{${\hat{Y}_t \in [L, U]}$}{
+           Accept imputation\;
+         }{
+           Discard current imputation, move to next imputation group\;
+         }
+       }
+     }
+   }
+ }
+ \caption{Imputation algorithm}
+\end{algorithm}
+
+%% \begin{algorithm}[H]
+%%  \SetAlgoLined
+%%  \KwData{Production and Harvested area data}
+%%  \KwResult{Imputation}
+%%  Initialization\;
+ 
+%%  \ForAll{countries}{
+%%    \ForAll{commodities}{
+%%      \ForAll{Years}{
+%%        \ForAll{imputation group}{
+ 
+%%          (1) Compute grouped change ratio in area ${\Delta{A_{c,t}}}$ by
+%%          \ref{eq:chratio}\;
+         
+%%          (2) Compute grouped change ratio in production
+%%          ${\Delta{P_{c,t}}}$ by \ref{eq:chratio}\; 
+         
+%%          (3) Compute implied yield ${\Delta{Y_{c, t}}}$ by
+%%          \ref{eq:impYieldCh}\;
+         
+%%          (4) Compute validation bound ${L}$ and ${U}$ based on official
+%%          and semi-official data by \ref{eq:validBound}\;
+         
+%%          \eIf{${\Delta{Y_t} \in [L, U]}$}{
+%%            Compute imputation\;
+%%            ${\hat{A}_{t+1} \leftarrow A_{t} \times \Delta{A_t}}$\;
+%%            ${\hat{P}_{t+1} \leftarrow P_{t} \times \Delta{P_t}}$\;
+%%          }{
+%%            Discard current imputation, move to next imputation group\;
+%%          }
+%%        }
+%%      }
+%%    }
+%%  }
+%%  \caption{Imputation algorithm}
+%% \end{algorithm}
+
+
+\end{document}
