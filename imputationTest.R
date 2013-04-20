@@ -6,7 +6,9 @@
 useInterpolation = FALSE
 check = FALSE
 ## Validation can be none, old, or new
-validate = "new"
+validation = "none"
+useNAAreaGrp = FALSE
+skipMissingGrp = TRUE
 
 library(plyr)
 library(reshape2)
@@ -67,12 +69,12 @@ setnames(comGrp.dt, old = colnames(comGrp.dt),
          new = c("itemCode", "comGroup", "includeGroup"))
 
 ## Extract the production commodity group from the FAOSTAT 2 website.
-doc = htmlParse("http://faostat.fao.org/site/384/default.aspx")
-test = getNodeSet(doc, path = "//table")
-prodTable.df = readHTMLTable(test[[10]],
-  header = c("Group Name", "Item FAO Code", "Item HS+ Code", "Item Name",
-    "Definition"), stringsAsFactors = FALSE, skip.rows = 1)
-tmp = prodTable.df[, c("Group Name", "Item FAO Code", "Item Name")]
+## doc = htmlParse("http://faostat.fao.org/site/384/default.aspx")
+## test = getNodeSet(doc, path = "//table")
+## prodTable.df = readHTMLTable(test[[10]],
+##   header = c("Group Name", "Item FAO Code", "Item HS+ Code", "Item Name",
+##     "Definition"), stringsAsFactors = FALSE, skip.rows = 1)
+## tmp = prodTable.df[, c("Group Name", "Item FAO Code", "Item Name")]
 
 
 
@@ -86,7 +88,12 @@ setnames(raw.dt, old = c("ItemGroup", "AREA", "ITEM", "ELE"),
 ## Remove test area and excluded countries 
 raw.dt = subset(raw.dt, !(FAOST_CODE %in% c(351, 296, 357, 76, 245, 246, 246, 43,
     298)))
+FAOcountryProfile[FAOcountryProfile$FAOST_CODE %in%
+                  c(351, 296, 357, 76, 245, 246, 246, 43, 298), "LAB_NAME"]
+
+## Not sure what is column is used, and it is a mixture of numeric and strings.
 raw.dt$itemGroup = NULL
+
 
 ## Manipulate the data before processing
 mraw.df = melt(raw.dt, c("FAOST_CODE", "itemCode", "elementCode"))
@@ -104,11 +111,46 @@ cmraw.df$symbProd = gsub("[[:space:]]", "", cmraw.df$symbProd)
 ## Create the final data frame with country and regional codes and
 ## names and also the commodity group.
 process.df = merge(cmraw.df, comGrp.dt, all.x = TRUE)
+
+## These items does not have commodity group from the file given by Hans.
+sort(unique(process.df[is.na(process.df$comGroup), "itemCode"]))
+unique(FAOmetaTable$itemTable[FAOmetaTable$itemTable$itemCode %in%
+                              sort(unique(process.df[is.na(process.df$comGroup),
+                                                     "itemCode"])),
+                              c("itemCode", "itemName")])
+
+if(skipMissingGrp)
+  process.df = process.df[!is.na(process.df$comGroup), ]
+
+    
+## Merge with regional and subregional
 process.df = merge(process.df, FAOcountryProfile[, c("FAOST_CODE", "LAB_NAME")],
   all.x = TRUE)
 process.df = arrange(merge(process.df,
-  FAOregionProfile[, c("FAOST_CODE", "UNSD_SUB_REG",
-  "UNSD_MACRO_REG")], all.x = TRUE), FAOST_CODE, itemCode, Year)
+  FAOregionProfile[, c("FAOST_CODE", "UNSD_SUB_REG_CODE",
+  "UNSD_MACRO_REG_CODE")], all.x = TRUE), FAOST_CODE, itemCode, Year)
+## This is a hack for the region until Fillipo fixes the countryprofile.
+process.df = merge(process.df,
+  na.omit(unique(FAOregionProfile[, c("UNSD_MACRO_REG_CODE", "UNSD_MACRO_REG")])),
+  all.x = TRUE)
+process.df = merge(process.df,
+  na.omit(unique(FAOregionProfile[, c("UNSD_SUB_REG_CODE", "UNSD_SUB_REG")])),
+  all.x = TRUE)
+process.df$UNSD_SUB_REG_CODE = NULL
+process.df$UNSD_MACRO_REG_CODE = NULL
+
+## These countries does not have region or subregion available.
+FAOcountryProfile[FAOcountryProfile$FAOST_CODE %in%
+                  unique(process.df[is.na(process.df$UNSD_MACRO_REG),
+                                    "FAOST_CODE"]), "LAB_NAME"]
+
+FAOcountryProfile[FAOcountryProfile$FAOST_CODE %in%
+                  unique(process.df[is.na(process.df$UNSD_SUB_REG),
+                                    "FAOST_CODE"]), "LAB_NAME"]
+
+if(skipMissingGrp)
+  process.df = process.df[!is.na(process.df$UNSD_MACRO_REG) &
+    !is.na(process.df$UNSD_SUB_REG),]
 
 ## Save the original value
 process.df$ovalueArea = process.df$valueArea
@@ -123,10 +165,21 @@ process.df[which(duplicated(process.df[, c("FAOST_CODE", "itemCode", "symbArea",
 process.df[which(duplicated(process.df[, c("FAOST_CODE", "itemCode", "symbProd",
                                  "valueProd")]) & process.df$symbProd == "F"),
          "valueProd"] = NA
-process.df$valueYield = with(process.df, valueProd/valueArea)
-process.df$ovalueYield = with(process.df, ovalueProd/ovalueArea)
 
- 
+
+## A function to compute yield to account for zeros in area and
+## production. To account fo identification problem, we compute yield
+## as NA if one of area or production is zero or NA.
+computeYield = function(production, area){
+  if(length(production) != length(area))
+    stop("Length of prodduction is not the same as area")
+  yield = ifelse(production != 0 & area != 0, production/area, NA)
+}
+
+process.df$valueYield = with(process.df, computeYield(valueProd, valueArea))
+process.df$ovalueYield = with(process.df, computeYield(ovalueProd, ovalueArea))
+
+## Removing blocks which contains only NA's or zero. 
 process.dt = data.table(process.df)
 tmp = process.dt[, sum(valueArea, valueProd, na.rm = TRUE),
   by = c("FAOST_CODE", "itemCode")]
@@ -134,8 +187,19 @@ tmp[, allMiss := V1 == 0 | is.na(V1)]
 tmp$V1 = NULL
 rmNA.dt = merge(process.dt, tmp, by = c("FAOST_CODE", "itemCode"))
 
+## Fix conflicting error, it is impossible for harvested area to be
+## zero when production is non-zero and vice versa. The solution is to
+## replace the zero for these entries with NA and try to impute them.
+rmNA.dt[valueArea == 0 & valueProd != 0, valueArea := as.numeric(NA)]
+rmNA.dt[valueArea != 0 & valueProd == 0, valueProd := as.numeric(NA)]
 
 
+## These item are removed if we specify FALSE for useNAAreaGrp, this
+## is because they don't have area data on area.
+if(!useNAAreaGrp)
+  rmNA.dt = rmNA.dt[(!comGroup %in% c("milk", "poultry_meat", "othr_meat"))]
+
+## Function to check the sparsity of the data
 checkSparsity = function(Data){
   image(data.matrix(is.na(Data)))
   text(rep(0.5, NCOL(Data)), seq(0, 1, length = NCOL(Data)),
@@ -146,12 +210,22 @@ checkSparsity = function(Data){
 ## TODO (Michael): Set the keys for the table
 ## final.dt = data.table(rmNA.df[which(rmNA.df$includeGroup & rmNA.df$allMiss), ])
 final.dt = rmNA.dt[c(!allMiss & includeGroup), ]
+final.dt[, includeGroup := NULL]
+final.dt[, allMiss := NULL]
 if(check)
   checkSparsity(final.dt)
 
-## Check errors
-final.dt[valueArea == 0 & valueProd != 0, ]
-final.dt[valueArea != 0 & valueProd == 0, ]
+## Problematic entries
+##
+## (1) These entries have production set to NA from zero because the
+## area harvested is non-zero, however the symbol for indicates these
+## are official figures and vice versa.
+final.dt[is.na(valueProd) & symbProd %in% c("", "E", "M")]
+final.dt[is.na(valueArea) & symbArea %in% c("", "E", "M")]
+
+## symbol by commodity group
+with(final.dt, table(symbArea, comGroup, useNA = "ifany"))
+with(final.dt, table(symbProd, comGroup, useNA = "ifany"))
 
 
 na.approx2 = function(x, na.rm = FALSE){
@@ -169,7 +243,6 @@ if(useInterpolation){
            by = c("FAOST_CODE", "itemCode")]
   final.dt[, valueProd := na.approx2(valueProd, na.rm = FALSE),
            by = c("FAOST_CODE", "itemCode")]
-
   if(check)
     checkSparsity(final.dt)
 }
@@ -297,8 +370,17 @@ yield.dt = final.dt[, grep("valueProd_", colnames(final.dt), value = TRUE),
 setnames(yield.dt, old = colnames(yield.dt),
          new = gsub("valueProd", "valueYield", colnames(yield.dt)))
 full.dt = cbind(final.dt, yield.dt)
-if(check)
-  checkSparsity(full.dt)
+
+## Check sparsity by chunk
+if(check){
+  pdf(file = "sparsityCheckAfterImp.pdf", width = 10)
+  tmp = quantile(c(1, NROW(full.dt)), probs = seq(0, 1, length = 20))
+  for(i in 1:(length(tmp) - 1)){
+    checkSparsity(full.dt[tmp[i]:tmp[i + 1], ])
+  }
+  graphics.off()
+  system("evince sparsityCheckAfterImp.pdf&")
+}
 
 
 ## Explore the relationship between the raw change and the imputed change
@@ -396,7 +478,7 @@ if(check){
 
 
 
-if(validate == "new"){
+if(validation == "new"){
   ## Compute the validation bound of yield
   full.dt[, validAbsLowerBound := quantile(valueYield, probs = 0.25,
               na.rm = TRUE) - (quantile(valueYield, probs = 0.5,
@@ -450,7 +532,7 @@ if(validate == "new"){
   full.dt[valueYield_regCom_gr  < validChLowerBound |
           valueYield_regCom_gr > validChUpperBound,
           valueYield_regCom_gr := NA]
-} else if(validate == "old"){
+} else if(validation == "old"){
   
   ## Validate the yield by change distribution
   full.dt[valueYield_countryCom_gr < 0.6 |
@@ -512,8 +594,8 @@ selectImp(data = full.dt, yieldCol = c("valueYield_countryCom_gr",
 
 
 ## Imputation by methodology
-table(full.dt[is.na(valueArea), final_area_impname], useNA = "always")
-table(full.dt[is.na(valueProd), final_area_impname], useNA = "always")
+table(full.dt[is.na(valueArea), final_area_impname], useNA = "ifany")
+table(full.dt[is.na(valueProd), final_area_impname], useNA = "ifany")
 
 if(check)
   checkSparsity(full.dt)
@@ -560,7 +642,7 @@ full.dt[, imputedProd := valueProd]
 
 full.dt[is.na(imputedArea), imputedArea := final_area_imp]
 full.dt[is.na(imputedProd), imputedProd := final_prod_imp]
-full.dt[, impliedYield := imputedProd/imputedArea]
+full.dt[, impliedYield := computeYield(imputedProd, imputedArea)]
 
 ## Proportion of missing value imputed
 NROW(full.dt[is.na(valueArea) & !is.na(imputedArea), ])/
