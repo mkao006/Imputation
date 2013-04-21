@@ -6,7 +6,8 @@
 useInterpolation = FALSE
 check = FALSE
 ## Validation can be none, old, or new
-validation = "none"
+validateChange = "none"
+validateAbs = "new"
 useNAAreaGrp = FALSE
 skipMissingGrp = TRUE
 
@@ -478,33 +479,7 @@ if(check){
 
 
 
-if(validation == "new"){
-  ## Compute the validation bound of yield
-  full.dt[, validAbsLowerBound := quantile(valueYield, probs = 0.25,
-              na.rm = TRUE) - (quantile(valueYield, probs = 0.5,
-                na.rm = TRUE) - quantile(valueYield, probs = 0.25,
-                  na.rm = TRUE)), by = c("itemCode", "Year")]
-  full.dt[, validAbsUpperBound := quantile(valueYield, probs = 0.75,
-              na.rm = TRUE) + (quantile(valueYield, probs = 0.75,
-                na.rm = TRUE) - quantile(valueYield, probs = 0.5,
-                  na.rm = TRUE)), by = c("itemCode", "Year")]
-    
-  ## Validate the yield by distribution
-  full.dt[valueYield_countryCom_gr < validAbsLowerBound |
-          valueYield_countryCom_gr > validAbsUpperBound,
-          valueYield_countryCom_gr := NA]
-  full.dt[valueYield_subregItem_gr < validAbsLowerBound |
-          valueYield_subregItem_gr > validAbsUpperBound,
-          valueYield_subregItem_gr := NA]
-  full.dt[valueYield_subregCom_gr < validAbsLowerBound |
-          valueYield_subregCom_gr > validAbsUpperBound,
-          valueYield_subregCom_gr  := NA]
-  full.dt[valueYield_regItem_gr < validAbsLowerBound |
-          valueYield_regItem_gr > validAbsUpperBound,
-          valueYield_regItem_gr := NA]
-  full.dt[valueYield_regCom_gr  < validAbsLowerBound |
-          valueYield_regCom_gr > validAbsUpperBound,
-          valueYield_regCom_gr := NA]
+if(validateChange == "new"){
   
   ## Compute the validation bound of change in yield
   full.dt[, validChLowerBound := quantile(valueYield_raw_gr, probs = 0.25,
@@ -532,7 +507,8 @@ if(validation == "new"){
   full.dt[valueYield_regCom_gr  < validChLowerBound |
           valueYield_regCom_gr > validChUpperBound,
           valueYield_regCom_gr := NA]
-} else if(validation == "old"){
+  
+} else if(validateChange == "old"){
   
   ## Validate the yield by change distribution
   full.dt[valueYield_countryCom_gr < 0.6 |
@@ -552,6 +528,34 @@ if(validation == "new"){
           valueYield_regCom_gr := NA]
 }
 
+if(validateAbs == "new"){
+    ## Compute the validation bound of yield
+  full.dt[, validAbsLowerBound := quantile(valueYield, probs = 0.25,
+              na.rm = TRUE) - (quantile(valueYield, probs = 0.5,
+                na.rm = TRUE) - quantile(valueYield, probs = 0.25,
+                  na.rm = TRUE)), by = c("itemCode", "Year")]
+  full.dt[, validAbsUpperBound := quantile(valueYield, probs = 0.75,
+              na.rm = TRUE) + (quantile(valueYield, probs = 0.75,
+                na.rm = TRUE) - quantile(valueYield, probs = 0.5,
+                  na.rm = TRUE)), by = c("itemCode", "Year")]
+    
+  ## Validate the yield by distribution
+  full.dt[valueYield_countryCom_gr < validAbsLowerBound |
+          valueYield_countryCom_gr > validAbsUpperBound,
+          valueYield_countryCom_gr := NA]
+  full.dt[valueYield_subregItem_gr < validAbsLowerBound |
+          valueYield_subregItem_gr > validAbsUpperBound,
+          valueYield_subregItem_gr := NA]
+  full.dt[valueYield_subregCom_gr < validAbsLowerBound |
+          valueYield_subregCom_gr > validAbsUpperBound,
+          valueYield_subregCom_gr  := NA]
+  full.dt[valueYield_regItem_gr < validAbsLowerBound |
+          valueYield_regItem_gr > validAbsUpperBound,
+          valueYield_regItem_gr := NA]
+  full.dt[valueYield_regCom_gr  < validAbsLowerBound |
+          valueYield_regCom_gr > validAbsUpperBound,
+          valueYield_regCom_gr := NA]
+}
 
 
 ## dev.new()
