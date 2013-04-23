@@ -6,11 +6,12 @@
 useInterpolation = FALSE
 check = FALSE
 ## Validation can be none, old, or new
-validateChange = "none"
-validateAbs = "new"
+validateChange = "new"
+validateAbs = "none"
 useNAAreaGrp = FALSE
 skipMissingGrp = TRUE
 
+library(quantreg)
 library(plyr)
 library(reshape2)
 library(XML)
@@ -92,7 +93,8 @@ raw.dt = subset(raw.dt, !(FAOST_CODE %in% c(351, 296, 357, 76, 245, 246, 246, 43
 FAOcountryProfile[FAOcountryProfile$FAOST_CODE %in%
                   c(351, 296, 357, 76, 245, 246, 246, 43, 298), "LAB_NAME"]
 
-## Not sure what is column is used, and it is a mixture of numeric and strings.
+## Not sure what this column is used, and it is a mixture of numeric
+## and strings.
 raw.dt$itemGroup = NULL
 
 
@@ -160,6 +162,8 @@ process.df$ovalueProd = process.df$valueProd
 ## Replace values with symbol T or duplicated F with NA
 process.df[which(process.df$symbArea == "T"), "valueArea"] = NA
 process.df[which(process.df$symbProd == "T"), "valueProd"] = NA
+process.df[which(process.df$symbArea == "E"), "valueArea"] = NA
+process.df[which(process.df$symbProd == "E"), "valueProd"] = NA
 process.df[which(duplicated(process.df[, c("FAOST_CODE", "itemCode", "symbArea",
                                  "valueArea")]) & process.df$symbArea == "F"),
          "valueArea"] = NA
@@ -208,32 +212,61 @@ checkSparsity = function(Data){
          FUN = function(x) 100 * sum(is.na(x))/length(x)), 2), "%)", sep = ""))
 }
 
-## TODO (Michael): Set the keys for the table
-## final.dt = data.table(rmNA.df[which(rmNA.df$includeGroup & rmNA.df$allMiss), ])
+## Remove all missing group and commodity group that does not require
+## imputation
 final.dt = rmNA.dt[c(!allMiss & includeGroup), ]
 final.dt[, includeGroup := NULL]
 final.dt[, allMiss := NULL]
+setkeyv(final.dt, c("FAOST_CODE", "itemCode", "Year"))
 if(check)
   checkSparsity(final.dt)
 
-## Problematic entries
-##
-## (1) These entries have production set to NA from zero because the
-## area harvested is non-zero, however the symbol for indicates these
-## are official figures and vice versa.
-final.dt[is.na(valueProd) & symbProd %in% c("", "E", "M")]
-final.dt[is.na(valueArea) & symbArea %in% c("", "E", "M")]
-
 ## symbol by commodity group
-with(final.dt, table(symbArea, comGroup, useNA = "ifany"))
+with(final.dt, table(symbArea, comGroup, useNA = "ifany")),
 with(final.dt, table(symbProd, comGroup, useNA = "ifany"))
+round(with(final.dt, table(symbArea, useNA = "ifany"))/NROW(final.dt), 2)
+round(with(final.dt, table(symbProd, useNA = "ifany"))/NROW(final.dt), 2)
 
 
+com = 15
+tmp = subset(final.dt, itemCode == com & symbArea %in% c("", "*") &
+  symbProd %in% c("", "*"))
+plot.new()
+plot.window(xlim = range(tmp$Year), ylim = range(tmp$valueYield, na.rm = TRUE))
+for(i in unique(tmp$FAOST_CODE)){
+  lines(tmp[FAOST_CODE == i, Year], tmp[FAOST_CODE == i, valueYield])
+}
+axis(1)
+axis(2)
+
+
+com = "cereals"
+tmp = subset(final.dt, comGroup == com & symbArea %in% c("", "*") &
+  symbProd %in% c("", "*"))
+keys = unique(tmp[, list(FAOST_CODE, itemCode)])
+plot.new()
+plot.window(xlim = range(tmp$Year), ylim = range(tmp$valueYield, na.rm = TRUE))
+for(i in 1:NROW(keys)){
+  lines(tmp[FAOST_CODE == keys[i, FAOST_CODE] & itemCode == keys[i, itemCode],
+            Year],
+        tmp[FAOST_CODE == keys[i, FAOST_CODE] & itemCode == keys[i, itemCode],
+            valueYield])
+}
+axis(1)
+axis(2)
+
+
+
+
+## Begin imputation
+## ---------------------------------------------------------------------
+
+## Function to carry out linear interpolation
 na.approx2 = function(x, na.rm = FALSE){
   if(length(na.omit(x)) < 2){
     tmp = x
   } else {
-    tmp = na.approx(x)
+    tmp = na.approx(x)(
   }
   tmp
 }
@@ -253,11 +286,7 @@ if(useInterpolation){
 ## Function for computing the year to year ratio
 diffv = function(x){
     T = length(x)
-    ## Use linear interpolation for weight (this might not be suitable)
-    ## x[x == 0] = NA
     if(sum(!is.na(x)) >= 2){
-      ## TODO (Michael): test whether approx or na.approx is faster.
-      ## x = na.approx(x)
       tmp = c(x[2:T]/x[1:(T - 1)])
     } else {
       tmp = rep(NA, length(x) - 1)
@@ -266,13 +295,11 @@ diffv = function(x){
 }
 
 
-foo = function(Data, primary_key, group_key, value, check = FALSE,
+groupCh = function(Data, primary_key, group_key, value, check = FALSE,
   grpName){
   if(missing(grpName))
     grpName = paste(group_key, collapse = "_")
   setnames(Data, old = value, new = "value")
-    ## Data[, grpSum := .SD[itemCode != i,
-    ##                       sum(value, na.rm = TRUE)], by = group_key]
   Data[, grpSum := sum(value, na.rm = !all(is.na(value))), by = group_key]
   Data[, grpGr := as.numeric(c(NA, diffv(grpSum))), by = primary_key]
   if(!check){
@@ -292,64 +319,55 @@ final.dt[, valueArea_raw_gr := as.numeric(c(NA, diffv(valueArea))),
          by = c("FAOST_CODE", "itemCode")]
 final.dt[, valueProd_raw_gr := as.numeric(c(NA, diffv(valueProd))),
          by = c("FAOST_CODE", "itemCode")]
-
-## foo(Data = final.dt,
-##     primary_key = c("FAOST_CODE", "itemCode"),
-##     group_key = c("FAOST_CODE", "itemCode", "Year"), value = "valueArea",
-##     grpName = "raw")
-## foo(Data = final.dt,
-##     primary_key = c("FAOST_CODE", "itemCode"),
-##     group_key = c("FAOST_CODE", "itemCode", "Year"), value = "valueProd",
-##     grpName = "raw")
 if(check)
   checkSparsity(final.dt)
 
 ## Compute the country commodity group
-foo(Data = final.dt,
+groupCh(Data = final.dt,
     primary_key = c("FAOST_CODE", "itemCode"),
     group_key = c("FAOST_CODE", "comGroup", "Year"), value = "valueArea",
     grpName = "countryCom")
-foo(Data = final.dt,
+groupCh(Data = final.dt,
     primary_key = c("FAOST_CODE", "itemCode"),
     group_key = c("FAOST_CODE", "comGroup", "Year"), value = "valueProd",
     grpName = "countryCom")
 
 ## Compute the subregion item group
-foo(Data = final.dt,
+groupCh(Data = final.dt,
     primary_key = c("FAOST_CODE", "itemCode"),
     group_key = c("UNSD_SUB_REG", "itemCode", "Year"), value = "valueArea",
     grpName = "subregItem")
-foo(Data = final.dt,
+groupCh(Data = final.dt,
     primary_key = c("FAOST_CODE", "itemCode"),
     group_key = c("UNSD_SUB_REG", "itemCode", "Year"), value = "valueProd",
     grpName = "subregItem")
 
 ## Compute the subregional commodity group
-foo(Data = final.dt,
+groupCh(Data = final.dt,
     primary_key = c("FAOST_CODE", "itemCode"),
     group_key = c("UNSD_SUB_REG", "comGroup", "Year"), value = "valueArea",
     grpName = "subregCom")
-foo(Data = final.dt,
+groupCh(Data = final.dt,
     primary_key = c("FAOST_CODE", "itemCode"),
     group_key = c("UNSD_SUB_REG", "comGroup", "Year"), value = "valueProd",
     grpName = "subregCom")
 
 ## Compute the region item group
-foo(Data = final.dt,
+groupCh(Data = final.dt,
     primary_key = c("FAOST_CODE", "itemCode"),
     group_key = c("UNSD_MACRO_REG", "itemCode", "Year"), value = "valueArea",
     grpName = "regItem")
-foo(Data = final.dt,
+groupCh(Data = final.dt,
     primary_key = c("FAOST_CODE", "itemCode"),
     group_key = c("UNSD_MACRO_REG", "itemCode", "Year"), value = "valueProd",
     grpName = "regItem")
 
 ## Compute the region commodity group
-foo(Data = final.dt,
+groupCh(Data = final.dt,
     primary_key = c("FAOST_CODE", "itemCode"),
     group_key = c("UNSD_MACRO_REG", "comGroup", "Year"), value = "valueArea",
     grpName = "regCom")
-foo(Data = final.dt,
+groupCh(Data = final.dt,
     primary_key = c("FAOST_CODE", "itemCode"),
     group_key = c("UNSD_MACRO_REG", "comGroup", "Year"), value = "valueProd",
     grpName = "regCom")
@@ -480,16 +498,26 @@ if(check){
 
 
 if(validateChange == "new"){
+  ## full.dt[, validAbsLowerBound := predict(rq(valueYield_raw_gr ~ Year, tau = 0.05),
+  ##             data.frame(Year)), by = "itemCode"]
+  ## full.dt[, validAbsUpperBound := predict(rq(valueYield_raw_gr ~ Year, tau = 0.95),
+  ##             data.frame(Year)), by = "itemCode"]  
   
-  ## Compute the validation bound of change in yield
-  full.dt[, validChLowerBound := quantile(valueYield_raw_gr, probs = 0.25,
-              na.rm = TRUE) - (quantile(valueYield_raw_gr, probs = 0.5,
-                na.rm = TRUE) - quantile(valueYield_raw_gr, probs = 0.25,
-                  na.rm = TRUE)), by = "itemCode"]
-  full.dt[, validChUpperBound := quantile(valueYield_raw_gr, probs = 0.75,
-              na.rm = TRUE) + (quantile(valueYield_raw_gr, probs = 0.75,
-                na.rm = TRUE) - quantile(valueYield_raw_gr, probs = 0.5,
-                  na.rm = TRUE)), by = "itemCode"]
+  ## ## compute the validation bound of change in yield
+  ## full.dt[, validChLowerBound := quantile(valueYield_raw_gr, probs = 0.25,
+  ##             na.rm = TRUE) - (quantile(valueYield_raw_gr, probs = 0.5,
+  ##               na.rm = TRUE) - quantile(valueYield_raw_gr, probs = 0.25,
+  ##                 na.rm = TRUE)), by = "itemCode"]
+  ## full.dt[, validChUpperBound := quantile(valueYield_raw_gr, probs = 0.75,
+  ##             na.rm = TRUE) + (quantile(valueYield_raw_gr, probs = 0.75,
+  ##               na.rm = TRUE) - quantile(valueYield_raw_gr, probs = 0.5,
+  ##                 na.rm = TRUE)), by = "itemCode"]
+  
+  ## compute the validation bound of change in yield
+  full.dt[, validChLowerBound := quantile(valueYield_raw_gr, probs = 0.05,
+              na.rm = TRUE), by = "itemCode"]
+  full.dt[, validChUpperBound := quantile(valueYield_raw_gr, probs = 0.95,
+              na.rm = TRUE), by = "itemCode"]
   
   ## Validate the yield by change distribution
   full.dt[valueYield_countryCom_gr < validChLowerBound |
@@ -528,34 +556,98 @@ if(validateChange == "new"){
           valueYield_regCom_gr := NA]
 }
 
-if(validateAbs == "new"){
-    ## Compute the validation bound of yield
-  full.dt[, validAbsLowerBound := quantile(valueYield, probs = 0.25,
-              na.rm = TRUE) - (quantile(valueYield, probs = 0.5,
-                na.rm = TRUE) - quantile(valueYield, probs = 0.25,
-                  na.rm = TRUE)), by = c("itemCode", "Year")]
-  full.dt[, validAbsUpperBound := quantile(valueYield, probs = 0.75,
-              na.rm = TRUE) + (quantile(valueYield, probs = 0.75,
-                na.rm = TRUE) - quantile(valueYield, probs = 0.5,
-                  na.rm = TRUE)), by = c("itemCode", "Year")]
+
+
+## if(validateAbs == "new"){
+##     ## Compute the validation bound of yield
+##   full.dt[, validAbsLowerBound := predict(rq(valueYield ~ Year, tau = 0.05),
+##               data.frame(Year)), by = "itemCode"]
+##   full.dt[, validAbsUpperBound := predict(rq(valueYield ~ Year, tau = 0.95),
+##               data.frame(Year)), by = "itemCode"]  
+  
+##   ## full.dt[, validAbsLowerBound := quantile(valueYield, probs = 0.25,
+##   ##             na.rm = TRUE) - (quantile(valueYield, probs = 0.5,
+##   ##               na.rm = TRUE) - quantile(valueYield, probs = 0.25,
+##   ##                 na.rm = TRUE)), by = c("itemCode", "Year")]
+##   ## full.dt[, validAbsUpperBound := quantile(valueYield, probs = 0.75,
+##   ##             na.rm = TRUE) + (quantile(valueYield, probs = 0.75,
+##   ##               na.rm = TRUE) - quantile(valueYield, probs = 0.5,
+##   ##                 na.rm = TRUE)), by = c("itemCode", "Year")]
     
-  ## Validate the yield by distribution
-  full.dt[valueYield_countryCom_gr < validAbsLowerBound |
-          valueYield_countryCom_gr > validAbsUpperBound,
-          valueYield_countryCom_gr := NA]
-  full.dt[valueYield_subregItem_gr < validAbsLowerBound |
-          valueYield_subregItem_gr > validAbsUpperBound,
-          valueYield_subregItem_gr := NA]
-  full.dt[valueYield_subregCom_gr < validAbsLowerBound |
-          valueYield_subregCom_gr > validAbsUpperBound,
-          valueYield_subregCom_gr  := NA]
-  full.dt[valueYield_regItem_gr < validAbsLowerBound |
-          valueYield_regItem_gr > validAbsUpperBound,
-          valueYield_regItem_gr := NA]
-  full.dt[valueYield_regCom_gr  < validAbsLowerBound |
-          valueYield_regCom_gr > validAbsUpperBound,
-          valueYield_regCom_gr := NA]
+##   ## Validate the yield by distribution
+##   full.dt[valueYield_countryCom < validAbsLowerBound |
+##           valueYield_countryCom > validAbsUpperBound,
+##           valueYield_countryCom_gr := NA]
+##   full.dt[valueYield_subregItem < validAbsLowerBound |
+##           valueYield_subregItem > validAbsUpperBound,
+##           valueYield_subregItem_gr := NA]
+##   full.dt[valueYield_subregCom < validAbsLowerBound |
+##           valueYield_subregCom > validAbsUpperBound,
+##           valueYield_subregCom_gr  := NA]
+##   full.dt[valueYield_regItem < validAbsLowerBound |
+##           valueYield_regItem > validAbsUpperBound,
+##           valueYield_regItem_gr := NA]
+##   full.dt[valueYield_regCom  < validAbsLowerBound |
+##           valueYield_regCom > validAbsUpperBound,
+##           valueYield_regCom_gr := NA]
+## }
+
+
+if(check){
+  pdf(file = "quantCheck.pdf")
+  for(i in unique(full.dt$itemCode)){
+    check.dt = full.dt[itemCode == i, ]
+    ## q01 = rq(valueYield ~ Year, tau = 0.01, data = check.dt)
+    q05 = rq(valueYield_raw_gr~ Year, tau = 0.05, data = check.dt)  
+    ## q25 = rq(valueYield ~ Year, tau = 0.25, data = check.dt)
+    ## q50 = rq(valueYield ~ Year, tau = 0.50, data = check.dt)
+    ## q75 = rq(valueYield ~ Year, tau = 0.75, data = check.dt)
+    q95 = rq(valueYield_raw_gr~ Year, tau = 0.95, data = check.dt)
+    ## q99 = rq(valueYield ~ Year, tau = 0.99, data = check.dt)
+    check.dt[, qregLowerBound := predict(q05, data.frame(Year))]
+    check.dt[, qregUpperBound := predict(q95, data.frame(Year))]
+    check.dt[, qLowerBound := quantile(valueYield_raw_gr, 0.05, na.rm = TRUE),
+             by = c("itemCode", "Year")]
+    check.dt[, qUpperBound := quantile(valueYield_raw_gr, 0.95, na.rm = TRUE),
+             by = c("itemCode", "Year")]      
+    ## Check the absolute validation
+    try(print(ggplot(check.dt, aes(x = Year, y = valueYield_raw_gr)) +
+              geom_point(aes(col = ifelse(symbArea %in% c("", "*") &
+                               symbProd %in% c("", "*"),
+                               "official", "non-official")), alpha = 0.3) +
+              geom_line(aes(x = Year, y = qregLowerBound),
+                        col = "steelblue", linetype = "dashed") +
+              geom_line(aes(x = Year, y = qregUpperBound),
+                        col = "steelblue", linetype = "dashed") +
+              geom_line(aes(x = Year, y = qLowerBound),
+                        col = "green", linetype = "dashed") +
+              geom_line(aes(x = Year, y = qUpperBound),
+                        col = "green", linetype = "dashed") +      
+              geom_line(aes(x = Year, y = 1.4), col = "red", linetype = "dashed") +
+              geom_line(aes(x = Year, y = 0.6), col = "red", linetype = "dashed") +
+              labs(col = "", x = NULL,
+       title = paste(unique(FAOmetaTable$itemTable[FAOmetaTable$itemTable$itemCode
+                     == i, "itemName"]), "(",
+           unique(FAOmetaTable$itemTable[FAOmetaTable$itemTable$itemCode == i,
+                                                   "itemCode"]), ")",  sep = ""))
+              ))
+  }
+  graphics.off()
+  system("evince quantCheck.pdf&")
 }
+
+## full.dt$isOfficial = with(full.dt, ifelse(symbArea %in% c("", "*") &
+##   symbProd %in% c("", "*"), "official", "non-official"))
+
+## pdf(file = "yieldOfficialCheck.pdf")
+## for(i in unique(final.dt$itemCode)){
+##   try(print(ggplot(full.dt[itemCode == i, ], aes(x = valueYield)) +
+##             geom_histogram(binwidth = 0.05) +
+##             facet_wrap(~isOfficial)))
+## }
+## graphics.off()
+## system("evince yieldOfficialCheck.pdf&")
+
 
 
 ## dev.new()
@@ -615,9 +707,6 @@ imp = function(value, gr){
     tmp = double(n)
     tmp[0:(firstObs - 1)] = NA
     for(i in firstObs:n){
-      ## This accounts for missing value in the original data, but how
-      ## do we account for missing value in the growth rate? Keep it
-      ## missing?
       if(is.na(value[i])){
         tmp[i] = tmp[i - 1] * gr[i]
       } else {
@@ -628,12 +717,13 @@ imp = function(value, gr){
   tmp
 }
 
-
 full.dt[, final_area_imp := c(NA, imp(valueArea[-length(valueArea)],
             final_area_gr[-1])), by = c("FAOST_CODE", "itemCode")]
 
 full.dt[, final_prod_imp := c(NA, imp(valueProd[-length(valueProd)],
             final_prod_gr[-1])), by = c("FAOST_CODE", "itemCode")]
+
+
 
 ## Check the imputation
 ## ---------------------------------------------------------------------
@@ -656,24 +746,17 @@ NROW(full.dt[is.na(valueProd) & !is.na(imputedProd), ])/
   NROW(full.dt[is.na(valueProd), ])
 
 
-if(check)
-  checkSparsity(full.dt)
-
-## check.dt = full.dt[, list(FAOST_CODE, itemCode, Year, valueArea, valueProd,
-##   valueYield, ovalueArea, ovalueProd, ovalueYield, imputedArea, imputedProd,
-##   impliedYield)]
-
 check.dt = full.dt[, list(FAOST_CODE, itemCode, Year, valueArea, valueProd,
   valueYield, imputedArea, imputedProd, impliedYield)]
-key = unique(check.dt[(is.na(valueArea) & !is.na(imputedArea)) |
+keys = unique(check.dt[(is.na(valueArea) & !is.na(imputedArea)) |
   (is.na(valueProd) & !is.na(imputedProd)), list(FAOST_CODE, itemCode)])
 mcheck.df = melt(check.dt, id.var = c("FAOST_CODE", "itemCode", "Year"))
 
 
 pdf(file = "checkImputation.pdf")
-for(i in 1:100){
-  try(print(ggplot(mcheck.df[mcheck.df$FAOST_CODE == key[i, FAOST_CODE] &
-                             mcheck.df$itemCode == key[i, itemCode], ],
+for(i in 1:NROW(keys)){
+  try(print(ggplot(mcheck.df[mcheck.df$FAOST_CODE == keys[i, FAOST_CODE] &
+                             mcheck.df$itemCode == keys[i, itemCode], ],
                    aes(x = Year, y = log(value))) +
             geom_line(aes(col = variable)) +
             geom_point(aes(col = variable), alpha = 0.3, size = 3) +
@@ -682,14 +765,88 @@ for(i in 1:100){
                                      maxColorValue = 255))) +
             labs(x = NULL,
     title = paste(unique(FAOmetaTable$itemTable[FAOmetaTable$itemTable$itemCode
-      == key[i, itemCode], "itemName"]), "(",
-      unique(FAOmetaTable$itemTable[FAOmetaTable$itemTable$itemCode == key[i,
+      == keys[i, itemCode], "itemName"]), "(",
+      unique(FAOmetaTable$itemTable[FAOmetaTable$itemTable$itemCode == keys[i,
                                       itemCode], "itemCode"]), "), ",
-      FAOcountryProfile[which(FAOcountryProfile$FAOST_CODE == key[i, FAOST_CODE]),
+      FAOcountryProfile[which(FAOcountryProfile$FAOST_CODE == keys[i, FAOST_CODE]),
                      "LAB_NAME"], sep = ""))))
 }
 graphics.off()
 system("evince checkImputation.pdf&")
+
+
+
+
+
+
+
+
+
+
+
+base = full.dt[, list(FAOST_CODE, itemCode, Year, valueArea, valueProd,
+  imputedArea, imputedProd, impliedYield)]
+setnames(base, old = c("imputedArea", "imputedProd", "impliedYield"),
+         new = c("imputedNewArea", "imputedNewProd", "impliedNewYield"))
+## load("noValidation")
+## setnames(tmp, old = colnames(tmp), new = c("FAOST_CODE", "itemCode", "Year",
+##                                      "imputedNoArea", "imputedNoProd",
+##                                      "impliedNoYield"))
+## test = merge(base, tmp, by = c("FAOST_CODE", "itemCode", "Year"))
+load("oldValidation")
+setnames(tmp, old = colnames(tmp), new = c("FAOST_CODE", "itemCode", "Year",
+                                     "imputedOldArea", "imputedOldProd",
+                                     "impliedOldYield"))
+test = merge(test, base, by = c("FAOST_CODE", "itemCode", "Year"))
+test[, needImpute := is.na(sum(valueArea, valueProd)),
+     by = c("FAOST_CODE", "itemCode")]
+test2 = test[test$needImpute, ]
+test2[, needImpute := NULL]
+test2[!is.na(valueArea), grep("^imp.+Area", colnames(test2), value = TRUE) := NA]
+test2[!is.na(valueProd), grep("^imp.+Prod", colnames(test2), value = TRUE) := NA]
+test2[, valueYield := computeYield(valueProd, valueArea), ]
+test2[!is.na(valueYield),
+      grep("^imp.+Yield", colnames(test2), value = TRUE) := NA]
+mtest = melt(test2, id.var = c("FAOST_CODE", "itemCode", "Year"))
+mtest$type = ifelse(grepl("Area", mtest$variable), "Area",
+  ifelse(grepl("Prod", mtest$variable), "Prod", "Yield"))
+
+
+keys = data.table(unique(mtest[, c("FAOST_CODE", "itemCode")]))
+pdf(file = "imputationCheck.pdf")
+set.seed(587)
+for(i in sample(1:NROW(keys), 300)){
+  plotTmp = subset(mtest, FAOST_CODE == keys[i, FAOST_CODE] &
+    itemCode == keys[i, itemCode])
+  try(print(ggplot(plotTmp[plotTmp$variable %in%
+                           c("valueArea", "valueProd", "valueYield"), ],
+                           aes(x = Year, y = value)) +
+            geom_line() + geom_point(alpha = 0.3) + 
+            geom_point(data = plotTmp[!(plotTmp$variable %in%
+                           c("valueArea", "valueProd", "valueYield")), ],
+                       aes(col = variable), alpha = 0.5) + 
+      facet_wrap(~type, ncol = 1, scales = "free_y") +
+            scale_color_manual(values =  rep(c("steelblue", "green", "red"),
+                                 each = 3)) + 
+            labs(x = NULL,
+    title = paste(unique(FAOmetaTable$itemTable[FAOmetaTable$itemTable$itemCode
+      == keys[i, itemCode], "itemName"]), "(",
+      unique(FAOmetaTable$itemTable[FAOmetaTable$itemTable$itemCode == keys[i,
+                                      itemCode], "itemCode"]), "), ",
+      FAOcountryProfile[which(FAOcountryProfile$FAOST_CODE == keys[i, FAOST_CODE]),
+                     "LAB_NAME"], sep = ""))
+            ))
+}
+graphics.off()  
+system("evince imputationCheck.pdf&")
+
+
+if(check)
+  checkSparsity(full.dt)
+
+## check.dt = full.dt[, list(FAOST_CODE, itemCode, Year, valueArea, valueProd,
+##   valueYield, ovalueArea, ovalueProd, ovalueYield, imputedArea, imputedProd,
+##   impliedYield)]
 
 
 ## with(full.dt[is.na(valueArea), ], plot(ovalueArea, imputedArea))
