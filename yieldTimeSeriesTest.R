@@ -18,7 +18,7 @@ library(XML)
 library(FAOSYB)
 library(reshape2)
 library(zoo)
-
+library(nlme)
 
 
 ## Commodity group data take from the SAS script
@@ -222,28 +222,163 @@ if(check)
   checkSparsity(process.dt)
 
 
-final.dt = process.dt[, list(FAOST_CODE, itemCode, Year, symbArea, symbProd,
-  ovalueArea, ovalueProd, valueArea, valueProd, valueYield)]
+final.dt = process.dt[, list(FAOST_CODE, UNSD_MACRO_REG,
+  UNSD_SUB_REG, itemCode, Year, symbArea, symbProd, ovalueArea,
+  ovalueProd, valueArea, valueProd, valueYield)]
+checkSparsity(final.dt)
+
+## ## Compute coefficient of variation
+## final.dt[, cvArea := sd(valueArea, na.rm = TRUE)/mean(valueArea, na.rm = TRUE),
+##          by = c("FAOST_CODE", "itemCode")]
+
+## final.dt[, cvYield := sd(valueYield, na.rm = TRUE)/mean(valueYield, na.rm = TRUE),
+##          by = c("FAOST_CODE", "itemCode")]
+
+## with(final.dt, plot(cvArea, cvYield, xlim = c(0, 3.5), ylim = c(0, 3.5)))
 
 
-pdf(file = "yieldTS.pdf", width = 10)
+## Compute average subregional yield
+final.dt[, gvalueYield := mean(valueYield, na.rm = TRUE),
+         by = c("Year", "UNSD_SUB_REG")]
+## Grouped yield is missing for Micronesia, we will do a hack here
+final.dt[is.na(gvalueYield),
+         gvalueYield := mean(ovalueProd/ovalueArea, na.rm = TRUE), by = "Year"]
+
+
+lme.fit = lme(valueYield ~ Year + gvalueYield, random =~ 1|FAOST_CODE,
+  data = final.dt, na.action = na.omit)
+
+
+
+final.dt[, imputedYield := valueYield]
 for(i in unique(final.dt$itemCode)){
-  tmp = subset(final.dt, itemCode == i &
-    symbArea %in% c("", "*") & symbProd %in% c("", "*"))
-  try(print(ggplot(data = tmp, aes(x = Year, y = valueYield)) +
-            geom_line(aes(col = factor(FAOST_CODE))) +
-            scale_color_manual(values = rep(rgb(0, 0, 0, alpha = 0.5),
-                               length(unique(tmp$FAOST_CODE)))) +
-            theme(legend.position = "none") +
-            labs(y = paste0("Yield series for ",
-                   FAOmetaTable$itemTable[FAOmetaTable$itemTable$itemCode == i,
-                                          "itemName"], "(", i, ")"),
-                 x = NULL)
-            ))
+  tmp.fit = lme(valueYield ~ Year + gvalueYield, random =~1|FAOST_CODE,
+    data = final.dt[itemCode == i, ], na.action = na.omit)
+  final.dt[is.na(imputedYield) & itemCode == i,
+           imputedYield := predict(tmp.fit,
+             final.dt[is.na(imputedYield) & itemCode == i, ]), ]
+}
+
+final.dt[is.na(valueArea) & !is.na(valueProd),
+         valueArea := valueProd/imputedYield]
+
+final.dt[!is.na(valueArea) & is.na(valueProd),
+         valueProd := valueArea/imputedYield]
+
+checkSparsity(final.dt)
+
+
+## Looks like there is a lot of mismatch between area and production,
+## let us impute area now.
+
+## Impute the area with linear interpolation
+
+## Function to carry out linear interpolation
+na.approx2 = function(x, na.rm = FALSE){
+  if(length(na.omit(x)) < 2){
+    tmp = x
+  } else {
+    tmp = na.approx(x, na.rm = na.rm)
+  }
+  c(tmp)
+}
+
+final.dt[, imputedArea := na.locf(na.approx2(valueArea), na.rm = FALSE),
+         by = c("FAOST_CODE", "itemCode")]
+checkSparsity(final.dt)
+
+final.dt[, imputedProd := imputedArea * imputedYield]
+
+checkSparsity(final.dt)
+
+final.dt[!is.na(valueArea), imputedArea := as.numeric(NA)]
+final.dt[!is.na(valueYield), imputedYield := as.numeric(NA)]
+final.dt[!is.na(valueProd), imputedProd := as.numeric(NA)]
+
+
+keys = unique(final.dt[is.na(valueProd) | is.na(valueArea),
+  list(FAOST_CODE, itemCode)])
+
+pdf(file = "checkImputation.pdf")
+for(i in 1:100){
+  tmp = final.dt[FAOST_CODE == keys[i, FAOST_CODE] &
+    itemCode == keys[i, itemCode]]
+
+  par(mfrow = c(3, 1))
+  try({ymax = max(tmp[, list(valueProd, imputedProd)], na.rm = TRUE)  
+  with(tmp, plot(Year, valueProd, ylim = c(0, ymax), type = "b",
+                 col = "black"))
+  with(tmp, points(Year, imputedProd, col = "red", pch = 19))})
+
+  try({ymax = max(tmp[, list(valueArea, imputedArea)], na.rm = TRUE)  
+  with(tmp, plot(Year, valueArea, ylim = c(0, ymax), type = "b",
+                 col = "black"))
+  with(tmp, points(Year, imputedArea, col = "red", pch = 19))})
+
+
+  try({ymax = max(tmp[, list(valueYield, imputedYield)], na.rm = TRUE)  
+  with(tmp, plot(Year, valueYield, ylim = c(0, ymax), type = "b",
+                 col = "black"))
+  with(tmp, points(Year, imputedYield, col = "red", pch = 19))})
+  
 }
 graphics.off()
-system("evince yieldTS.pdf&")
+system("evince checkImputation.pdf&")
 
+
+## Function to carry out linear interpolation
+na.approx2 = function(x, na.rm = FALSE){
+  if(length(na.omit(x)) < 2){
+    tmp = x
+  } else {
+    tmp = na.approx(x, na.rm = na.rm)
+  }
+  c(tmp)
+}
+
+final.dt[, valueArea := na.approx2(valueArea), by = c("FAOST_CODE", "itemCode")]
+checkSparsity(final.dt)
+
+## Assuming linear interpolation has been carried out
+auto.arima.forecast = function(ts){
+  if(length(na.omit(ts)) >= 5){
+    notNA = which(!is.na(ts))
+    ## print(ts)
+    firstObs = notNA[1]
+    lastObs = notNA[length(notNA)]
+    n = length(ts)
+    tmp.fit = try(auto.arima(ts[firstObs:lastObs]))
+    if(!inherits(tmp.fit, "try-error")){
+      if(lastObs != n){
+        imp = forecast(tmp.fit, h = n - lastObs)
+        final = c(rep(NA, firstObs - 1), ts[firstObs:lastObs], imp$mean)
+      } else {
+        final = c(rep(NA, firstObs - 1), ts[firstObs:lastObs])
+      }
+    } else {
+      final = ts
+    }
+  }else {
+    final = ts
+  }
+  c(final)
+}
+
+final.dt[, valueArea := auto.arima.forecast(valueArea),
+         by = c("FAOST_CODE", "itemCode")]
+
+final.dt[!is.na(valueArea) & !is.na(valueProd) & is.na(valueYield),
+         valueYield := valueProd/valueArea]
+
+
+final.dt[!is.na(valueArea) & is.na(valueProd) & !is.na(valueYield),
+         valueProd := valueArea * valueYield]
+checkSparsity(final.dt)
+
+
+final.dt[, valueYield := auto.arima.forecast(valueYield),
+         by = c("FAOST_CODE", "itemCode")]
+checkSparsity(final.dt)
 
 final.dt[, mvalueYield := median(valueYield, na.rm = TRUE),
          by = c("FAOST_CODE", "itemCode")]
@@ -262,16 +397,6 @@ omitMissYield.dt[is.na(valueProd) & !is.na(valueArea),
 table(omitMissYield.dt[is.na(valueProd), symbArea])
 table(omitMissYield.dt[is.na(valueProd), symbProd])
 
-
-## Function to carry out linear interpolation
-na.approx2 = function(x, na.rm = FALSE){
-  if(length(na.omit(x)) < 2){
-    tmp = x
-  } else {
-    tmp = na.approx(x, na.rm = na.rm)
-  }
-  c(tmp)
-}
 
 ## Use linear interpolation for area
 omitMissYield.dt[, valueArea := na.approx2(valueArea, na.rm = FALSE),
@@ -308,6 +433,130 @@ graphics.off()
 system("evince checkAllImputedSeries.pdf&")
 
 
+
+
+
+
+## Examine codes
+## ---------------------------------------------------------------------
+
+pdf(file = "yieldTS.pdf", width = 12)
+for(i in unique(final.dt$itemCode)){
+  tmp = subset(final.dt, itemCode == i &
+    symbArea %in% c("", "*") & symbProd %in% c("", "*"))
+  ## tmp[, upper := predict(rq(valueYield ~ Year, tau = 0.95), data.frame(Year))]
+  ## tmp[, med := predict(rq(valueYield ~ Year, tau = 0.5), data.frame(Year))]
+  ## tmp[, lower := predict(rq(valueYield ~ Year, tau = 0.05), data.frame(Year))]
+  try(print(ggplot(data = tmp, aes(x = Year, y = valueYield)) +
+            geom_line(aes(col = factor(FAOST_CODE))) +
+            scale_color_manual(values = c(rep(rgb(0, 0, 0, alpha = 0.5),
+                               length(unique(tmp$FAOST_CODE))), "blue", "red")) +
+            theme(legend.position = "none") +
+            ## geom_line(aes(x = Year, y = upper, col = "red",
+            ##               linetype = "dashed", lwd = 1)) +
+            ## geom_line(aes(x = Year, y = med, col = "blue",
+            ##               linetype = "dashed", lwd = 1)) +
+            ## geom_line(aes(x = Year, y = lower, col = "red",
+            ##               linetype = "dashed", lwd = 1)) +
+            labs(y = paste0("Yield series for ",
+                   FAOmetaTable$itemTable[FAOmetaTable$itemTable$itemCode == i,
+                                          "itemName"], "(", i, ")"),
+                 x = NULL)
+            ))
+}
+graphics.off()
+system("evince yieldTS.pdf&")
+
+
+
+
+pdf(file = "areaTS.pdf", width = 12)
+for(i in unique(final.dt$itemCode)){
+  tmp = subset(final.dt, itemCode == i &
+    symbArea %in% c("", "*") & symbProd %in% c("", "*"))
+  ## tmp[, upper := predict(rq(valueArea ~ Year, tau = 0.95), data.frame(Year))]
+  ## tmp[, med := predict(rq(valueArea ~ Year, tau = 0.5), data.frame(Year))]
+  ## tmp[, lower := predict(rq(valueArea ~ Year, tau = 0.05), data.frame(Year))]
+  try(print(ggplot(data = tmp, aes(x = Year, y = valueArea)) +
+            geom_line(aes(col = factor(FAOST_CODE))) +
+            scale_color_manual(values = c(rep(rgb(0, 0, 0, alpha = 0.5),
+                               length(unique(tmp$FAOST_CODE))), "blue", "red")) +
+            theme(legend.position = "none") +
+            ## geom_line(aes(x = Year, y = upper, col = "red",
+            ##               linetype = "dashed", lwd = 1)) +
+            ## geom_line(aes(x = Year, y = med, col = "blue",
+            ##               linetype = "dashed", lwd = 1)) +
+            ## geom_line(aes(x = Year, y = lower, col = "red",
+            ##               linetype = "dashed", lwd = 1)) +
+            labs(y = paste0("Area series for ",
+                   FAOmetaTable$itemTable[FAOmetaTable$itemTable$itemCode == i,
+                                          "itemName"], "(", i, ")"),
+                 x = NULL)
+            ))
+}
+graphics.off()
+system("evince areaTS.pdf&")
+
+
+
+
+## Investigate shocks in production
+pdf(file = "examineShocks.pdf", width = 12)
+for(i in unique(final.dt$itemCode)){
+  tmp.dt = subset(final.dt, itemCode == i &
+    symbArea %in% c("", "*") & symbProd %in% c("", "*"),
+    select = c("FAOST_CODE", "itemCode", "Year", "valueArea", "valueProd",
+      "valueYield"))
+  mtmp.df = melt(tmp.dt, id.var = c("FAOST_CODE", "itemCode", "Year"))
+  mtmp.df$variable = factor(gsub("value", "", mtmp.df$variable),
+    levels = c("Prod", "Area", "Yield"))
+    try(print(ggplot(data = mtmp.df, aes(x = Year, y = log(value))) +
+    geom_line(aes(col = factor(FAOST_CODE))) +
+      facet_wrap(~variable, ncol = 1) +
+        scale_color_manual(values = rep(rgb(0, 0, 0, alpha = 0.3),
+                             length(unique(mtmp.df$FAOST_CODE)))) +
+                               theme(legend.position = "none") +
+  labs(y = paste("Log of ",
+         unique(FAOmetaTable$itemTable[FAOmetaTable$itemTable$itemCode ==
+              i, "itemName"]), " (", i, ")", sep = ""))
+            ))
+}
+graphics.off()
+system("evince examineShocks.pdf&")
+
+final.dt[, varArea := var(valueArea, na.rm = TRUE),
+         by = c("FAOST_CODE", "itemCode")]
+
+final.dt[, varYield := var(valueYield, na.rm = TRUE),
+         by = c("FAOST_CODE", "itemCode")]
+
+cor2 = function(x, y){
+  tmp = try(cor(x, y, use = "complete.obs"))
+  if(inherits(tmp, "try-error"))
+    tmp = as.numeric(NA)
+  tmp
+}
+
+final.dt[, areaYieldCor := cor2(valueYield, valueArea),
+         by = c("FAOST_CODE", "itemCode")]
+hist(final.dt$areaYieldCor, breaks = 100)
+
+with(final.dt, plot(log(varArea), log(varYield)))
+with(final.dt, plot(log(valueArea), log(valueYield)), )
+
+
+
+pdf(file = "yieldAreaRelationship.pdf")
+for(i in unique(final.dt$itemCode)){
+  tmp.dt = subset(final.dt, itemCode == i &
+    symbArea %in% c("", "*") & symbProd %in% c("", "*"))
+    print(ggplot(data = tmp.dt,
+                 aes(x = log(valueArea), y = log(valueYield))) +
+          geom_point(alpha = 0.1))
+}    
+graphics.off()
+system("evince yieldAreaRelationship.pdf&")
+
 pdf(file = "checkAllLogImputedSeries.pdf", width = 10)
 for(i in 1:NROW(keys)){
   tmp = subset(omitMissYield.dt, FAOST_CODE == keys[i, FAOST_CODE] &
@@ -330,3 +579,70 @@ system("evince checkAllLogImputedSeries.pdf&")
 
 omitMissYield.dt$checkYield = with(omitMissYield.dt, valueProd/valueArea)
 with(omitMissYield.dt, plot(valueYield, checkYield))
+
+
+
+
+
+## Examine forecast under different methods
+
+
+
+
+
+
+## Test of the linear mixed model
+wy.dt = final.dt[itemCode == 116, list(FAOST_CODE, itemCode, Year, valueYield)]
+mwy.dt = merge(wy.dt, FAOregionProfile[, c("FAOST_CODE", "UNSD_SUB_REG_CODE")],
+  all.x = TRUE, by = "FAOST_CODE")
+
+mwy.dt[, gvalueYield := mean(valueYield, na.rm = TRUE),
+       by = c("UNSD_SUB_REG_CODE", "Year")]
+mwy.dt[, UNSD_SUB_REG_CODE := factor(UNSD_SUB_REG_CODE)]
+
+lme.fit = lme(valueYield ~ Year + gvalueYield, random =~ 1|FAOST_CODE,
+  data = mwy.dt, na.action = na.omit)
+
+mwy.dt[is.na(valueYield) & !is.na(gvalueYield), valueYield2 :=
+       predict(lme.fit, mwy.dt[is.na(valueYield)  & !is.na(gvalueYield), ])]
+
+mwy.dt[!is.na(valueYield) & !is.na(gvalueYield), valueYield2 :=
+       fitted(lme.fit)]
+
+pdf(file = "yieldImputeCheck.pdf", width = 12)
+for(i in unique(final.dt$itemCode)){
+  tmp.dt = final.dt[itemCode == i, ]
+  tmp.dt[, nValue := sum(!is.na(valueYield))/length(valueYield),
+         by = c("UNSD_MACRO_REG")]
+  tmp.dt[, subregionalYield := mean(valueYield, na.rm = TRUE),
+         by = c("Year", "UNSD_MACRO_REG")]
+  tmp.dt[nValue <= 0.5, subregionalYield := as.numeric(NA)]
+  tmp.dt[is.na(subregionalYield),
+         subregionalYield := mean(ovalueProd/ovalueArea, na.rm = TRUE),
+         by = "Year"]
+  try({tmp.fit = lme(valueYield ~ Year + subregionalYield, random =~1|FAOST_CODE,
+    na.action = na.omit, data = tmp.dt)
+  tmp.dt[is.na(valueYield),
+         imputedYield := predict(tmp.fit, tmp.dt[is.na(valueYield), ])]
+
+  mtmp.df = melt(tmp.dt[, list(FAOST_CODE, UNSD_MACRO_REG, itemCode, Year,
+    valueYield, subregionalYield, imputedYield)],
+    id.var = c("FAOST_CODE", "UNSD_MACRO_REG", "itemCode", "Year"))
+
+  itemName = unique(FAOmetaTable$itemTable[FAOmetaTable$itemTable$itemCode == i,
+                 "itemName"])
+  print(ggplot(data = mtmp.df, aes(x = Year, y = value)) +
+            geom_line(data = mtmp.df[mtmp.df$variable == "valueYield", ],
+                      aes(col = factor(FAOST_CODE))) +
+            geom_point(data = mtmp.df[mtmp.df$variable == "imputedYield", ],
+                       aes(col = factor(FAOST_CODE))) +                
+            geom_line(data = mtmp.df[mtmp.df$variable == "subregionalYield", ],
+                      lwd = 1.5) +
+            theme(legend.position = "none") +
+            facet_wrap(~UNSD_MACRO_REG, ncol = 3) +
+            labs(x = NULL,
+                 y = paste0(itemName, " (", i, ")"))
+            )})
+}
+graphics.off()
+system("evince yieldImputeCheck.pdf&")
