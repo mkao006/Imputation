@@ -3,11 +3,8 @@
 ## Date: 2013-04-16
 ########################################################################
 
-useInterpolation = FALSE
 check = FALSE
 ## Validation can be none, old, or new
-validateChange = "new"
-validateAbs = "none"
 useNAAreaGrp = FALSE
 skipMissingGrp = TRUE
 
@@ -69,16 +66,6 @@ comGrp.dt = data.table(comGrp.df)
 rm(comGrp.df)
 setnames(comGrp.dt, old = colnames(comGrp.dt),
          new = c("itemCode", "comGroup", "includeGroup"))
-
-## Extract the production commodity group from the FAOSTAT 2 website.
-## doc = htmlParse("http://faostat.fao.org/site/384/default.aspx")
-## test = getNodeSet(doc, path = "//table")
-## prodTable.df = readHTMLTable(test[[10]],
-##   header = c("Group Name", "Item FAO Code", "Item HS+ Code", "Item Name",
-##     "Definition"), stringsAsFactors = FALSE, skip.rows = 1)
-## tmp = prodTable.df[, c("Group Name", "Item FAO Code", "Item Name")]
-
-
 
 ## Read and process the test data
 ## ---------------------------------------------------------------------
@@ -172,13 +159,22 @@ process.df[which(duplicated(process.df[, c("FAOST_CODE", "itemCode", "symbProd",
          "valueProd"] = NA
 
 
+
+## Fix conflicting error, it is impossible for harvested area to be
+## zero when production is non-zero and vice versa. The solution is to
+## replace the zero for these entries with NA and try to impute them.
+process.df[which(process.df$valueArea == 0 & process.df$valueProd != 0),
+           "valueArea"] = NA
+process.df[which(process.df$valueArea != 0 & process.df$valueProd == 0),
+           "valueProd"] = NA
+
 ## A function to compute yield to account for zeros in area and
 ## production. To account fo identification problem, we compute yield
 ## as NA if one of area or production is zero or NA.
 computeYield = function(production, area){
   if(length(production) != length(area))
     stop("Length of prodduction is not the same as area")
-  yield = ifelse(production != 0 & area != 0, production/area, NA)
+  ifelse(production != 0 & area != 0, production/area, NA)
 }
 
 process.df$valueYield = with(process.df, computeYield(valueProd, valueArea))
@@ -191,12 +187,6 @@ tmp = process.dt[, sum(valueArea, valueProd, na.rm = TRUE),
 tmp[, allMiss := V1 == 0 | is.na(V1)]
 tmp$V1 = NULL
 rmNA.dt = merge(process.dt, tmp, by = c("FAOST_CODE", "itemCode"))
-
-## Fix conflicting error, it is impossible for harvested area to be
-## zero when production is non-zero and vice versa. The solution is to
-## replace the zero for these entries with NA and try to impute them.
-rmNA.dt[valueArea == 0 & valueProd != 0, valueArea := as.numeric(NA)]
-rmNA.dt[valueArea != 0 & valueProd == 0, valueProd := as.numeric(NA)]
 
 
 ## These item are removed if we specify FALSE for useNAAreaGrp, this
@@ -221,57 +211,67 @@ setkeyv(process.dt, c("FAOST_CODE", "itemCode", "Year"))
 if(check)
   checkSparsity(process.dt)
 
-
+## Create the final data frame for imputation
 final.dt = process.dt[, list(FAOST_CODE, UNSD_MACRO_REG,
   UNSD_SUB_REG, itemCode, Year, symbArea, symbProd, ovalueArea,
   ovalueProd, valueArea, valueProd, valueYield)]
-checkSparsity(final.dt)
-
-## ## Compute coefficient of variation
-## final.dt[, cvArea := sd(valueArea, na.rm = TRUE)/mean(valueArea, na.rm = TRUE),
-##          by = c("FAOST_CODE", "itemCode")]
-
-## final.dt[, cvYield := sd(valueYield, na.rm = TRUE)/mean(valueYield, na.rm = TRUE),
-##          by = c("FAOST_CODE", "itemCode")]
-
-## with(final.dt, plot(cvArea, cvYield, xlim = c(0, 3.5), ylim = c(0, 3.5)))
 
 
-## Compute average subregional yield
-final.dt[, gvalueYield := mean(valueYield, na.rm = TRUE),
-         by = c("Year", "UNSD_SUB_REG")]
-## Grouped yield is missing for Micronesia, we will do a hack here
-final.dt[is.na(gvalueYield),
-         gvalueYield := mean(ovalueProd/ovalueArea, na.rm = TRUE), by = "Year"]
-
-
-lme.fit = lme(valueYield ~ Year + gvalueYield, random =~ 1|FAOST_CODE,
-  data = final.dt, na.action = na.omit)
-
-
-
-final.dt[, imputedYield := valueYield]
-for(i in unique(final.dt$itemCode)){
-  tmp.fit = lme(valueYield ~ Year + gvalueYield, random =~1|FAOST_CODE,
-    data = final.dt[itemCode == i, ], na.action = na.omit)
-  final.dt[is.na(imputedYield) & itemCode == i,
-           imputedYield := predict(tmp.fit,
-             final.dt[is.na(imputedYield) & itemCode == i, ]), ]
+## Function to compute changes from year to year
+diffv = function(x){
+    T = length(x)
+    if(sum(!is.na(x)) >= 2){
+      tmp = c(x[2:T]/x[1:(T - 1)])
+    } else {
+      tmp = rep(NA, length(x) - 1)
+    }
+    tmp - 1
 }
 
-final.dt[is.na(valueArea) & !is.na(valueProd),
-         valueArea := valueProd/imputedYield]
+## Function to impute with LME
+lmeImpute = function(Data, value, country, group, year, commodity){
+  setnames(Data, old = c(value, country, group, year, commodity),
+           new = c("value", "country", "group", "year", "commodity"))
+  for(i in unique(Data$commodity)){
+    Data[commodity == i, valueCh := diffv(value), by = "country"]
+    Data[commodity == i, groupValueCh := mean(valueCh, na.rm = TRUE),
+         by = c("year", "group")]
+    Data[commodity == i & is.na(groupValueCh), groupValueCh := 0]
+    print(i)
+    fit = try(lme(value ~ year + groupValueCh, random= ~1|country,
+      na.action = na.omit, data = Data[commodity == i, ]))
+    if(!inherits(fit, "try-error")){
+      Data[commodity == i & is.na(value),
+           imputedValue := predict(fit, Data[commodity == i & is.na(value), ])]
+      Data[commodity == i, valueCh := NULL]
+      Data[commodity == i, groupValueCh := NULL]
+    }
+  }
+  setnames(Data, old = c("value", "country", "group", "year", "commodity"),
+           new = c(value, country, group, year, commodity))
+}
 
-final.dt[!is.na(valueArea) & is.na(valueProd),
-         valueProd := valueArea/imputedYield]
+lmeImpute(final.dt, "valueYield", "FAOST_CODE", "UNSD_SUB_REG", "Year",
+            "itemCode")
+setnames(final.dt, old = "imputedValue", new = "imputedYield")
 
-checkSparsity(final.dt)
+## Create the impute column
+final.dt[!is.na(valueYield), imputedYield := valueYield]
+final.dt[, imputedArea := valueArea]
+final.dt[, imputedProd := valueProd]
+
+## Impute area and production if the other one exist
+final.dt[is.na(imputedArea) & !is.na(imputedProd),
+         imputedArea := imputedProd/imputedYield]
+final.dt[!is.na(imputedArea) & is.na(imputedProd),
+         imputedProd := imputedArea * imputedYield]
+
+if(check)
+  checkSparsity(final.dt)
 
 
 ## Looks like there is a lot of mismatch between area and production,
 ## let us impute area now.
-
-## Impute the area with linear interpolation
 
 ## Function to carry out linear interpolation
 na.approx2 = function(x, na.rm = FALSE){
@@ -283,47 +283,74 @@ na.approx2 = function(x, na.rm = FALSE){
   c(tmp)
 }
 
-final.dt[, imputedArea := na.locf(na.approx2(valueArea), na.rm = FALSE),
+## Impute area with linear interpolation and last observation carry
+## forward.
+final.dt[, imputedArea := na.locf(na.locf(na.approx2(imputedArea), na.rm = FALSE),
+             fromLast = TRUE, na.rm = FALSE),
          by = c("FAOST_CODE", "itemCode")]
+
+
+## LME can not be used cause of excessive zeroes
+## lmeImpute(final.dt, "imputedArea", "FAOST_CODE", "UNSD_SUB_REG", "Year",
+##           "itemCode")
+
+## Impute the remaining production
+final.dt[is.na(imputedProd), imputedProd := imputedArea * imputedYield]
+
 checkSparsity(final.dt)
 
-final.dt[, imputedProd := imputedArea * imputedYield]
+## Percentage of missing value imputed
+NROW(final.dt[is.na(valueProd) & !is.na(imputedProd), ])/
+  NROW(final.dt[is.na(valueProd), ])
 
-checkSparsity(final.dt)
-
-final.dt[!is.na(valueArea), imputedArea := as.numeric(NA)]
-final.dt[!is.na(valueYield), imputedYield := as.numeric(NA)]
-final.dt[!is.na(valueProd), imputedProd := as.numeric(NA)]
+NROW(final.dt[is.na(valueArea) & !is.na(imputedArea), ])/
+  NROW(final.dt[is.na(valueArea), ])
 
 
 keys = unique(final.dt[is.na(valueProd) | is.na(valueArea),
   list(FAOST_CODE, itemCode)])
 
 pdf(file = "checkImputation.pdf")
-for(i in 1:100){
+for(i in 1:NROW(keys)){
   tmp = final.dt[FAOST_CODE == keys[i, FAOST_CODE] &
     itemCode == keys[i, itemCode]]
 
+  myCountry = FAOcountryProfile[which(FAOcountryProfile$FAOST_CODE ==
+    keys[i, FAOST_CODE]), "LAB_NAME"]
+  myItem = unique(FAOmetaTable$itemTable[FAOmetaTable$itemTable$itemCode ==
+    keys[i, itemCode], "itemName"])
   par(mfrow = c(3, 1))
-  try({ymax = max(tmp[, list(valueProd, imputedProd)], na.rm = TRUE)  
-  with(tmp, plot(Year, valueProd, ylim = c(0, ymax), type = "b",
-                 col = "black"))
-  with(tmp, points(Year, imputedProd, col = "red", pch = 19))})
-
-  try({ymax = max(tmp[, list(valueArea, imputedArea)], na.rm = TRUE)  
-  with(tmp, plot(Year, valueArea, ylim = c(0, ymax), type = "b",
-                 col = "black"))
-  with(tmp, points(Year, imputedArea, col = "red", pch = 19))})
-
-
-  try({ymax = max(tmp[, list(valueYield, imputedYield)], na.rm = TRUE)  
-  with(tmp, plot(Year, valueYield, ylim = c(0, ymax), type = "b",
-                 col = "black"))
-  with(tmp, points(Year, imputedYield, col = "red", pch = 19))})
+  try({
+    ymax = max(tmp[, list(valueProd, imputedProd)], na.rm = TRUE)  
+    with(tmp, plot(Year, valueProd, ylim = c(0, ymax), type = "b",
+                   col = "black",
+                   main = paste0(myCountry, " (", keys[i, FAOST_CODE], ") - ",
+                     myItem, " (", keys[i, itemCode], ")")))
+    with(tmp, points(Year, imputedProd, col = "red", pch = 19))
+  })
+  
+  try({
+    ymax = max(tmp[, list(valueArea, imputedArea)], na.rm = TRUE)  
+    with(tmp, plot(Year, valueArea, ylim = c(0, ymax), type = "b",
+                   col = "black"))
+    with(tmp, points(Year, imputedArea, col = "red", pch = 19))
+  })
+  
+  
+  try({
+    ymax = max(tmp[, list(valueYield, imputedYield)], na.rm = TRUE)  
+    with(tmp, plot(Year, valueYield, ylim = c(0, ymax), type = "b",
+                   col = "black"))
+    with(tmp, points(Year, imputedYield, col = "red", pch = 19))
+  })
   
 }
 graphics.off()
 system("evince checkImputation.pdf&")
+
+
+## Old codes
+## ---------------------------------------------------------------------
 
 
 ## Function to carry out linear interpolation
@@ -498,6 +525,25 @@ graphics.off()
 system("evince areaTS.pdf&")
 
 
+pdf(file = "areaLogTS.pdf", width = 12)
+for(i in unique(final.dt$itemCode)){
+  tmp = subset(final.dt, itemCode == i &
+    symbArea %in% c("", "*") & symbProd %in% c("", "*"))
+  try(print(ggplot(data = tmp, aes(x = Year, y = log(valueArea))) +
+            geom_line(aes(col = factor(FAOST_CODE))) +
+            scale_color_manual(values = c(rep(rgb(0, 0, 0, alpha = 0.5),
+                               length(unique(tmp$FAOST_CODE))), "blue", "red")) +
+            theme(legend.position = "none") +
+            labs(y = paste0("Area series for ",
+                   FAOmetaTable$itemTable[FAOmetaTable$itemTable$itemCode == i,
+                                          "itemName"], "(", i, ")"),
+                 x = NULL)
+            ))
+}
+graphics.off()
+system("evince areaLogTS.pdf&")
+
+
 
 
 ## Investigate shocks in production
@@ -609,40 +655,58 @@ mwy.dt[is.na(valueYield) & !is.na(gvalueYield), valueYield2 :=
 mwy.dt[!is.na(valueYield) & !is.na(gvalueYield), valueYield2 :=
        fitted(lme.fit)]
 
+
 pdf(file = "yieldImputeCheck.pdf", width = 12)
 for(i in unique(final.dt$itemCode)){
   tmp.dt = final.dt[itemCode == i, ]
-  tmp.dt[, nValue := sum(!is.na(valueYield))/length(valueYield),
-         by = c("UNSD_MACRO_REG")]
-  tmp.dt[, subregionalYield := mean(valueYield, na.rm = TRUE),
-         by = c("Year", "UNSD_MACRO_REG")]
-  tmp.dt[nValue <= 0.5, subregionalYield := as.numeric(NA)]
-  tmp.dt[is.na(subregionalYield),
-         subregionalYield := mean(ovalueProd/ovalueArea, na.rm = TRUE),
-         by = "Year"]
-  try({tmp.fit = lme(valueYield ~ Year + subregionalYield, random =~1|FAOST_CODE,
-    na.action = na.omit, data = tmp.dt)
-  tmp.dt[is.na(valueYield),
-         imputedYield := predict(tmp.fit, tmp.dt[is.na(valueYield), ])]
+  ## tmp.dt[, nValue := sum(!is.na(valueYield))/length(valueYield),
+  ##        by = c("UNSD_MACRO_REG")]
+  ## tmp.dt[, subregionalYield := mean(valueYield, na.rm = TRUE),
+  ##        by = c("Year", "UNSD_MACRO_REG")]
+  ## tmp.dt[nValue <= 0.5, subregionalYield := as.numeric(NA)]
+  ## tmp.dt[is.na(subregionalYield),
+  ##        subregionalYield := mean(ovalueProd/ovalueArea, na.rm = TRUE),
+  ##        by = "Year"]
 
-  mtmp.df = melt(tmp.dt[, list(FAOST_CODE, UNSD_MACRO_REG, itemCode, Year,
-    valueYield, subregionalYield, imputedYield)],
-    id.var = c("FAOST_CODE", "UNSD_MACRO_REG", "itemCode", "Year"))
-
-  itemName = unique(FAOmetaTable$itemTable[FAOmetaTable$itemTable$itemCode == i,
-                 "itemName"])
-  print(ggplot(data = mtmp.df, aes(x = Year, y = value)) +
-            geom_line(data = mtmp.df[mtmp.df$variable == "valueYield", ],
-                      aes(col = factor(FAOST_CODE))) +
-            geom_point(data = mtmp.df[mtmp.df$variable == "imputedYield", ],
-                       aes(col = factor(FAOST_CODE))) +                
-            geom_line(data = mtmp.df[mtmp.df$variable == "subregionalYield", ],
-                      lwd = 1.5) +
-            theme(legend.position = "none") +
-            facet_wrap(~UNSD_MACRO_REG, ncol = 3) +
-            labs(x = NULL,
-                 y = paste0(itemName, " (", i, ")"))
-            )})
+  tmp.dt[, valueYieldCh := diffv(valueYield),
+         by = "FAOST_CODE"]
+  tmp.dt[, subregionalValueYieldCh := mean(valueYieldCh, na.rm = TRUE),
+         by = c("UNSD_SUB_REG", "Year")]
+  ## TODO (Michael): Need to check whether this is appropriate.
+  tmp.dt[is.na(subregionalValueYieldCh), subregionalValueYieldCh := 0]
+  
+  try({
+    ## tmp.fit = lme(valueYield ~ Year + subregionalYield, random =~1|FAOST_CODE,
+    ##   na.action = na.omit, data = tmp.dt)
+    tmp.fit = lme(valueYield ~ Year + subregionalValueYieldCh,
+      random =~1|FAOST_CODE, na.action = na.omit, data = tmp.dt)
+    ## tmp.fit = lme(valueYield ~ Year + subregionalValueYieldCh,
+    ##   random =~1|FAOST_CODE, correlation = corCAR1(form = ~Year|FAOST_CODE),
+    ##   na.action = na.omit, data = tmp.dt)
+    
+    tmp.dt[is.na(valueYield),
+           imputedYield := predict(tmp.fit, tmp.dt[is.na(valueYield), ])]
+    
+    mtmp.df = melt(tmp.dt[, list(FAOST_CODE, UNSD_SUB_REG, itemCode, Year,
+      valueYield, subregionalValueYieldCh, imputedYield)],
+      id.var = c("FAOST_CODE", "UNSD_SUB_REG", "itemCode", "Year"))
+    
+    itemName = unique(FAOmetaTable$itemTable[FAOmetaTable$itemTable$itemCode == i,
+      "itemName"])
+    print(ggplot(data = mtmp.df, aes(x = Year, y = value)) +
+          geom_line(data = mtmp.df[mtmp.df$variable == "valueYield", ],
+                    aes(col = factor(FAOST_CODE))) +
+          geom_point(data = mtmp.df[mtmp.df$variable == "imputedYield", ],
+                     aes(col = factor(FAOST_CODE))) +                
+          ## geom_line(data = mtmp.df[mtmp.df$variable == "subregionalYield", ],
+          ##           lwd = 1.5) +
+          theme(legend.position = "none") +
+          facet_wrap(~UNSD_SUB_REG, ncol = 3) +
+          labs(x = NULL,
+               y = paste0(itemName, " (", i, ")"))
+          )})
 }
 graphics.off()
 system("evince yieldImputeCheck.pdf&")
+
+
