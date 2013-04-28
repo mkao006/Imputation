@@ -1,4 +1,4 @@
-\documentclass{article}
+\documentclass[nojss]{jss}
 \usepackage{url}
 \usepackage[sc]{mathpazo}
 \usepackage{geometry}
@@ -8,12 +8,12 @@
 \usepackage{breakurl}
 \usepackage{hyperref}
 \usepackage{algorithm2e}
-\usepackage{algorithmicx}
+%% \usepackage{algorithmicx}
 \usepackage{mathtools}
 \usepackage{draftwatermark}
 
 
-\begin{document}
+
 
 <<setup, include=FALSE, cache=FALSE>>=
 opts_chunk$set(fig.path='figure/', fig.align='center', fig.show='hold',
@@ -26,22 +26,63 @@ options(replace.assign=TRUE,width=80)
 library(ggplot2)
 library(gridExtra)
 @ 
-\title{\bf Review and Proposal of Imputation and Validation
-  Methodology for the FAOSTAT Production Domain}
+
+
+\title{\bf Working Paper on Imputation and Validation Methodology for
+  the FAOSTAT Production Domain}
 
 \author{Michael C. J. Kao\\ Food and Agriculture Organization \\ of
   the United Nations}
 
-\date{}
+%% for pretty printing and a nice hypersummary also set:
+\Plainauthor{Michael. C. J. Kao} 
+\Plaintitle{Working Paper on Imputation and Validation Methodology for
+  the FAOSTAT Production Domain}
+\Shorttitle{Imputation and Validation Methodology}
 
-\maketitle
-\tableofcontents
+\Abstract{ 
 
+  This paper proposes a new imputation method for the FAOSTAT
+  production domain, addressing existing problems and allow extension
+  to incorporate more infromation.
+  
+  We first examine the driving factors of the production of various
+  commodity and a brief acount of the current methodology and problems
+  faced.
+  
+  The details of the methodology is then introduced and the
+  decomposition is described with validation and simulation result
+  following.
+
+}
+
+\Keywords{Imputation, Mixed model, Production}
+\Plainkeywords{Imputation, Mixed model, Production}
+
+\Address{
+  Michael. C. J. Kao\\
+  Economics and Social Statistics Division\\
+  Economic and Social Development Department\\
+  United Nations Food and Agriculture Organization\\
+  Viale delle Terme di Caracalla 00153 Rome, Italy\\
+  E-mail: \email{michael.kao@fao.org}
+  % URL: \url{http://eeecon.uibk.ac.at/~zeileis/}
+}
+
+%% \maketitle
+%% \tableofcontents
+
+
+\begin{document}
 \section{Introduction}
 Missing values are common in the production domain, they may come from
 non-responding surveys or lack of reliable measurements. Yet they are
 an important and integrated part of the Food Balance Sheet, thus
-imputation is essential and necessary.
+accurate and reliable imputation is essential and necessary for
+continue work. This paper addresses several observed shortcoming of
+the current methodology and the new methodology is proposed in order
+to resolve these issue and allow a flexible framework to incorporate
+new information when made available.
 
 The relationship between the variables in the production domain can be
 expressed as:
@@ -52,11 +93,17 @@ expressed as:
 \end{equation}
 
 
-Where $t$ denotes the time index and $P$, $A$ and $Y$ denotes
+Where $t$ denotes the time index and $P$, $A$ and $Y$ represents
 production, area harvested and yield respectively. The Yield is
 however unobserved and can only be calculated when both production and
-area are available. Furthermore, certain commodity may not have
-harvested area or the area may not represent harvested area.
+area are available. For certain commodity harvested area may not exist
+or sometimes they may represent under a different context.
+
+The aim of the imputation is to incorporate all available and reliable
+information in order to propive estimates which is used in the Food
+Balance Sheet to understand the global supply and utilization of food
+and agricultural products.
+
 
 \section{Background and Review of the Current Methodology}
 
@@ -67,7 +114,13 @@ implement methods such as linear interpolation and trend regression;
 while the second class of methodology aims to capture the variation of
 relevant commodity and/or geographic characteristics through the
 application of aggregated growth rate. The imputation is carried out
-on both area and production then the yield is calculated implicitely.
+on both area and production then the yield is calculated
+implicitely. However, both proposed method only utilises one dimension
+of the information and improvements can be obtained if the information
+usage can be married. Furthermore, most of the method lacks the
+ability to incorporate external information such as vegetaion index or
+temperature which may provide valuable information and enhance the
+accuracy of the imputation.
 
 
 The results of the paper indicates that linear interpolation is a
@@ -75,12 +128,12 @@ stable and accurate method but lack the capability to utilize cross
 sectional informations. Furthermore, it does not provide a solution
 for extrapolation where connection points are not available. As a
 result, the aggregation method was implemented as it provide a high
-coverage rate for the imputation.
+coverage rate for the imputation with satisfactory performance.
 
-This imputation in short computes the commodity/regional aggregated
-growth of both area and production, the growth rate is then applied to
-the last observed value. The formulae of the aggregated growth can be
-expressed as:
+The aggregation method of imputation in short computes the
+commodity/regional aggregated growth of both area and production, the
+growth rate is then applied to the last observed value. The formulae
+of the aggregated growth can be expressed as:
 
 \begin{equation}
   \label{eq:aggregateGrowth}
@@ -106,8 +159,8 @@ The imputation can then be computed as:
 
 There are however, several shortcoming of this methodology. The
 achillies heel lies in the fact that the area and production are
-imputed independently, this has caused the area and production to
-diverge and result in inconsistency in the trend and exploding
+imputed independently, cases of divergin area and production has been
+observed and result in inconsistency between trends and exploding
 yield. The source of this undesirable characteristic is nested in the
 computation of the aggregated growth rate. Due to missing values, the
 basket computed may not be comparable over time and result in spurious
@@ -133,15 +186,41 @@ tmp.dt = official.dt[, list(FAOST_CODE, UNSD_MACRO_REG, UNSD_SUB_REG, itemCode,
 plot.df = melt(tmp.dt, id.var = c("FAOST_CODE", "UNSD_MACRO_REG", "UNSD_SUB_REG",
                          "itemCode", "Year"))
 plot.df$variable = gsub("value", "", plot.df$variable)
+
+## official.dt[, dvalueArea := diffv(valueArea), by = c("FAOST_CODE", "itemCode")]
+## official.dt[, dvalueYield := diffv(valueYield), by = c("FAOST_CODE", "itemCode")]
+
+## official.dt[, varArea := var(dvalueArea, na.rm = TRUE), by = "itemCode"]
+## official.dt[, varYield := var(dvalueYield, na.rm = TRUE), by = "itemCode"]
+
+## par(mfrow = c(2, 1))
+## hist(official.dt$varArea[official.dt$varArea <= 3], 
+##      breaks = 300)
+## hist(official.dt$varYield[official.dt$varYield <= 3], 
+##      breaks = 300)
+
+## official.dt[, cvArea := sd(dvalueArea, na.rm = TRUE)/
+##             mean(dvalueArea, na.rm = TRUE), by = "itemCode"]
+## official.dt[, cvYield := sd(dvalueYield, na.rm = TRUE)/
+##             mean(dvalueYield, na.rm = TRUE), by = "itemCode"]
+
+
+## par(mfrow = c(2, 1))
+## hist(official.dt$cvArea[abs(official.dt$cvArea) <= 50], 
+##      breaks = 300)
+## hist(official.dt$cvYield[abs(official.dt$cvYield) <= 30], 
+##      breaks = 300)
+
+
 @ 
 
 Before any modelling or statistical analysis, a grasp of the data is
 essential. This section is devoted to some basic exploratory analysis
-of the data inorder to understand the nature of the series and their
+of the data in order to understand the nature of the series and their
 drivers. First, let us explore the relationship between the identity
 in equation \ref{eq:identity}. To make the relationshp clearer we have
-log-transformed the data so the identity become an additive
-relationship.
+log-transformed the data so the relationship becomes an additive one
+rather than multiplicative.
 
 \begin{equation}
   \label{eq:logIdentity}
@@ -156,9 +235,9 @@ furthermore shocks are typically refleceted by a significant change in
 the area rather than the yield. Secondly, the range for yield is very
 small in comparison to area, this matches with our intuition that
 there are physical constraints on how much can be produced within a
-given size of area. Similar results are observed in potato and cherry
-and even the fresh veregation nes which is an aggregated category
-stand for "not elsewhere specified".
+given size of area. Similar results are observed in potato, cherry and
+even fresh veregation nes which is an aggregated category stand for
+"not elsewhere specified".
 
 <<Decomposition-wheat>>=
 dwheat = ggplot(data = plot.df[plot.df$itemCode == 15, ], 
@@ -218,7 +297,7 @@ After exploring the relationship between the identity, let us dig
 deeper into area and yield. Depicted below are the area and yield for
 the same set of commodities but on the original scale. From the graph
 we can see that the yield fluctutate from year to year with
-correlation to a certain extent more preminently observed in
+correlation to a certain extent and more preminently observed in
 wheat. This implies there maybe underlying factors such as climate
 condition which may impact the yield in different countries
 simultanrously. However, this characteristic is not observed in the
@@ -284,9 +363,16 @@ freshVegeNesAreaYield = ggplot(data = plot.df[plot.df$itemCode == 463 &
 
 
 <<plot-area-yield, fig.width=9, fig.height=12, out.width='\\linewidth', out.height='20cm'>>=
-grid.arrange(wheatAreaYield, potatoAreaYield, cherryAreaYield, freshVegeNesAreaYield)
+grid.arrange(wheatAreaYield, potatoAreaYield, cherryAreaYield, 
+             freshVegeNesAreaYield)
 @ 
 
+From the exploratory data analysis, we can see that the trend and
+level of the production is largely determined by the area harvested,
+but the year to year fluctuation is driven by the yield which is
+associated to the climate condition. This gives us insight on how to
+model the total vairability in production and attribute the
+fluctuation to area nad yield.
 
 \section{Proposed Methodology}
 In order to avoid identification problem and to capture the
@@ -316,19 +402,19 @@ model can be specified as:
 Where the fixed component $\mathbf{X_i}\boldsymbol{\beta}$ models the
 regional level and trend, while the random component of
 $\mathbf{Z_i}\mathbf{b_i}$ captures the country specific variation
-around the regional level.  More specifically in the proposed model we
-have,
+around the regional level.  More specifically the proposing model for
+the FAOSTAT production has the following expression:
 
 \begin{align}
   \label{eq:lmeImpute}
-  \text{Y}_{i,t} &= \overbrace{\beta_{0j} + \beta_{1j}xt +
+  \text{Y}_{i,t} &= \overbrace{\beta_{0j} + \beta_{1j}t +
     \beta_{2j}\Delta\bar{Y}_{j,t}}^{\text{Fixed effect}} +
   \overbrace{b_{0i} + b_{1i}t}^{\text{Random effect}} + \epsilon_{i,t}
 \end{align}
 
-Where $Y$ denotes yield with $\bar{Y}$ being the grouped yield, $i$
-the country, $j$ is the designated regional grouping and $t$ denotes
-the time index. 
+Where $Y$ denotes yield with $\bar{Y}$ being the grouped averaged
+yield, $i$ for country, $j$ represents the designated regional
+grouping and $t$ denotes the time.
 
 
 The grouped change yield can be calculated as:
@@ -349,7 +435,7 @@ cross-sectional information are utilised, the imputation display
 stable characteristics while reflecting changes in the climatic
 conditions.
 
-To better understand the methodology shown below is the sub-regional
+To better understand the methodology, shown below is the sub-regional
 decomposition with both the regional level (black line) and the
 grouped yield (dark blue line) super imposed. The model assign a
 sub-regional level and trend to each series and model the correlation
@@ -411,13 +497,13 @@ stable trend and linear interpolation yields a good result. Despite
 the stability, shocks are sometimes observed in the area series.
 However without further understanding of the nature and the source of
 the shock, blindly applying model will introduce vulnerability rather
-than improve imputation. For now, we have chosen to carry forward and
-backward the latest available figure where linear interpolation is not
-applicable. The major advantage of this approach is that if the
-production cease to exist and both production and area are zero, we
-will not impute a positive value. Nevertheless, we are continuing to
-explore the data and investigate methods which may be applied to the
-imputation of area.
+than the anticipated improvement of imputation. At current stage, we
+have chosen to carry forward and backward the latest available figure
+where linear interpolation is not applicable. The major advantage of
+this approach is that if the production cease to exist and both
+production and area are zero, we will not impute a positive
+value. Nevertheless, we are continuing to explore the data and
+investigate methods which may be applied to the imputation of area.
 
 
 \begin{equation}
@@ -447,17 +533,17 @@ impute with the latest value.
   
   \BlankLine
   Missing values are denoted $\emptyset$\;
-  
+
   \BlankLine
   Initialization\;
   \Begin{
-      \If{$A_t = 0$ \land $P_t \ne 0$}{
+      \If{$A_t = 0 \land P_t \ne 0$}{
         $A_t \leftarrow \emptyset$\;
       }
-      \If{$P_t = 0$ \land $A_t \ne 0$}{
+      \If{$P_t = 0 \land A_t \ne 0$}{
         $P_t \leftarrow \emptyset$\;
       }
-    }  
+  }  
     
   \BlankLine  
   Start imputation\;
@@ -483,24 +569,41 @@ impute with the latest value.
         \Indm\Indm\Indm        
         
         \ForAll{imputed yield $\hat{Y}_{i, t}$}{
-          \If{$A_t = \emptyset$ \land $P_t \ne \emptyset$}{
+          \If{$A_t = \emptyset \land P_t \ne \emptyset$}{
             $\hat{A}_{i, t} \leftarrow P_{i, t}/\hat{Y}_{i, t}$\;
           }
-          \If{$P_t = \emptyset$ \land $A_t \ne \emptyset$}{
+          \If{$P_t = \emptyset \land A_t \ne \emptyset$}{
             $\hat{P}_{i, t} \leftarrow A_{i, t} \times \hat{Y}_{i, t}$\;
           }
         }
         
         (4) Impute area ($A_{i, t}$) with equation
-        \ref{eq:linearInterpolation} and \ref{eq:locf}\;
+        \ref{eq:linearInterpolation} then \ref{eq:locf}\;
+        
         \ForAll{imputed area $\hat{A}_{i, t}$}{
           \If{$\hat{Y}_{i, t} \ne \emptyset$}{
             $\hat{P}_{i, t} \leftarrow \hat{A}_{i, t} \times \hat{Y}_{i, t}$\;
           }
         }
       }
-    }
+  }
   \caption{Imputation Process}
 \end{algorithm}
 
+
+\section{Results and Simulation Study}
+
+
+\section{Conclusion}
+  
+\section{Area of Improvements}  
+\begin{itemize}
+  \item Get full data from 1961.
+  \item Test the auto-correlation of area harvested.
+  \item Test smooth spline for yield
+  \item Assess the applicability of vegetation index and other
+    information available.
+\end{itemize}
+
+  
 \end{document}
