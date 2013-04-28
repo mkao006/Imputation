@@ -11,6 +11,7 @@ diffv = function(x){
     T = length(x)
     if(sum(!is.na(x)) >= 2){
       tmp = c(x[2:T]/x[1:(T - 1)])
+      tmp[is.nan(tmp) | tmp == Inf | tmp == -Inf] = NA
     } else {
       tmp = rep(NA, length(x) - 1)
     }
