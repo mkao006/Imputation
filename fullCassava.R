@@ -93,6 +93,9 @@ cmfc.df[which(cmfc.df$FAOST_CODE == 164), "UNSD_SUB_REG"] = "Polynesia"
 final.dt = data.table(cmfc.df[cmfc.df$UNSD_SUB_REG != "Western Asia", ])
 setkeyv(final.dt, c("FAOST_CODE", "FAOST_NAME", "Year"))
 
+## Number of official and semi officail data
+final.dt[symbArea %in% c(" ", "*"), sum(!is.na(ovalueArea))]
+final.dt[symbProd %in% c(" ", "*"), sum(!is.na(ovalueProd))]
 
 
 ## Function to check the sparsity of the data
@@ -104,6 +107,8 @@ checkSparsity = function(Data){
 }
 
 checkSparsity(final.dt)
+
+
 
 
 ## Function to carry out linear interpolation
@@ -289,6 +294,10 @@ NROW(final.dt[is.na(valueArea) & !is.na(imputedArea), ])/
 
 final.dt[, avgYield := mean(valueYield, na.rm = TRUE),
          by = c("Year", "UNSD_SUB_REG")]
+final.dt[imputedProd == 0 & imputedArea == 0, imputedYield := as.numeric(NA)]
+
+## Examination and plots
+## ---------------------------------------------------------------------
 
 pdf(file = "cassvaBreakDown.pdf", width = 15)
 print(ggplot(data = final.dt[UNSD_SUB_REG != "Western Asia", ],
@@ -304,7 +313,7 @@ print(ggplot(data = final.dt[UNSD_SUB_REG != "Western Asia", ],
 graphics.off()
 system("evince cassvaBreakDown.pdf&")
 
-pdf(file = "checkCassavaImputation.pdf")
+pdf(file = "checkCassavaImputation.pdf", width = 10)
 ## for(i in c(32, 45, 46, 61, 74, 144, 181, 215, 251)){
 for(i in unique(final.dt$FAOST_CODE)){
   tmp = final.dt[FAOST_CODE == i, ]
@@ -313,28 +322,31 @@ for(i in unique(final.dt$FAOST_CODE)){
     i), "LAB_NAME"]
   myItem = unique(FAOmetaTable$itemTable[FAOmetaTable$itemTable$itemCode ==
     unique(final.dt$itemCode), "itemName"])
-  par(mfrow = c(3, 1))
+  par(mfrow = c(3, 1), mar = c(2.1, 4.1, 3.1, 2.1))
   try({
-    ymax = max(tmp[, list(valueProd, imputedProd)], na.rm = TRUE)  
+    ymax = max(tmp[, list(valueProd, imputedProd)], na.rm = TRUE) * 1.2
     with(tmp, plot(Year, valueProd, ylim = c(0, ymax), type = "b",
-                   col = "black",
+                   col = "black", xlab = "", ylab = "Production",
                    main = paste0(myCountry, " (", i, ") - ",
-                     myItem, " (", unique(final.dt$itemCode), ")")))
+                     myItem, " (", unique(final.dt$itemCode), ")"),
+                   cex = 2))
     with(tmp, points(Year, imputedProd, col = "red", pch = 19))
   })
   
   try({
-    ymax = max(tmp[, list(valueArea, imputedArea)], na.rm = TRUE)  
+    ymax = max(tmp[, list(valueArea, imputedArea)], na.rm = TRUE) * 1.2  
     with(tmp, plot(Year, valueArea, ylim = c(0, ymax), type = "b",
-                   col = "black"))
+                   col = "black", xlab = "", ylab = "Area",
+                   cex = 2))
     with(tmp, points(Year, imputedArea, col = "red", pch = 19))
   })
   
   
   try({
-    ymax = max(tmp[, list(valueYield, imputedYield)], na.rm = TRUE)  
+    ymax = max(tmp[, list(valueYield, imputedYield)], na.rm = TRUE) * 1.2
     with(tmp, plot(Year, valueYield, ylim = c(0, ymax), type = "b",
-                   col = "black"))
+                   col = "black", xlab = "", ylab = "Yield",
+                   cex = 2))
     with(tmp, points(Year, imputedYield, col = "red", pch = 19))
     with(tmp, points(Year, fittedValue, col = "blue", pch = 19))    
   })
@@ -345,8 +357,9 @@ system("evince checkCassavaImputation.pdf&")
 
 
 
-
-print(ggplot(data = final.dt[UNSD_SUB_REG != "Western Asia", ],
+pdf(file = "cassavaYieldSubregion.pdf", width = 11)
+print(ggplot(data = final.dt[!UNSD_SUB_REG %in% c("Western Asia", "Micronesia",
+               "Northern Africa"), ],
              aes(x = Year, y = valueYield)) +
       geom_line(aes(col = factor(FAOST_CODE))) +
       geom_point(aes(col = factor(FAOST_CODE)), size = 1) +  
@@ -356,22 +369,69 @@ print(ggplot(data = final.dt[UNSD_SUB_REG != "Western Asia", ],
       ## geom_line(aes(x = Year, y = avgValue), col = "steelblue", alpha = 0.5) +
       geom_smooth(method = "lm") + 
       ## geom_line(aes(x = Year, y = avgValue), col = "blue", alpha = 0.5) +      
-      facet_wrap(~UNSD_SUB_REG, ncol = 4, scales = "free_y") + 
+      facet_wrap(~UNSD_SUB_REG, ncol = 3) +
+      labs(x = NULL, y = NULL,
+           title = "Yield of Cassava by sub-region with average and least square line") + 
       theme(legend.position = "none"))
+graphics.off()
 
 
 
 
-
-print(ggplot(data = final.dt[UNSD_SUB_REG != "Western Asia", ],
+print(ggplot(data = final.dt[!UNSD_SUB_REG %in% c("Western Asia", "Micronesia"), ],
              aes(x = Year, y = valueArea)) +
       geom_line(aes(col = factor(FAOST_CODE))) +
       geom_point(aes(col = factor(FAOST_CODE)), size = 1) +  
       scale_color_manual(values = rep("gold",
                            length(unique(final.dt$FAOST_CODE)))) +
       geom_smooth(method = "lm") + 
-      facet_wrap(~UNSD_SUB_REG, ncol = 4, scales = "free_y") + 
+      facet_wrap(~UNSD_SUB_REG, ncol = 4, scales = "free_y") +
+      labs(x = NULL, y = NULL, title = "Yield of Cassava by sub-region") + 
       theme(legend.position = "none"))
 
 
 
+
+
+
+plot.df = melt(final.dt[symbArea %in% c(" ", "*") & symbProd %in% c(" ", "*"),
+  list(FAOST_CODE, FAOST_NAME, Year, UNSD_SUB_REG,
+  valueArea, valueProd, valueYield)],
+  id.var = c("FAOST_CODE", "FAOST_NAME", "Year", "UNSD_SUB_REG"))
+plot.df$variable = factor(gsub("value", "", plot.df$variable),
+  levels = c("Prod", "Area", "Yield"))
+
+tmp = data.table(plot.df[plot.df$variable == "Prod", ])
+tmp[ ,avgValue := mean(value, na.rm = TRUE), by = c("Year", "UNSD_SUB_REG")]
+
+ggplot(data = tmp,
+       aes(x = Year, y = value)) +
+  geom_line(aes(col = factor(FAOST_CODE)), alpha = 0.3) +
+  scale_color_manual(values = rep("black", length(unique(plot.df$FAOST_CODE)))) +
+  geom_line(aes(x = Year, y = avgValue), col = "blue") +
+  facet_wrap(~UNSD_SUB_REG, ncol = 4, scales = "free_y") + 
+  theme(legend.position = "none") +
+  labs(x = NULL, y = NULL,
+       title = "Area and Yield series of Cassava on original scale")
+
+pdf(file = "cassavaIdentityBreakDown.pdf", width = 10, height = 5)
+ggplot(data = plot.df[which(plot.df$value > 0), ],
+       aes(x = Year, y = log(value))) +
+  geom_line(aes(col = factor(FAOST_CODE)), alpha = 0.3) +
+  scale_color_manual(values = rep("black", length(unique(plot.df$FAOST_CODE)))) +
+  facet_wrap(~variable, ncol = 1) +
+  theme(legend.position = "none") +
+  labs(x = NULL, y = NULL,
+       title = "Relation of Cassava production, area and yield on log scale")
+graphics.off()
+
+pdf(file = "cassavaAreaYield.pdf", width = 10, height = 5)
+ggplot(data = plot.df[plot.df$variable != "Prod", ],
+       aes(x = Year, y = value)) +
+  geom_line(aes(col = factor(FAOST_CODE)), alpha = 0.3) +
+  scale_color_manual(values = rep("black", length(unique(plot.df$FAOST_CODE)))) +
+  facet_wrap(~variable, ncol = 1, scales = "free_y") +
+  theme(legend.position = "none") +
+  labs(x = NULL, y = NULL,
+       title = "Area and Yield series of Cassava on original scale")
+graphics.off()
