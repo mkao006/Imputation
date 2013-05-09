@@ -9,6 +9,15 @@ library(FAOSTAT)
 library(nlme)
 library(zoo)
 
+## Run the data manipulation
+source("na.approx2.R")
+source("diffv.R")
+source("lmeImpute.R")
+source("lmeEMImpute.R")
+source("checkSparsity.R")
+source("computeYield.R")
+
+
 fc.df = read.csv(file = "fullWheat.csv", header = TRUE,
   stringsAsFactors = FALSE)
 
@@ -61,11 +70,7 @@ cmfc.df[which(cmfc.df$valueArea != 0 & cmfc.df$valueProd == 0),
 ## A function to compute yield to account for zeros in area and
 ## production. To account fo identification problem, we compute yield
 ## as NA if one of area or production is zero or NA.
-computeYield = function(production, area){
-  if(length(production) != length(area))
-    stop("Length of prodduction is not the same as area")
-  ifelse(production != 0 & area != 0, production/area, NA)
-}
+
 
 cmfc.df$valueYield = with(cmfc.df, computeYield(valueProd, valueArea))
 cmfc.df$ovalueYield = with(cmfc.df, computeYield(ovalueProd, ovalueArea))
@@ -90,167 +95,27 @@ cmfc.df = cmfc.df[!is.na(cmfc.df$UNSD_SUB_REG), ]
 ## Western Asia is removed because there is no information
 ## final.dt = data.table(cmfc.df[cmfc.df$UNSD_SUB_REG != "Western Asia", ])
 final.dt = data.table(cmfc.df)
+final.dt[, UNSD_MACRO_REG := factor(UNSD_MACRO_REG)]
+final.dt[, UNSD_SUB_REG := factor(UNSD_SUB_REG)]
 setkeyv(final.dt, c("FAOST_CODE", "FAOST_NAME", "Year"))
 
 ## Number of official and semi officail data
 final.dt[symbArea %in% c(" ", "*"), sum(!is.na(ovalueArea))]
 final.dt[symbProd %in% c(" ", "*"), sum(!is.na(ovalueProd))]
 
-
-## Function to check the sparsity of the data
-checkSparsity = function(Data){
-  image(data.matrix(is.na(Data)))
-  text(rep(0.5, NCOL(Data)), seq(0, 1, length = NCOL(Data)),
-       labels = paste(colnames(Data), " (", round(sapply(X = Data,
-         FUN = function(x) 100 * sum(is.na(x))/length(x)), 2), "%)", sep = ""))
-}
-
 checkSparsity(final.dt)
 
 
 
 
-## Function to carry out linear interpolation
-na.approx2 = function(x, na.rm = FALSE){
-  if(length(na.omit(x)) < 2){
-    tmp = x
-  } else {
-    tmp = na.approx(x, na.rm = na.rm)
-  }
-  c(tmp)
-}
-
-## Function to compute changes from year to year
-diffv = function(x){
-    T = length(x)
-    if(sum(!is.na(x)) >= 2){
-      tmp = c(x[2:T]/x[1:(T - 1)])
-      tmp[is.nan(tmp) | tmp == Inf | tmp == -Inf] = NA
-    } else {
-      tmp = rep(NA, length(x) - 1)
-    }
-    tmp
-}
+## lmeImpute(Data = final.dt, value = "valueYield", country = "FAOST_CODE",
+##           group = "UNSD_SUB_REG", year = "Year", commodity = "itemCode")
+## setnames(final.dt, old = "imputedValue", new = "imputedYield")
 
 
-## Function to impute with LME
-lmeImpute = function(Data, value, country, group, year, commodity){
-  setnames(Data, old = c(value, country, group, year, commodity),
-           new = c("value", "country", "group", "year", "commodity"))
-  Data[, group := factor(group)]
-  for(i in unique(Data$commodity)){
-    ## Data[commodity == i, valueCh := diffv(value), by = "country"]
-    ## Data[commodity == i, groupValueCh := mean(valueCh, na.rm = TRUE),
-    ##      by = c("year", "group")]
-    ## Data[commodity == i & is.na(groupValueCh), groupValueCh := 0]
-    Data[commodity == i, avgYield := mean(value, na.rm = TRUE),
-         by = c("group", "year")]
-    ## Data[commodity == i & is.na(avgYield),
-    ##      check := .SD[Data, mean(avgYield, na.rm = TRUE)],
-    ##      by = "group"]
-    Data[, groupAvgYield := mean(value, na.rm = TRUE), by = "group"]
-    Data[is.na(avgYield), avgYield := groupAvgYield]
-    Data[, groupAvgYield := NULL]
-    
-    fit <<- try(lme(value ~ year * group, random= ~avgYield + year|country,
-      na.action = na.omit, data = Data[commodity == i, ]))
-    
-    if(!inherits(fit, "try-error")){
-      Data[commodity == i & is.na(value),
-           imputedValue := predict(fit, Data[commodity == i & is.na(value), ])]
-      Data[commodity == i & !is.na(value),
-           fittedValue := predict(fit, Data[commodity == i & !is.na(value), ])]
-      ## Data[commodity == i, valueCh := NULL]
-      ## Data[commodity == i, groupValueCh := NULL]
-    }
-  }
-  setnames(Data, old = c("value", "country", "group", "year", "commodity"),
-           new = c(value, country, group, year, commodity))
-}
-
-## ## Function to impute with LME
-## lmeImpute = function(Data, value, country, group, year, commodity){
-##   setnames(Data, old = c(value, country, group, year, commodity),
-##            new = c("value", "country", "group", "year", "commodity"))
-##   for(i in unique(Data$commodity)){
-##     Data[commodity == i, valueCh := diffv(value), by = "country"]
-##     Data[commodity == i, groupValueCh := mean(valueCh, na.rm = TRUE),
-##          by = c("year", "group")]
-##     Data[commodity == i & is.na(groupValueCh), groupValueCh := 0]
-##     ## fit <<- try(lme(value ~ year * group + groupValueCh, random = ~year|country,
-##     ##   na.action = na.omit, data = Data[commodity == i, ]))
-##     fit <<- try(lme(value ~ year * group, random = ~ groupValueCh|country,
-##       na.action = na.omit, data = Data[commodity == i, ]))    
-##     if(!inherits(fit, "try-error")){
-##       Data[commodity == i & is.na(value),
-##            imputedValue := predict(fit, Data[commodity == i & is.na(value), ])]
-##       Data[commodity == i & !is.na(value),
-##            fittedValue := fitted(fit)]
-##       Data[commodity == i, valueCh := NULL]
-##       Data[commodity == i, groupValueCh := NULL]
-##     }
-##   }
-##   setnames(Data, old = c("value", "country", "group", "year", "commodity"),
-##            new = c(value, country, group, year, commodity))
-## }
-
-lmeImpute(Data = final.dt, value = "valueYield", country = "FAOST_CODE",
-          group = "UNSD_SUB_REG", year = "Year", commodity = "itemCode")
-setnames(final.dt, old = "imputedValue", new = "imputedYield")
-
-
-## ## Function to impute with LME
-## lmeEMImpute = function(Data, value, country, group, year, commodity,
-##   n.iter = 1000, tol = 1e-6){
-##   setnames(Data, old = c(value, country, group, year, commodity),
-##            new = c("value", "country", "group", "year", "commodity"))
-##   for(i in unique(Data$commodity)){
-##     print(i)
-##     ll = double(n.iter)
-##     ll[1] = -Inf
-##     missInd = is.na(Data[, value])    
-##     Data[, estValue := value]
-    
-##     for(j in 2:n.iter){      
-##       ## Data[, avgValue := mean(estValue, na.rm = TRUE), by = c("year", "group")]
-##       ## fit = try(lme(estValue ~ year * group + avgValue, random= ~year|country,
-##       ##   na.action = na.omit, data = Data[commodity == i, ]))
-##       Data[, avgYield := mean(estValue, na.rm = TRUE),
-##            by = c("group", "year")]
-##       Data[, groupAvgYield := mean(estValue, na.rm = TRUE), by = "group"]
-##       Data[is.na(avgYield), avgYield := groupAvgYield]
-##       Data[, groupAvgYield := NULL]
-      
-##       fit <<- try(lme(value ~ year * group, random= ~avgYield|country,
-##                       na.action = na.omit, data = Data[commodity == i, ]))
-            
-##       fit.ll = logLik(fit)
-##       print(fit.ll)
-##       if(!inherits(fit, "try-error")){
-##         if(fit.ll - ll[j - 1] > tol){
-##           Data[commodity == i & missInd,
-##                estValue := predict(fit, Data[commodity == i & missInd, ])]
-##           Data[commodity == i & !is.na(value),
-##                fittedValue := predict(fit, Data[commodity == i & !missInd, ])]
-##           ll[j] = fit.ll
-##           ## Data[commodity == i, valueCh := NULL]
-##           ## Data[commodity == i, groupValueCh := NULL]
-##         } else {
-##           break
-##         }
-##       } else {
-##         break
-##       }
-##     }
-##   }
-##   setnames(Data, old = c("value", "country", "group", "year", "commodity"),
-##            new = c(value, country, group, year, commodity))
-## }
-
-
-## lmeEMImpute(final.dt, "valueYield", "FAOST_CODE", "UNSD_SUB_REG", "Year",
-##             "itemCode")
-## setnames(final.dt, old = "estValue", new = "imputedYield")
+lmeEMImpute(final.dt, "valueYield", "FAOST_CODE", "UNSD_SUB_REG", "Year",
+            "itemCode")
+setnames(final.dt, old = "estValue", new = "imputedYield")
 
 
 
@@ -307,7 +172,7 @@ print(ggplot(data = final.dt,
       scale_color_manual(values = rep("gold",
                            length(unique(final.dt$FAOST_CODE)))) +
       geom_line(aes(x = Year, y = avgYield), col = "black", alpha = 0.5) +
-      ## geom_line(aes(x = Year, y = avgValue), col = "blue", alpha = 0.5) +      
+      geom_line(aes(x = Year, y = avgValue), col = "blue", alpha = 0.5) +      
       facet_wrap(~UNSD_SUB_REG, ncol = 4, scales = "free_y") + 
       theme(legend.position = "none"))
 graphics.off()
@@ -365,15 +230,15 @@ print(ggplot(data = final.dt,
       scale_color_manual(values = rep("gold",
                            length(unique(final.dt$FAOST_CODE)))) +
       geom_line(aes(x = Year, y = avgYield), col = "black", alpha = 0.5) +      
-      ## geom_line(aes(x = Year, y = avgValue), col = "steelblue", alpha = 0.5) +
-      geom_smooth(method = "lm") + 
+      geom_line(aes(x = Year, y = avgValue), col = "steelblue", alpha = 0.5) +
+      ## geom_smooth(method = "lm") + 
       ## geom_line(aes(x = Year, y = avgValue), col = "blue", alpha = 0.5) +      
       facet_wrap(~UNSD_SUB_REG, ncol = 4) +
       labs(x = NULL, y = NULL,
            title = "Yield of Wheat by sub-region with average and least square line") + 
       theme(legend.position = "none"))
 graphics.off()
-
+system("evince wheatYieldSubregion.pdf&")
 
 
 
