@@ -5,51 +5,11 @@
 
 ## Run the data manipulation
 source("dataManipulation.R")
+source("na.approx.R")
+source("diffv.R")
+source("lmeImpute.R")
+source("lmeEMImpute.R")
 
-
-## Function to carry out linear interpolation
-na.approx2 = function(x, na.rm = FALSE){
-  if(length(na.omit(x)) < 2){
-    tmp = x
-  } else {
-    tmp = na.approx(x, na.rm = na.rm)
-  }
-  c(tmp)
-}
-
-## Function to compute changes from year to year
-diffv = function(x){
-    T = length(x)
-    if(sum(!is.na(x)) >= 2){
-      tmp = c(x[2:T]/x[1:(T - 1)])
-      tmp[is.nan(tmp) | tmp == Inf | tmp == -Inf] = NA
-    } else {
-      tmp = rep(NA, length(x) - 1)
-    }
-    tmp - 1
-}
-
-## Function to impute with LME
-lmeImpute = function(Data, value, country, group, year, commodity){
-  setnames(Data, old = c(value, country, group, year, commodity),
-           new = c("value", "country", "group", "year", "commodity"))
-  for(i in unique(Data$commodity)){
-    Data[commodity == i, valueCh := diffv(value), by = "country"]
-    Data[commodity == i, groupValueCh := mean(valueCh, na.rm = TRUE),
-         by = c("year", "group")]
-    Data[commodity == i & is.na(groupValueCh), groupValueCh := 0]
-    fit = try(lme(value ~ year + groupValueCh, random= ~1|country,
-      na.action = na.omit, data = Data[commodity == i, ]))
-    if(!inherits(fit, "try-error")){
-      Data[commodity == i & is.na(value),
-           imputedValue := predict(fit, Data[commodity == i & is.na(value), ])]
-      Data[commodity == i, valueCh := NULL]
-      Data[commodity == i, groupValueCh := NULL]
-    }
-  }
-  setnames(Data, old = c("value", "country", "group", "year", "commodity"),
-           new = c(value, country, group, year, commodity))
-}
 
 
 
@@ -57,70 +17,96 @@ lmeImpute(final.dt, "valueYield", "FAOST_CODE", "UNSD_SUB_REG", "Year",
             "itemCode")
 setnames(final.dt, old = "imputedValue", new = "imputedYield")
 
+checkImputation = function(Data, area, production, yield, impArea, impProd,
+  impYield, fitYield, countryCode, itemCode){
+  tmp = final.dt[FAOST_CODE == i, ]
+
+  myCountry = FAOcountryProfile[which(FAOcountryProfile$FAOST_CODE ==
+    countryCode), "LAB_NAME"]
+  myItem = unique(FAOmetaTable$itemTable[FAOmetaTable$itemTable$itemCode ==
+    itemCode, "itemName"])
+  setnames(Data, old = c(area, production, yield, impArea, impProd, impYield,
+                   fitYield),
+           new = c("area", "production", "yield", "impArea", "impProd",
+             "impYield", "fitYield"))
+  par(mfrow = c(3, 1))
+  try({
+    ymax = max(tmp[, list(prod, impProd)], na.rm = TRUE)  
+    with(tmp, plot(Year, prod, ylim = c(0, ymax), type = "b", col = "black",
+                   main = paste0(myCountry, " (", countryCode, ") - ",
+                     myItem, " (", itemCode, ")")))
+    with(tmp, points(Year, impProd, col = "red", pch = 19))
+  })
+  
+  try({
+    ymax = max(tmp[, list(area, impArea)], na.rm = TRUE)  
+    with(tmp, plot(Year, area, ylim = c(0, ymax), type = "b",
+                   col = "black"))
+    with(tmp, points(Year, impArea, col = "red", pch = 19))
+  })
+  
+  
+  try({
+    ymax = max(tmp[, list(yield, impYield)], na.rm = TRUE)  
+    with(tmp, plot(Year, yield, ylim = c(0, ymax), type = "b",
+                   col = "black"))
+    with(tmp, points(Year, impYield, col = "red", pch = 19))
+    with(tmp, points(Year, fitYield, col = "blue", pch = 19))    
+  })
+}
 
 ## Function to impute with LME
-lmeEMImpute = function(Data, value, country, group, year, commodity,
-  n.iter = 1000, tol = 1e-6){
-  setnames(Data, old = c(value, country, group, year, commodity),
-           new = c("value", "country", "group", "year", "commodity"))
-  for(i in unique(Data$commodity)){
-    print(i)
-    ll = double(n.iter)
-    ll[1] = -Inf
-    missInd = is.na(Data[, value])    
-    Data[, estValue := value]
-    Data[, estValue := na.locf(na.locf(na.approx2(estValue, na.rm = FALSE),
-             na.rm = FALSE), fromLast = TRUE), by = "country"]
-    
-    for(j in 2:n.iter){
-      Data[, avgValue := mean(estValue, na.rm = TRUE), by = c("year", "group")]
-      ## TODO (Michael): If average is missing, then replace by global
-      ## mean, need to improve this to global yearly mean.
-      ## Data[is.na(avgValue), avgValue := mean(Data[, estValue], na.rm = TRUE)]
-      fit = try(lme(estValue ~ year + avgValue, random= ~1|country,
-        na.action = na.omit, data = Data[commodity == i, ]))
-      fit.ll = logLik(fit)
-      print(fit.ll)
-      if(!inherits(fit, "try-error")){
-        if(fit.ll - ll[j - 1] > tol){
-          Data[commodity == i & missInd,
-               estValue := predict(fit, Data[commodity == i & missInd, ])]
-          ll[j] = fit.ll
-          ## Data[commodity == i, valueCh := NULL]
-          ## Data[commodity == i, groupValueCh := NULL]
-        } else {
-          break
-        }
-      } else {
-        break
-      }
-    }
-  }
-  setnames(Data, old = c("value", "country", "group", "year", "commodity"),
-           new = c(value, country, group, year, commodity))
-}
+
+## wheat.dt = final.dt[itemCode == 56, ]
+
+## ## lmeControl(maxIter = 100, msMaxIter = 100, msVerbose = TRUE)
+## lmeEMImpute(wheat.dt, "valueYield", "FAOST_CODE", "UNSD_SUB_REG", "Year",
+##             "itemCode")
+
+## ggplot(wheat.dt, aes(x = Year, y = valueYield)) +
+##             geom_line(aes(col = factor(FAOST_CODE)), alpha = 0.5) +
+##             geom_point(aes(col = factor(FAOST_CODE))) +
+##             scale_color_manual(values = rep("gold",
+##                                  length(unique(wheat.dt$FAOST_CODE)))) + 
+##             geom_line(aes(x = Year, y = avgValue), col = "steelblue", lwd = 1.2,
+##                       alpha = 0.5) +
+##             facet_wrap(~UNSD_SUB_REG, ncol = 4, scales = "free_y") +
+##             theme(legend.position = "none")
+  
+## ggplot(wheat.dt, aes(x = year, y = value)) +
+##   geom_line(aes(col = factor(country)), alpha = 0.5) +
+##   geom_point(aes(col = factor(country))) +
+##   scale_color_manual(values = rep("gold",
+##                        length(unique(wheat.dt$country)))) + 
+##   geom_line(aes(x = year, y = avgValue), col = "steelblue", lwd = 1.2,
+##             alpha = 0.5) +
+##   facet_wrap(~group, ncol = 4, scales = "free_y") +
+##   theme(legend.position = "none")
+
+
 
 pdf(file = "EMmeanCheck.pdf", width = 15, height = 10)
 for(i in unique(final.dt$itemCode)){
   test.dt = final.dt[itemCode == i, ]
-  lmeEMImpute(test.dt, "valueYield", "FAOST_CODE", "UNSD_SUB_REG", "Year",
-              "itemCode")
+  fit = try(lmeEMImpute(test.dt, "valueYield", "FAOST_CODE", "UNSD_SUB_REG",
+    "Year", "itemCode"))
   test.dt[, avalueYield := mean(valueYield, na.rm = TRUE),
           by = c("Year", "UNSD_SUB_REG")]
-  try(print(ggplot(test.dt, aes(x = Year, y = valueYield)) +
-            geom_line(aes(col = factor(FAOST_CODE)), alpha = 0.5) +
-            geom_point(aes(col = factor(FAOST_CODE))) +
-            scale_color_manual(values = rep("gold",
-                                 length(unique(test.dt$FAOST_CODE)))) + 
-            geom_line(aes(x = Year, y = avgValue), col = "steelblue", lwd = 1.5,
-                      alpha = 0.5) +
-            geom_line(aes(x = Year, y = avalueYield), col = "black", lwd = 1.5,
-                      alpha = 0.5) + 
-            facet_wrap(~UNSD_SUB_REG, ncol = 4, scales = "free_y") +
-            theme(legend.position = "none") +
-  labs(y = paste0(unique(FAOmetaTable$itemTable[FAOmetaTable$itemTable$itemCode ==
+  ## if(!inherits(fit, "try-error")){
+    print(ggplot(test.dt, aes(x = Year, y = valueYield)) +
+          geom_line(aes(col = factor(FAOST_CODE)), alpha = 0.5) +
+          geom_point(aes(col = factor(FAOST_CODE))) +
+          scale_color_manual(values = rep("gold",
+                               length(unique(test.dt$FAOST_CODE)))) + 
+          geom_line(aes(x = Year, y = avgValue), col = "steelblue", lwd = 1.2,
+                    alpha = 0.5) +
+          geom_line(aes(x = Year, y = avalueYield), col = "black", lwd = 1.2,
+                    alpha = 0.5) + 
+          facet_wrap(~UNSD_SUB_REG, ncol = 4, scales = "free_y") +
+          theme(legend.position = "none") +
+   labs(y = paste0(unique(FAOmetaTable$itemTable[FAOmetaTable$itemTable$itemCode ==
          i, "itemName"]), " (", i, ")"))
-          ))
+          )
 }
 graphics.off()
 system("evince EMmeanCheck.pdf&")
