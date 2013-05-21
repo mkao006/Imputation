@@ -78,7 +78,7 @@ setnames(raw.dt, old = c("ItemGroup", "AREA", "ITEM", "ELE"),
 raw.dt = subset(raw.dt, !(FAOST_CODE %in% c(351, 296, 357, 76, 245, 246, 246, 43,
     298)))
 FAOcountryProfile[FAOcountryProfile$FAOST_CODE %in%
-                  c(351, 296, 357, 76, 245, 246, 246, 43, 298), "LAB_NAME"]
+                  c(351, 296, 357, 76, 245, 246, 246, 43, 298), "FAO_TABLE_NAME"]
 
 ## Not sure what this column is used, and it is a mixture of numeric
 ## and strings.
@@ -114,7 +114,7 @@ if(skipMissingGrp)
 
     
 ## Merge with regional and subregional
-process.df = merge(process.df, FAOcountryProfile[, c("FAOST_CODE", "LAB_NAME")],
+process.df = merge(process.df, FAOcountryProfile[, c("FAOST_CODE", "FAO_TABLE_NAME")],
   all.x = TRUE)
 process.df = arrange(merge(process.df,
   FAOregionProfile[, c("FAOST_CODE", "UNSD_SUB_REG_CODE",
@@ -132,11 +132,11 @@ process.df$UNSD_MACRO_REG_CODE = NULL
 ## These countries does not have region or subregion available.
 FAOcountryProfile[FAOcountryProfile$FAOST_CODE %in%
                   unique(process.df[is.na(process.df$UNSD_MACRO_REG),
-                                    "FAOST_CODE"]), "LAB_NAME"]
+                                    "FAOST_CODE"]), "FAO_TABLE_NAME"]
 
 FAOcountryProfile[FAOcountryProfile$FAOST_CODE %in%
                   unique(process.df[is.na(process.df$UNSD_SUB_REG),
-                                    "FAOST_CODE"]), "LAB_NAME"]
+                                    "FAOST_CODE"]), "FAO_TABLE_NAME"]
 
 if(skipMissingGrp)
   process.df = process.df[!is.na(process.df$UNSD_MACRO_REG) &
