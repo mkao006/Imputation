@@ -40,29 +40,19 @@ library(gridExtra)
 
 \Abstract{ 
 
-  This document is a presentation of the continue on-going
-  improvements and refinement of the imputation methodology of the
-  FAOSTAT production domain. The proposal provides resolve to many of
-  the shortcomings of the current approach, and offers a flexible
-  framework to incorporate further information to improve performance.
-  
-  We first provide the necessary background of the prior methodology
-  and address issues faced during the last phase of implementation
-  which motivated the proposal.
-  
-  Visualization of the data are presented in order to identify the
-  potential driving factors of the production of various commodity and
-  to provide insight to potential relationships which underlies the
-  new model.
-  
-  The description of the new methodology is provided, with a visual
-  decomposition of the model and accompanying explanation. Finally,
-  conclusion and future work are presented for discussion.
+This paper proposes a new imputation method for the FAOSTAT production
+domain.  The proposal provides resolve to many of the shortcomings of
+the current approach, and offers a flexible framework to incorporate
+further information to improve performance.  We first examine the
+factors that drive changes in production by commodity, after which a
+brief acount of the current approach and its shortcomings. Then, a
+description of the new methodology is provided, with a visual
+decomposition of the model and accompanying explanation.
 
 }
 
-\Keywords{Imputation, Mixed model, Production}
-\Plainkeywords{Imputation, Mixed model, Production}
+\Keywords{Imputation, Linear Mixed Model, Agricultural Production, EM}
+\Plainkeywords{Imputation, Linear Mixed Model, Agricultural Production, EM}
 
 \Address{
   Michael. C. J. Kao\\
@@ -82,13 +72,14 @@ library(gridExtra)
 %% \tableofcontents
 \section{Introduction}
 Missing values are commonplace in the agriculturl production domain,
-stemming from non-responding in surveys or a lack of reliable
-measurement. Yet a consistent and non-sparse production domain is of
-critical importance to Food Balance Sheets, thus accurate and reliable
-imputation is essential and a necessary requisite for continuing
-work. This paper addresses several shortcomings of the current work
-and a new methodology is proposed in order to resolve these issues and
-to increase the accuracy of imputation.
+stemming from non-response in surveys or a lack of capacity by the
+reporting entity to provide measurement. Yet a consistent and
+non-sparse production domain is of critical importance to Food Balance
+Sheets (FBS), thus accurate and reliable imputation is essential and a
+necessary requisite for continuing work. This paper addresses several
+shortcomings of the current work and a new methodology is proposed in
+order to resolve these issues and to increase the accuracy of
+imputation.
 
 The relationship between the variables in the production domain can be
 expressed as:
@@ -99,16 +90,16 @@ expressed as:
 \end{equation}
 
 
-Where $P$, $A$ and $Y$ represents production, area harvested and yield
-respectively indexed by time $t$. The Yield is however, unobserved and
+Where $P$, $A$ and $Y$ represent production, area harvested and yield,
+respectively, indexed by time $t$. The yield is, however, unobserved and
 can only be calculated when both production and area are
-available. For certain commodity harvested area may not exist or
-sometimes they may be represented under a different context.
+available. For certain commodities, harvested area may not exist or
+sometimes it may be represented under a different context.
 
 
-The main aim for the need of imputation is to incorporate all
-available and reliable information in order to provide estimates of
-food supply in Food Balance Sheets (FBS).
+The primary objective of imputation is to incorporate all
+available and reliable information in order to provide best estimates of
+food supply in FBS.
 
 \section{Background and Review of the Current Methodology}
 
@@ -116,31 +107,31 @@ There have been two classes of methodology proposed in the past in
 order to account for missing values in the production domain. The
 first type utilises historical information and implements methods such
 as linear interpolation and trend regression; while the second class
-of methodology aims to capture the variation of relevant commodity
-and/or geographic characteristics through the application of
+aims to capture the variation of relevant commodity
+and/or spatial characteristics through the application of
 aggregated growth rates. The imputation is carried out independently
 on both area and production, with the yield calculated implicitly as
 an identity.
 
 Nevertheless, both approaches only utilise one dimension of
-information and improvements can be obtained if the information usage
+information and improvements can be obtained if information usage
 can be married. Furthermore, these methods lack the ability to
 incorporate external information such as vegetaion indices,
 precipitation or temperature that may provide valuable information and
-enhance the accuracy of mputation.
+enhance the accuracy of imputation.
 
-The simulation results of the prior attempts indicate that linear
-interpolation is a stable and accurate method but lack the capability
-to utilize cross sectional informations. Furthermore, it does not
-provide a solution for extrapolation where connection points are not
-available. As a result, the aggregation method was then implemented as
-it provide a high coverage rate for the imputation with satisfactory
-performance.
+Simulation results of the prior attempts indicate that linear
+interpolation is a stable and accurate method but it lacks the
+capability to utilize cross-sectional information. Furthermore, it
+does not provide a solution for extrapolation where connection points
+are not available. As a result, the aggregation method was then
+implemented as it was found to provide a high coverage rate for
+imputation with seemingly satisfactory performance.
 
 In short, the aggregation imputation method computes the
 commodity/regional aggregated growth of both area and production, the
 growth rate is then applied to the last observed value of the
-respective series. The formulae of the aggregated growth can be
+respective series. The formula of the aggregated growth can be
 expressed as:
 
 \begin{equation}
@@ -148,10 +139,10 @@ expressed as:
   r_{s, t} = \sum_{c \in \mathbb{S}} X_{c, t}/\sum_{c \in \mathbb{S}} X_{c, t-1}
 \end{equation}
 
-Where $\mathbb{S}$ denote the relevant set of products and countries
+Where $\mathbb{S}$ denotes the relevant set of products and countries
 within the relevant commodity group and regional classification after
 omitting the item to be imputed. For example, to compute the
-\textit{country cereal aggregated growth} in order to impute wheat
+\textit{country cereal aggregated growth} with the aim to impute wheat
 production, we sum up all the production of commodities listed in the
 cereal group in the same country excluding wheat. On the other hand,
 to impute by \textit{regional item aggregated growth}, wheat
@@ -165,19 +156,19 @@ Imputation can then be computed as:
 \end{equation}
   
 
-There are however, several shortcoming of this methodology. The
-achillies heel lies in the fact that area and production are imputed
+There are, however, several shortcomings of this methodology. The
+Achillies heel lies in the fact that area and production are imputed
 independently, cases of diverging area havrvested and production have
 been observed that result in inconsistency between trends as well as
-exploding yield. The source of this undesirable characteristic is
-nested in the computation of the aggregated growth rate. Due to
+exploding yields. The source of this undesirable characteristic is
+nested in the computation of the aggregated growth rate. Owing to
 missing values, the basket computed may not be comparable over time
-and result in spurious growth or contraction. Furthermore, the basket
-to compute the changes in production and area may be considerably
-different.
+and consequently results in spurious growth or
+contraction. Furthermore, the basket to compute the changes in
+production and area may be considerably different.
 
-Finally, the methodology does not does not provide insight into the
-underlying driving forces of the production for understanding and
+Finally, the methodology does not provide insight into the
+underlying driving factors of production that are required to better understand the phenomenon and hence for
 intepretation.
 
 
@@ -297,22 +288,22 @@ grid.arrange(dwheat, dpotato, dcherry, dFreshVegeNes)
 In the above plots, the log of production, area and yield of a
 specific commodity is depicted within each panel for comparison. Each
 line represents a country and the production is the sum of area and
-yield. The first notable thing we can observe from the relationship
+yield. The first noteworthy feature we observe from the relationship
 between the series is that the level of production is mainly
 determined by the level of harvested area, furthermore shocks are
-typically refleceted by a significant change in the area rather than
-the yield. It is commonly believed that harvested area are stable and
-predictable over time while vulnerable to drastic changes such as wild
-fire or tsunamies. Secondly, the range of the variability for yield is
-very small in comparison to area, this matches with our intuition that
+typically reflected by a significant change in the area rather than
+the yield. It is commonly believed that harvested area is stable and
+predictable over time while vulnerable to shocks stemming from the
+natural world.  Secondly, the range of the variability for yield is
+very small in comparison to area, consistent with our intuition that
 there are physical constraints on the potential yield of a crop within
 a given size of area. The results are very similar even between
 different commodities.
 
 After exploring the relationship between the identity, let us delve
-deeper into the constitutents of area and yield. Depicted below are
-area and yields for the same set of commodities but on an original
-scale.
+deeper into the constitutents of production: area and yield. Depicted
+below are area and yields for the same set of commodities but on an
+original scale.
 
 
 <<wheat-area-yield>>=
@@ -378,22 +369,23 @@ grid.arrange(wheatAreaYield, potatoAreaYield, cherryAreaYield,
              freshVegeNesAreaYield)
 @ 
 
-We can first observe that the area are in general much more stable and
-smoother when compared to the yield. The yield fluctutate from year to
-year with correlation to a certain extent and more preminently
-observed in wheat. This implies there maybe underlying factors such as
-climatic conditions, which may impact the yield in different countries
-simultaneously. However, this characteristic is not observed in the
-NES category which suggests the impact of the factor are stronger
-within the same commodity but weak in general.
+We can first observe that area is in general much more stable and
+smoother when compared to yield. The yield fluctutates from
+year-to-year with correlation to a certain extent, which is more
+preminently observed in wheat. This implies that there maybe
+underlying factors such as climatic shocks, which may impact the yield
+in different countries simultaneously. However, this characteristic is
+not observed in the NES (none elsewhere specified) category which
+suggests the impact of the factor is stronger within the same
+commodity but weak in general.
 
 
-The figures strongly suggests that both the trend and level of the
-production is largely determined by the area harvested, but the
+The figures strongly suggests that both the trend and level of 
+production is largely determined by  area harvested, but the
 year-to-year fluctuation is driven by the yield, which may be
-associated with the climate conditions. The exploratory data analysis
-reveals valuable insight into the nature of the time series, and
-underlies the proposed model decomposition of variability and in
+associated with changing climate conditions. The exploratory data analysis
+reveals valuable insights into the nature of the time series, and
+underpins the proposed model decomposition of variability and in
 attributing the fluctuation to area and yield.
 
 <<sparsity-area-wheat, fig.width=9, fig.height=12, out.width='\\linewidth', out.height='20cm', eval=FALSE>>=
@@ -416,9 +408,9 @@ approach.
 
 \subsection{Imputation for Yield}
 The proposed model for imputing the yield is a linear mixed model, the
-usage of this model enables all the information available both
+usage of this model enables all information available both
 historical and cross-sectional to be incorporated. In addition,
-proposed indicator such as the vegetaion index, $\text{CO}_2$
+proposed indicators such as the vegetaion index, $\text{CO}_2$
 concentration and other drivers can be tested and incorporated if
 proven to improve predictive power.
 
@@ -435,7 +427,7 @@ The general form of the model can be specified as:
 Where the fixed component $\mathbf{X_i}\boldsymbol{\beta}$ models the
 regional level and trend, while the random component of
 $\mathbf{Z_i}\mathbf{b_i}$ captures the country specific variation
-around the regional level.  More specifically the proposing model for
+around the regional level.  More specifically, the proposed model for
 FAOSTAT production has the following expression:
 
 \begin{align}
@@ -455,19 +447,19 @@ computed as:
   \bar{Y}_{j, t} = \frac{1}{N_i}\sum_{i \in j} \hat{Y}_{i,t}
 \end{equation}
 
-However, since the grouped average yield is only partially observed
+However, as the grouped average yield is only partially observed
 given the missing values, the average yield is estimated through the
 EM-algorithm.
 
 
 In essence, the imputation of the yield is based on the country
 specific level and historical regional trend while accounting for
-correlation between country and regional fluctuation. In contrast to
+correlation between country and regional fluctuations. In contrast to
 the previous methodology, where the full effect of the change is
 applied, the proposed methodology measures the size of relationship
 between the individual time series and the regional variability to
 estimate the random effect for the country. Since both historical and
-cross-sectional information are utilised, imputed values display
+cross-sectional information are utilized, imputed values display
 stable characteristics while reflecting changes in climatic
 conditions.
 
@@ -503,25 +495,25 @@ ggplot(data = tmp.df,
 
 
 \subsection{Imputation for Harvested area}
-After imputing the yield and compute areas and production where
+After imputing the yield and computing area and production where
 available, we then impute the area with linear interpolation and carry
 forward the last observation when both production and area are not
 available.
 
 Following prior research and current investigation, we believe linear
 interpolation is suitable because much of the harvested area data
-exhibits extremely stable trend and linear interpolation yields a
+exhibit extremely stable trends while linear interpolation yields a
 satisfactory result. Despite the stability, shocks are sometimes
-observed in the area series.  However without further understanding of
-the nature and the source of the shock, blindly applying the model will
-introduce vulnerability rather than an anticipated improvement of
-imputation. At the current stage, we have chosen to carry forward and
-backward the latest available figure where linear interpolation is not
-applicable. The major advantage of this approach is that if the
-production cease to exist and both production and area are zero, we
-will not impute a positive value. Nevertheless, we are continuing to
-explore the data and investigate methods which may be applied to the
-imputation of area.
+observed in the area series.  However, without a further understanding
+of the nature and the source of the shocks, blindly applying the model
+will introduce vulnerability rather than an anticipated improvement of
+imputation performance. At the current stage, we have chosen to carry
+forward and backward the latest available data where linear
+interpolation is not applicable. The major advantage of this approach
+is that if production ceases to exist and both production and area are
+zero, we will not impute a positive value. Nevertheless, we are
+continuing to explore the data and investigate superior methods which
+may be applied to the imputation of area.
 
 
 \begin{equation}
@@ -538,20 +530,21 @@ impute with the latest value.
 \end{equation}
 
 \section{Conclusion and Future improvements}
-The aim of the paper is to further refine and incorporate feedback
-from the last round of the imputation methodology.
+The aim of the paper has been to overhaul the current imputation
+methodology, with a more consistent, yet better performing approach.
 
-The proposed model demonstrated the ability to solve issues such as
+The proposed model demonstrates the ability to resolve issues such as
 diverging area and production series and biased growth as a result of
-the missing value. Furthermore, the proposal takes into account of the
-feed back for incorporating relevant information and establish a
-flexible framework to accomodate additional information.
+missing values. Furthermore, the proposal takes into account the
+attribute of incorporating relevant information as well as
+establishing a flexible framework to accomodate additional
+information.
 
-This is however an draft interim report, and the teams are continuing
-to collaborate in order to seek deeper understanding of the data and
-improve the model. Application of the state-space model are in place
-to be tested for imputation of the production, area and yield
-simultaneous.
+This is, however, work in progress, as the technical teams are
+continuing to collaborate in order to seek a deeper understanding of
+the data in order to improve on the model. Application of the
+state-space model might be a candidate to succeed in this regard, as
+it allows for production, area and yield to be imputed simultaneously.
 
 
 
