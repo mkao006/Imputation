@@ -13,14 +13,17 @@ lmeEMImpute = function(Data, value, country, group, year, commodity,
     ll[1] = -Inf
     missInd = is.na(Data[, value])    
     Data[commodity == i, estValue := value]
-    ## data[commodity == i, estValue := na.locf(na.locf(na.approx2(estValue,
-    ##                        na.rm = FALSE), na.rm = FALSE), fromLast = TRUE),
-    ##      by = "country"]
+    Data[commodity == i, estValue := na.locf(na.locf(na.approx2(estValue,
+                           na.rm = FALSE), na.rm = FALSE), fromLast = TRUE),
+         by = "country"]
     ## Data[commodity == i & is.na(estValue),
     ##      estValue := .SD[, Data[, mean(estValue, na.rm = TRUE)]], by = "year"]
-    Data[commodity == i & is.na(estValue),
-         estValue := randomImp(estValue), by = "country"]
-
+    ## Data[, randSample := sample(na.omit(estValue), length(estValue),
+    ##                     replace = TRUE), by = c("country", "group")]
+    ## Data[is.na(estValue), estValue := randSample]
+    ## Data[commodity == i & is.na(estValue),
+    ##      estValue := .SD[, randomImp(estValue)], by = "country"]
+       
     for(j in 2:n.iter){
       Data[commodity == i, avgValue := mean(estValue, na.rm = TRUE),
            by = c("year", "group")]
