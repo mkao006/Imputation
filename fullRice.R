@@ -114,20 +114,24 @@ ggplot(data = final.dt, aes(x = dvalueYield)) +
   facet_wrap(~missBin, scales = "free_y")
 
 
-
-
-
-## Carry out the imputation and simulation
+## Imputation
 ## ---------------------------------------------------------------------
+imputed.dt = fullImputation(final.dt, area = "valueArea", prod = "valueProd",
+  yield = "valueYield", country = "FAOST_CODE",
+  group = "UNSD_SUB_REG", year = "Year",  commodity = "itemCode")
+
+
 
 
 ## Simulation
+## ---------------------------------------------------------------------
+
 n.sim = 1000
 sim.df = data.frame(propSim = runif(n.sim, 1e-05, 1 - 1e-05),
   propReal = rep(NA, n.sim),
   MAPE = rep(NA, n.sim))
 for(i in 1:n.sim){
-  print(paste0("Simulation Number: ", n.sim))
+  print(paste0("Simulation Number: ", i))
   tmp.dt = final.dt
   prop = sim.df[i, "propSim"]
   simMissArea = sample(which(tmp.dt$symbArea %in% c(" ", "*")),
@@ -137,72 +141,27 @@ for(i in 1:n.sim){
     length(which(tmp.dt$symbProd %in% c(" ", "*"))) * prop)
   tmp.dt[simMissProd, "valueProd"] = NA 
   sim.df[i, "propReal"] = tmp.dt[, sum(is.na(valueProd))/length(valueProd)]
-  imputed.dt = fullImputation(tmp.dt, area = "valueArea", prod = "valueProd",
+  sim.dt = fullImputation(tmp.dt, area = "valueArea", prod = "valueProd",
     yield = "valueYield", country = "FAOST_CODE",
     group = "UNSD_SUB_REG", year = "Year",  commodity = "itemCode")
-  
   ## Check the MAPE of the imputation
   sim.df[i, "MAPE"] = 
-    imputed.dt[1:nrow(imputed.dt) %in% simMissProd & ovalueProd != 0 &
+    sim.dt[1:nrow(sim.dt) %in% simMissProd & ovalueProd != 0 &
            !is.na(imputedProd),
            sum(abs((ovalueProd - imputedProd)/(ovalueProd)))/length(simMissProd)]
 }
+
+
+
 with(sim.df, plot(propReal, MAPE))
 abline(h = 0.1, col = "red", lty = 2)
 hist(sim.df[sim.df$propReal <= 0.5, "MAPE"], breaks = 100)
 mean(sim.df[sim.df$propReal <= 0.5, "MAPE"])
-
-
-
-
-lmeEMImpute(final.dt, "valueYield", "FAOST_CODE", "UNSD_SUB_REG", "Year",
-            "itemCode")
-
-## Create the impute column
-## final.dt[!is.na(valueYield), imputedYield := valueYield]
-setnames(final.dt, old = "estValue", new = "imputedYield")
-final.dt[!is.na(valueYield), imputedYield := as.numeric(NA)]
-checkSparsity(final.dt)
-
-## Create the imputed column for area and production
-final.dt[, imputedArea := valueArea]
-final.dt[, imputedProd := valueProd]
-
-## Impute area and production if the other one exist
-final.dt[is.na(imputedArea) & !is.na(imputedProd),
-         imputedArea := imputedProd/imputedYield]
-final.dt[!is.na(imputedArea) & is.na(imputedProd),
-         imputedProd := imputedArea * imputedYield]
-
-## Impute area with linear interpolation and last observation carry
-## forward.
-final.dt[, imputedArea := na.locf(na.locf(na.approx2(imputedArea), na.rm = FALSE),
-             fromLast = TRUE, na.rm = FALSE),
-         by = c("FAOST_CODE", "itemCode")]
-
-## Impute the remaining production
-final.dt[is.na(imputedProd), imputedProd := imputedArea * imputedYield]
-
-
-
-checkSparsity(final.dt)
-
-## Percentage of missing value imputed
-NROW(final.dt[is.na(valueProd) & !is.na(imputedProd), ])/
-  NROW(final.dt[is.na(valueProd), ])
-
-NROW(final.dt[is.na(valueArea) & !is.na(imputedArea), ])/
-  NROW(final.dt[is.na(valueArea), ])
-
-final.dt[, avgYield := mean(valueYield, na.rm = TRUE),
-         by = c("Year", "UNSD_SUB_REG")]
-
-## Check the MAPE of the imputation
-final.dt[1:nrow(final.dt) %in% simMissProd & ovalueProd != 0 & !is.na(imputedProd),
-         sum(abs((ovalueProd - imputedProd)/(ovalueProd)))/length(simMissProd)]
-
-## ## Remove yield where area or production are zero
-## final.dt[imputedProd == 0 | imputedArea == 0, imputedYield := as.numeric(NA)]
+sim.df$MAPEbin = as.numeric(sim.df$MAPE >= 0.1)
+with(sim.df, plot(propReal, MAPEbin))
+bin.fit = glm(MAPEbin ~ propReal, sim.df, family = binomial)
+curve(1/(1 + exp(-(coef(bin.fit)[1] + coef(bin.fit)[2] * x))),
+      add = TRUE, col = "red")
 
 
 ## Examination and plots
@@ -210,20 +169,20 @@ final.dt[1:nrow(final.dt) %in% simMissProd & ovalueProd != 0 & !is.na(imputedPro
 
 pdf(file = "checkRiceImputation.pdf", width = 10)
 ## for(i in c(32, 45, 46, 61, 74, 144, 181, 215, 251)){
-for(i in unique(final.dt$FAOST_CODE)){
-  tmp = final.dt[FAOST_CODE == i, ]
+for(i in unique(imputed.dt$FAOST_CODE)){
+  tmp = imputed.dt[FAOST_CODE == i, ]
 
   myCountry = FAOcountryProfile[which(FAOcountryProfile$FAOST_CODE ==
     i), "FAO_TABLE_NAME"]
   myItem = unique(FAOmetaTable$itemTable[FAOmetaTable$itemTable$itemCode ==
-    unique(final.dt$itemCode), "itemName"])
+    unique(imputed.dt$itemCode), "itemName"])
   par(mfrow = c(3, 1), mar = c(2.1, 4.1, 3.1, 2.1))
   try({
     ymax = max(tmp[, list(valueProd, imputedProd)], na.rm = TRUE) * 1.2
     with(tmp, plot(Year, valueProd, ylim = c(0, ymax), type = "b",
                    col = "black", xlab = "", ylab = "Production",
                    main = paste0(myCountry, " (", i, ") - ",
-                     myItem, " (", unique(final.dt$itemCode), ")"),
+                     myItem, " (", unique(imputed.dt$itemCode), ")"),
                    cex = 2))
     with(tmp, points(Year, imputedProd, col = "red", pch = 19))
   })
@@ -249,6 +208,200 @@ for(i in unique(final.dt$FAOST_CODE)){
 }
 graphics.off()
 system("evince checkRiceImputation.pdf&")
+
+
+
+## Explanation slides for countrySTAT
+pdf(file = "imputation_step.pdf", width = 10)
+tmp = imputed.dt[FAOST_CODE == 175, ]
+myCountry = FAOcountryProfile[which(FAOcountryProfile$FAOST_CODE ==
+  175), "FAO_TABLE_NAME"]
+myItem = unique(FAOmetaTable$itemTable[FAOmetaTable$itemTable$itemCode ==
+  unique(imputed.dt$itemCode), "itemName"])
+par(mfrow = c(3, 1), mar = c(2.1, 4.1, 3.1, 2.1))
+## Slide 1
+try({
+  ymax = max(tmp[, list(valueProd, imputedProd)], na.rm = TRUE) * 1.2
+  with(tmp, plot(Year, valueProd, ylim = c(0, ymax), type = "b",
+                 col = "black", xlab = "", ylab = "Production",
+                 main = paste0("Step: Raw data - ", myCountry, " (", 175, ") - ",
+                   myItem, " (", unique(imputed.dt$itemCode), ")"),
+                 cex = 2))
+  with(tmp, points(Year, imputedProd, col = "red", pch = 19, type = "n"))
+})
+try({
+  ymax = max(tmp[, list(valueArea, imputedArea)], na.rm = TRUE) * 1.2  
+  with(tmp, plot(Year, valueArea, ylim = c(0, ymax), type = "b",
+                 col = "black", xlab = "", ylab = "Area",
+                 cex = 2))
+  with(tmp, points(Year, imputedArea, col = "red", pch = 19, type = "n"))
+})
+try({
+  ymax = max(tmp[, list(valueYield, imputedYield)], na.rm = TRUE) * 1.2
+  with(tmp, plot(Year, valueYield, ylim = c(0, ymax), type = "n",
+                 col = "black", xlab = "", ylab = "Yield",
+                 cex = 2))
+  with(tmp, points(Year, imputedYield, col = "red", pch = 19, type = "n"))
+  with(tmp, points(Year, fittedValue, col = "blue", pch = 19, type = "n"))    
+})
+
+## Slide 2
+try({
+  ymax = max(tmp[, list(valueProd, imputedProd)], na.rm = TRUE) * 1.2
+  with(tmp, plot(Year, valueProd, ylim = c(0, ymax), type = "b",
+                 col = "black", xlab = "", ylab = "Production",
+                 main = paste0("Step 1: Compute implied yield - ",
+                   myCountry, " (", 175, ") - ",
+                   myItem, " (", unique(imputed.dt$itemCode), ")"),
+                 cex = 2))
+  with(tmp, points(Year, imputedProd, col = "red", pch = 19, type = "n"))
+})
+try({
+  ymax = max(tmp[, list(valueArea, imputedArea)], na.rm = TRUE) * 1.2  
+  with(tmp, plot(Year, valueArea, ylim = c(0, ymax), type = "b",
+                 col = "black", xlab = "", ylab = "Area",
+                 cex = 2))
+  with(tmp, points(Year, imputedArea, col = "red", pch = 19, type = "n"))
+})
+try({
+  ymax = max(tmp[, list(valueYield, imputedYield)], na.rm = TRUE) * 1.2
+  with(tmp, plot(Year, valueYield, ylim = c(0, ymax), type = "b",
+                 col = "black", xlab = "", ylab = "Yield",
+                 cex = 2))
+  with(tmp, points(Year, imputedYield, col = "red", pch = 19, type = "n"))
+  with(tmp, points(Year, fittedValue, col = "blue", pch = 19, type = "n"))    
+})
+
+## Slide 3
+try({
+  ymax = max(tmp[, list(valueProd, imputedProd)], na.rm = TRUE) * 1.2
+  with(tmp, plot(Year, valueProd, ylim = c(0, ymax), type = "b",
+                 col = "black", xlab = "", ylab = "Production",
+                 main = paste0("Step 2: Impute missing yield - ",
+                   myCountry, " (", 175, ") - ",
+                   myItem, " (", unique(imputed.dt$itemCode), ")"),
+                 cex = 2))
+  with(tmp, points(Year, imputedProd, col = "red", pch = 19, type = "n"))
+})
+try({
+  ymax = max(tmp[, list(valueArea, imputedArea)], na.rm = TRUE) * 1.2  
+  with(tmp, plot(Year, valueArea, ylim = c(0, ymax), type = "b",
+                 col = "black", xlab = "", ylab = "Area",
+                 cex = 2))
+  with(tmp, points(Year, imputedArea, col = "red", pch = 19, type = "n"))
+})
+try({
+  ymax = max(tmp[, list(valueYield, imputedYield)], na.rm = TRUE) * 1.2
+  with(tmp, plot(Year, valueYield, ylim = c(0, ymax), type = "b",
+                 col = "black", xlab = "", ylab = "Yield",
+                 cex = 2))
+  with(tmp, points(Year, imputedYield, col = "red", pch = 19))
+  with(tmp, points(Year, fittedValue, col = "black", pch = 19))    
+})
+
+
+## Slide 4
+try({
+  ymax = max(tmp[, list(valueProd, imputedProd)], na.rm = TRUE) * 1.2
+  with(tmp, plot(Year, valueProd, ylim = c(0, ymax), type = "b",
+                 col = "black", xlab = "", ylab = "Production",
+                 main = paste0("Step 3: Compute available area and production - ",
+                   myCountry, " (", 175, ") - ",
+                   myItem, " (", unique(imputed.dt$itemCode), ")"),
+                 cex = 2))
+  ## with(tmp, points(Year, imputedProd, col = "red", pch = 19, type = "n"))
+  with(tmp[!is.na(valueArea) & is.na(valueProd), ],
+           points(Year, imputedArea, col = "red", pch = 19))
+})
+try({
+  ymax = max(tmp[, list(valueArea, imputedArea)], na.rm = TRUE) * 1.2  
+  with(tmp, plot(Year, valueArea, ylim = c(0, ymax), type = "b",
+                 col = "black", xlab = "", ylab = "Area",
+                 cex = 2))
+  ## with(tmp, points(Year, imputedArea, col = "red", pch = 19, type = "n"))
+  with(tmp[is.na(valueArea) & !is.na(valueProd), ],
+           points(Year, imputedArea, col = "red", pch = 19))  
+})
+try({
+  ymax = max(tmp[, list(valueYield, imputedYield)], na.rm = TRUE) * 1.2
+  with(tmp, plot(Year, valueYield, ylim = c(0, ymax), type = "b",
+                 col = "black", xlab = "", ylab = "Yield",
+                 cex = 2))
+  with(tmp, points(Year, imputedYield, pch = 19, col = "blue"))
+  ## with(tmp, points(Year, fittedValue, pch = 19, col = "blue"))
+})
+
+
+## Slide 5
+try({
+  ymax = max(tmp[, list(valueProd, imputedProd)], na.rm = TRUE) * 1.2
+  with(tmp, plot(Year, valueProd, ylim = c(0, ymax), type = "b",
+                 col = "black", xlab = "", ylab = "Production",
+                 main = paste0("Step 4: Impute Area - ",
+                   myCountry, " (", 175, ") - ",
+                   myItem, " (", unique(imputed.dt$itemCode), ")"),
+                 cex = 2))
+  ## with(tmp, points(Year, imputedProd, col = "red", pch = 19, type = "n"))
+  with(tmp[!is.na(valueArea) & is.na(valueProd), ],
+           points(Year, imputedArea, col = "blue", pch = 19))
+})
+try({
+  ymax = max(tmp[, list(valueArea, imputedArea)], na.rm = TRUE) * 1.2  
+  with(tmp, plot(Year, valueArea, ylim = c(0, ymax), type = "b",
+                 col = "black", xlab = "", ylab = "Area",
+                 cex = 2))
+  ## with(tmp, points(Year, imputedArea, col = "red", pch = 19, type = "n"))
+  with(tmp[is.na(valueArea) & !is.na(valueProd), ],
+           points(Year, imputedArea, col = "blue", pch = 19))
+  with(tmp[is.na(valueArea) & is.na(valueProd), ],
+           points(Year, imputedArea, col = "red", pch = 19))  
+})
+try({
+  ymax = max(tmp[, list(valueYield, imputedYield)], na.rm = TRUE) * 1.2
+  with(tmp, plot(Year, valueYield, ylim = c(0, ymax), type = "b",
+                 col = "black", xlab = "", ylab = "Yield",
+                 cex = 2))
+  with(tmp, points(Year, imputedYield, pch = 19, col = "blue"))
+  ## with(tmp, points(Year, fittedValue, pch = 19, col = "blue"))
+})
+
+
+## Slide 6
+try({
+  ymax = max(tmp[, list(valueProd, imputedProd)], na.rm = TRUE) * 1.2
+  with(tmp, plot(Year, valueProd, ylim = c(0, ymax), type = "b",
+                 col = "black", xlab = "", ylab = "Production",
+                 main = paste0("Step 5: Impute Production - ",
+                   myCountry, " (", 175, ") - ",
+                   myItem, " (", unique(imputed.dt$itemCode), ")"),
+                 cex = 2))
+  ## with(tmp, points(Year, imputedProd, col = "red", pch = 19, type = "n"))
+  with(tmp[!is.na(valueArea) & is.na(valueProd), ],
+           points(Year, imputedProd, col = "blue", pch = 19))
+  with(tmp[is.na(valueArea) & is.na(valueProd), ],
+           points(Year, imputedProd, col = "red", pch = 19))  
+})
+try({
+  ymax = max(tmp[, list(valueArea, imputedArea)], na.rm = TRUE) * 1.2  
+  with(tmp, plot(Year, valueArea, ylim = c(0, ymax), type = "b",
+                 col = "black", xlab = "", ylab = "Area",
+                 cex = 2))
+  ## with(tmp, points(Year, imputedArea, col = "red", pch = 19, type = "n"))
+  with(tmp[is.na(valueArea) & !is.na(valueProd), ],
+           points(Year, imputedArea, col = "blue", pch = 19))
+  with(tmp[is.na(valueArea) & is.na(valueProd), ],
+           points(Year, imputedArea, col = "blue", pch = 19))  
+})
+try({
+  ymax = max(tmp[, list(valueYield, imputedYield)], na.rm = TRUE) * 1.2
+  with(tmp, plot(Year, valueYield, ylim = c(0, ymax), type = "b",
+                 col = "black", xlab = "", ylab = "Yield",
+                 cex = 2))
+  with(tmp, points(Year, imputedYield, pch = 19, col = "blue"))
+  ## with(tmp, points(Year, fittedValue, pch = 19, col = "blue"))
+})
+graphics.off()
+system("evince imputation_step.pdf&")
 
 
 
