@@ -10,12 +10,17 @@ fullImputation = function(Data, area, prod, yield, country, group, year,
            new = c("area", "prod", "yield", "country", "group", "year",
              "commodity"))
   setkeyv(dataCopy, c("area", "year"))
-  impYield.dt = lmeEMImpute(Data = dataCopy, value = "yield",
+
+  ## Impute yield
+  impYield.lst = lmeEMImpute(Data = dataCopy, value = "yield",
     country = "country", group = "group", year = "year", commodity = "commodity",
     n.iter = n.iter, tol = tol)
-
+  impYield.dt = data.table(impYield.lst$imputed)
+  print(paste("yield methodology: ", impYield.lst$method))
+  impYield.dt[, yieldMethodology := impYield.lst$method]
   setnames(impYield.dt, old = "estValue", new = "imputedYield")
-  impYield.dt[!is.na(yield), imputedYield := as.numeric(NA)]
+  
+  ## Impute area and produciton if available
   impYield.dt[, imputedArea := area]
   impYield.dt[, imputedProd := prod]
   impYield.dt[is.na(imputedArea) & !is.na(imputedProd) & !is.na(imputedYield),
@@ -23,8 +28,7 @@ fullImputation = function(Data, area, prod, yield, country, group, year,
   impYield.dt[is.na(imputedProd) & !is.na(imputedArea) & !is.na(imputedYield),
            imputedProd := imputedArea * imputedYield]
   
-  impYield.dt[, imputedArea := na.locf(na.locf(na.approx2(imputedArea),
-                           na.rm = FALSE), fromLast = TRUE, na.rm = FALSE),
+  impYield.dt[, imputedArea := naiveImp(imputedArea),
               by = c("country", "commodity")]
   impYield.dt[is.na(imputedProd), imputedProd := imputedArea * imputedYield]
   setnames(impYield.dt,
