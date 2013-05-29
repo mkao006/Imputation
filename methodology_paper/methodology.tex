@@ -89,14 +89,15 @@
 
 \Abstract{ 
 
-This paper proposes a new imputation method for the FAOSTAT production
-domain.  The proposal provides resolve to many of the shortcomings of
-the current approach, and offers a flexible framework to incorporate
-further information to improve performance.  We first examine the
-factors that drive changes in production by commodity, after which a
-brief acount of the current approach and its shortcomings. Then, a
-description of the new methodology is provided, with a visual
-decomposition of the model and accompanying explanation.
+  This paper proposes a new imputation method for the FAOSTAT
+  production domain.  The proposal provides resolve to many of the
+  shortcomings of the current approach, and offers a flexible
+  framework to incorporate further information to improve performance.
+  We first examine the factors that drive changes in production by
+  commodity, after which a brief acount of the current approach and
+  its shortcomings. Then, a description of the new methodology is
+  provided, with a visual decomposition of the model and accompanying
+  explanation.
 
 }
 
@@ -118,6 +119,14 @@ decomposition of the model and accompanying explanation.
 
 
 \begin{document}
+
+\section*{Disclaimer}
+This Working Paper should not be reported as representing the views of
+the FAO. The views expressed in this Working Paper are those of the
+author and do not necessarily represent those of the FAO or FAO
+policy. Working Papers describe research in progress by the author and
+are published to elicit comments and to further discussion.
+
 %% \tableofcontents
 \section{Introduction}
 Missing values are commonplace in the agriculturl production domain,
@@ -224,7 +233,18 @@ intepretation.
 
 \section{Exploratory Data Analysis}
 
+\begin{knitrout}
+\definecolor{shadecolor}{rgb}{0.969, 0.969, 0.969}\color{fgcolor}\begin{kframe}
 
+
+{\ttfamily\noindent\bfseries\color{errorcolor}{\#\# Error: cannot open the connection}}
+
+{\ttfamily\noindent\bfseries\color{errorcolor}{\#\# Error: object 'official.dt' not found}}
+
+{\ttfamily\noindent\bfseries\color{errorcolor}{\#\# Error: object 'tmp.dt' not found}}
+
+{\ttfamily\noindent\bfseries\color{errorcolor}{\#\# Error: object 'plot.df' not found}}\end{kframe}
+\end{knitrout}
 
 
 Before any modelling or statistical analysis, a grasp of the data is
@@ -241,32 +261,48 @@ rather than multiplicative.
 \end{equation}
 
 
+\begin{knitrout}
+\definecolor{shadecolor}{rgb}{0.969, 0.969, 0.969}\color{fgcolor}\begin{kframe}
+
+
+{\ttfamily\noindent\bfseries\color{errorcolor}{\#\# Error: object 'plot.df' not found}}\end{kframe}
+\end{knitrout}
 
 
 
+\begin{knitrout}
+\definecolor{shadecolor}{rgb}{0.969, 0.969, 0.969}\color{fgcolor}\begin{kframe}
 
 
+{\ttfamily\noindent\bfseries\color{errorcolor}{\#\# Error: object 'plot.df' not found}}\end{kframe}
+\end{knitrout}
 
 
+\begin{knitrout}
+\definecolor{shadecolor}{rgb}{0.969, 0.969, 0.969}\color{fgcolor}\begin{kframe}
 
 
-
-
-
-
+{\ttfamily\noindent\bfseries\color{errorcolor}{\#\# Error: object 'plot.df' not found}}\end{kframe}
+\end{knitrout}
 
 
 
 
 \begin{knitrout}
-\definecolor{shadecolor}{rgb}{0.969, 0.969, 0.969}\color{fgcolor}
-
-{\centering \includegraphics[width=\linewidth,height=20cm]{figure/plot-decomposition} 
-
-}
+\definecolor{shadecolor}{rgb}{0.969, 0.969, 0.969}\color{fgcolor}\begin{kframe}
 
 
+{\ttfamily\noindent\bfseries\color{errorcolor}{\#\# Error: object 'plot.df' not found}}\end{kframe}
+\end{knitrout}
 
+
+
+
+\begin{knitrout}
+\definecolor{shadecolor}{rgb}{0.969, 0.969, 0.969}\color{fgcolor}\begin{kframe}
+
+
+{\ttfamily\noindent\bfseries\color{errorcolor}{\#\# Error: object 'dwheat' not found}}\end{kframe}
 \end{knitrout}
 
 
@@ -291,29 +327,45 @@ below are area and yields for the same set of commodities but on an
 original scale.
 
 
+\begin{knitrout}
+\definecolor{shadecolor}{rgb}{0.969, 0.969, 0.969}\color{fgcolor}\begin{kframe}
 
 
+{\ttfamily\noindent\bfseries\color{errorcolor}{\#\# Error: object 'plot.df' not found}}\end{kframe}
+\end{knitrout}
 
 
+\begin{knitrout}
+\definecolor{shadecolor}{rgb}{0.969, 0.969, 0.969}\color{fgcolor}\begin{kframe}
 
 
+{\ttfamily\noindent\bfseries\color{errorcolor}{\#\# Error: object 'plot.df' not found}}\end{kframe}
+\end{knitrout}
 
 
+\begin{knitrout}
+\definecolor{shadecolor}{rgb}{0.969, 0.969, 0.969}\color{fgcolor}\begin{kframe}
 
 
-
+{\ttfamily\noindent\bfseries\color{errorcolor}{\#\# Error: object 'plot.df' not found}}\end{kframe}
+\end{knitrout}
 
 
 
 \begin{knitrout}
-\definecolor{shadecolor}{rgb}{0.969, 0.969, 0.969}\color{fgcolor}
-
-{\centering \includegraphics[width=\linewidth,height=18cm]{figure/plot-area-yield} 
-
-}
+\definecolor{shadecolor}{rgb}{0.969, 0.969, 0.969}\color{fgcolor}\begin{kframe}
 
 
+{\ttfamily\noindent\bfseries\color{errorcolor}{\#\# Error: object 'plot.df' not found}}\end{kframe}
+\end{knitrout}
 
+
+
+\begin{knitrout}
+\definecolor{shadecolor}{rgb}{0.969, 0.969, 0.969}\color{fgcolor}\begin{kframe}
+
+
+{\ttfamily\noindent\bfseries\color{errorcolor}{\#\# Error: object 'wheatAreaYield' not found}}\end{kframe}
 \end{knitrout}
 
 
@@ -415,14 +467,16 @@ and models the correlation with the dark blue grouped yield series.
 
 
 \begin{knitrout}
-\definecolor{shadecolor}{rgb}{0.969, 0.969, 0.969}\color{fgcolor}
-
-{\centering \includegraphics[width=\maxwidth,height=18cm]{figure/wheat-yield} 
-
-}
+\definecolor{shadecolor}{rgb}{0.969, 0.969, 0.969}\color{fgcolor}\begin{kframe}
 
 
+{\ttfamily\noindent\bfseries\color{errorcolor}{\#\# Error: object 'plot.df' not found}}
 
+{\ttfamily\noindent\bfseries\color{errorcolor}{\#\# Error: object 'gmean.df' not found}}
+
+{\ttfamily\noindent\bfseries\color{errorcolor}{\#\# Error: object 'plot.df' not found}}
+
+{\ttfamily\noindent\bfseries\color{errorcolor}{\#\# Error: object 'tmp.df' not found}}\end{kframe}
 \end{knitrout}
 
 
@@ -462,6 +516,7 @@ impute with the latest value.
   \label{eq:locf}
   \hat{A}_t = A_{t_{nn}}
 \end{equation}
+
 
 \section{Conclusion and Future improvements}
 The aim of the paper has been to overhaul the current imputation
@@ -508,12 +563,12 @@ The codes and data can be find at the github repository at
   
   \Begin{
       \For{i=1 \emph{\KwTo} n.iter}{
-        (1) Compute the expected group average yield\;
+        E-step: Compute the expected group average yield\;
         \Indp\Indp\Indp 
         $\bar{Y}_{j, t} \leftarrow 1/N \sum_{i \in j} \hat{Y}_{i}$\;
         \Indm\Indm\Indm 
         
-        (2) Fit the Linear Mix Model in \ref{eq:lmeImpute}\;
+        M-step: Fit the Linear Mix Model in \ref{eq:lmeImpute}\;
         \If{$\cal{L}_{\text{new}} - \cal{L}_{\text{old}} \ge
           \cal{E}$}{ $\hat{Y}_{i, t} \leftarrow \hat{\beta}_{0j} +
           \hat{\beta}_{1j}t + \hat{b}_{0i} + \hat{b}_{1i}t +

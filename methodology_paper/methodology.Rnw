@@ -40,14 +40,15 @@ library(gridExtra)
 
 \Abstract{ 
 
-This paper proposes a new imputation method for the FAOSTAT production
-domain.  The proposal provides resolve to many of the shortcomings of
-the current approach, and offers a flexible framework to incorporate
-further information to improve performance.  We first examine the
-factors that drive changes in production by commodity, after which a
-brief acount of the current approach and its shortcomings. Then, a
-description of the new methodology is provided, with a visual
-decomposition of the model and accompanying explanation.
+  This paper proposes a new imputation method for the FAOSTAT
+  production domain.  The proposal provides resolve to many of the
+  shortcomings of the current approach, and offers a flexible
+  framework to incorporate further information to improve performance.
+  We first examine the factors that drive changes in production by
+  commodity, after which a brief acount of the current approach and
+  its shortcomings. Then, a description of the new methodology is
+  provided, with a visual decomposition of the model and accompanying
+  explanation.
 
 }
 
@@ -69,6 +70,14 @@ decomposition of the model and accompanying explanation.
 
 
 \begin{document}
+
+\section*{Disclaimer}
+This Working Paper should not be reported as representing the views of
+the FAO. The views expressed in this Working Paper are those of the
+author and do not necessarily represent those of the FAO or FAO
+policy. Working Papers describe research in progress by the author and
+are published to elicit comments and to further discussion.
+
 %% \tableofcontents
 \section{Introduction}
 Missing values are commonplace in the agriculturl production domain,
@@ -183,37 +192,6 @@ plot.df = melt(tmp.dt, id.var = c("FAOST_CODE", "UNSD_MACRO_REG", "UNSD_SUB_REG"
                          "itemCode", "Year"))
 plot.df$variable = factor(gsub("value", "", plot.df$variable), 
   levels = c("Prod", "Area", "Yield"))
-
-## official.dt[, dvalueArea := diffv(valueArea), by = c("FAOST_CODE", "itemCode")]
-## official.dt[, dvalueYield := diffv(valueYield), by = c("FAOST_CODE", "itemCode")]
-
-## official.dt[, varArea := var(dvalueArea, na.rm = TRUE), by = "itemCode"]
-## official.dt[, varYield := var(dvalueYield, na.rm = TRUE), by = "itemCode"]
-
-## par(mfrow = c(2, 1))
-## hist(official.dt$varArea[official.dt$varArea <= 3], 
-##      breaks = 300)
-## hist(official.dt$varYield[official.dt$varYield <= 3], 
-##      breaks = 300)
-
-## official.dt[, cvArea := sd(dvalueArea, na.rm = TRUE)/
-##             mean(dvalueArea, na.rm = TRUE), by = "itemCode"]
-## official.dt[, cvYield := sd(dvalueYield, na.rm = TRUE)/
-##             mean(dvalueYield, na.rm = TRUE), by = "itemCode"]
-
-
-## par(mfrow = c(2, 1))
-## hist(official.dt$cvArea[abs(official.dt$cvArea) <= 50], 
-##      breaks = 300)
-## hist(official.dt$cvYield[abs(official.dt$cvYield) <= 30], 
-##      breaks = 300)
-
-## plot.df$UNSD_SUB_REG2 = plot.df$UNSD_SUB_REG
-## plot.df[plot.df$FAOST_CODE %in% c(9, 19,21, 40, 44, 58, 69, 91, 169, 170, 234, 
-##                                   236), "UNSD_SUB_REG2"] = "South America"
-## plot.df[plot.df$FAOST_CODE %in% c(12, 14, 23, 48, 49, 56, 60, 87, 89, 93, 95, 
-##                                   109, 135, 138, 157, 166, 177, 188, 189, 191, 
-##                                   207, 220), "UNSD_SUB_REG2"] = "Central America"
 
 @ 
 
@@ -529,6 +507,7 @@ impute with the latest value.
   \hat{A}_t = A_{t_{nn}}
 \end{equation}
 
+
 \section{Conclusion and Future improvements}
 The aim of the paper has been to overhaul the current imputation
 methodology, with a more consistent, yet better performing approach.
@@ -574,12 +553,12 @@ The codes and data can be find at the github repository at
   
   \Begin{
       \For{i=1 \emph{\KwTo} n.iter}{
-        (1) Compute the expected group average yield\;
+        E-step: Compute the expected group average yield\;
         \Indp\Indp\Indp 
         $\bar{Y}_{j, t} \leftarrow 1/N \sum_{i \in j} \hat{Y}_{i}$\;
         \Indm\Indm\Indm 
         
-        (2) Fit the Linear Mix Model in \ref{eq:lmeImpute}\;
+        M-step: Fit the Linear Mix Model in \ref{eq:lmeImpute}\;
         \If{$\cal{L}_{\text{new}} - \cal{L}_{\text{old}} \ge
           \cal{E}$}{ $\hat{Y}_{i, t} \leftarrow \hat{\beta}_{0j} +
           \hat{\beta}_{1j}t + \hat{b}_{0i} + \hat{b}_{1i}t +
