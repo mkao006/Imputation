@@ -99,8 +99,8 @@
   performances.
 
   Nous examinons en premier lieu les facteurs d\'{e}terminant des
-  changements de production par produits, puis donnons un bref aperçu
-  de la m\'{e}thode actuelle et de ses limites. La nouvelle
+  changements de production par produits, puis donnons un bref
+  aper\c{c}u de la m\'{e}thode actuelle et de ses limites. La nouvelle
   m\'{e}thodologie est ensuite d\'{e}crite, accompagn\'{e}e d'une
   d\'{e}composition du mod\`{e}le et de son explication.
 
@@ -139,13 +139,13 @@
 %% \tableofcontents
 \section{Introduction}
 Les probl\`{e}mes de donn\'{e}es manquantes sont courants dans le
-domaine de la production agricole. Ils peuvent être dus a une absence
-de r\'{e}ponse de la part des entit\'{e}s pourvoyant les donn\'{e}es
-ou une incapacit\'{e} de celles-ci \`{a} obtenir les informations.  Il
-est cependant de premi\`{e}re importance, pour produire la balance
-alimentaire de pouvoir compter sur un domaine de production
-coh\'{e}rent et le plus complet possible. Une imputation pr\'{e}cise
-et fiable en est donc un pr\'{e}-requis essentiel.
+domaine de la production agricole. Ils peuvent \^{e}tre dus a une
+absence de r\'{e}ponse de la part des entit\'{e}s pourvoyant les
+donn\'{e}es ou une incapacit\'{e} de celles-ci \`{a} obtenir les
+informations.  Il est cependant de premi\`{e}re importance, pour
+produire la balance alimentaire de pouvoir compter sur un domaine de
+production coh\'{e}rent et le plus complet possible. Une imputation
+pr\'{e}cise et fiable est donc un pr\'{e}-requis essentiel.
 
 Ce papier cherche \`{a} cerner et d\'{e}passer un certain nombre de
 limites de la m\'{e}thodologie actuelle et \`{a} am\'{e}liorer la
@@ -153,7 +153,7 @@ pr\'{e}cision de l'imputation en d\'{e}veloppant une nouvelle
 m\'{e}thodologie.
 
 
-La relation entre les variables du domaine de production peut être
+La relation entre les variables du domaine de production peut \^{e}tre
 exprim\'{e}e ainsi :
 \begin{equation}
   \label{eq:identity}
@@ -170,22 +170,22 @@ diff\'{e}rente.
 
 L'objectif de l'imputation est, en incorporant l'ensemble des
 informations fiables utilisables, de fournir les meilleurs estimations
-de la nourriture disponible pour permettre le calcul de la balance
-alimentaire.
+de la quantite d'aliments disponible pour permettre le calcul de la
+balance alimentaire.
 
 
 \section{Contexte et revue de la m\'{e}thodologie actuelle}
 Deux cat\'{e}gories de m\'{e}thodologies ont \'{e}t\'{e} propos\'{e}es
 par le pass\'{e} pour \'{e}valuer les donn\'{e}es manquantes dans le
 domaine de production. Les m\'{e}thodologies appartenant \`{a} la
-premi\`{e}re cat\'{e}gorie utilisent les s\'{e}ries de donn\'{e}es
-historiques et appliquent des m\'{e}thodes d'interpolation et de
-r\'{e}gression sur une tendance.  Celles appartenant \`{a} la seconde
-cat\'{e}gorie basent l'imputation sur les taux de croissance des
-produits d'int\'{e}rêt et/ou sur des agr\'{e}gations par
-r\'{e}gion. L'imputation est men\'{e}e de mani\`{e}re ind\'{e}pendante
-\`{a} la fois sur la surface cultiv\'{e}e et sur la production, tandis
-que les rendements sont calcul\'{e}s de mani\`{e}re implicite.
+premi\`{e}re cat\'{e}gorie utilisent les s\'{e}ries historiques et
+appliquent des m\'{e}thodes d'interpolation et de r\'{e}gression sur
+une tendance.  Celles appartenant \`{a} la seconde cat\'{e}gorie
+basent l'imputation sur les taux de croissance des produits et/ou sur
+des agr\'{e}gations par r\'{e}gion. L'imputation est men\'{e}e de
+mani\`{e}re ind\'{e}pendante \`{a} la fois sur la surface cultiv\'{e}e
+et sur la production, tandis que les rendements sont calcul\'{e}s de
+mani\`{e}re implicite.
 
 
 Chacune de ces approches n'utilisent cependant qu'une dimension de
@@ -208,32 +208,32 @@ connexion ne sont pas disponibles.
 
 En cons\'{e}quent, la m\'{e}thode d'agr\'{e}gation a \'{e}t\'{e}
 pr\'{e}f\'{e}r\'{e}e car elle permet d'atteindre un taux de couverture
-\'{e}lev\'{e} pour l'imputation, et semble extrêmement performante.
+\'{e}lev\'{e} pour l'imputation, et semble extr\^{e}mement
+performante.
 
 
 Dans un premier temps, cette m\'{e}thode permet de calculer la
 croissance agr\'{e}g\'{e}e de la production et de la surface par
 produit et par r\'{e}gion.  Le taux de croissance est ensuite
 appliqu\'{e} a la derni\`{e}re valeur observ\'{e}e dans la s\'{e}rie
-concern\'{e}e. La formule de la croissance agr\'{e}g\'{e}e peut être
-exprim\'{e} de la mani\`{e}re suivant :
+concern\'{e}e. La formule est la suivante:
 
 \begin{equation}
   \label{eq:aggregateGrowth}
   r_{s, t} = \sum_{c \in \mathbb{S}} X_{c, t}/\sum_{c \in \mathbb{S}} X_{c, t-1}
 \end{equation}
 
-Où $\mathbb{S}$ r\'{e}f\`{e}re \`{a} l'ensemble des produits et pays
-appartenant aux groupes de produits et de la classification
-r\'{e}gionale concern\'{e}e, apr\`{e}s l'omission des donn\'{e}es
-devant être imput\'{e}es.
+O\`{u} $\mathbb{S}$ r\'{e}f\`{e}re \`{a} l'ensemble des produits et
+pays appartenant aux groupes de produits et de la classification
+r\'{e}gionale concern\'{e}e, apr\`{e}s exclusion des donn\'{e}es
+devant \^{e}tre imput\'{e}es.
 
 
-Par exemple, pour calculer la \textit{croissance agr\'{e}g\'{e}e de
+Par exemple, pour calculer la \textit{croissance agr\'{e}g\'{e}e de la
   production c\'{e}r\'{e}ali\`{e}re} pour un pays dans le but
-  d'imputer la production de bl\'{e}, on additionne toute la
-  production des produits appartenant au groupe de c\'{e}r\'{e}ales
-  d'un même pays en excluant le bl\'{e}.
+d'imputer la production de bl\'{e}, on additionne toute la production
+des produits appartenant au groupe de c\'{e}r\'{e}ales d'un m\^{e}me pays
+en excluant le bl\'{e}.
 
 Pour imputer la production de bl\'{e} \`{a} l'aide d'un (\textit{
   indice r\'{e}gional de croissance agr\'{e}g\'{e}e }), les
@@ -242,7 +242,7 @@ l'int\'{e}rieur du profile r\'{e}gional, \`{a} l'exception du pays
 concern\'{e}. \\
 
 
-l'Imputation peut donc être calcul\'{e}e de la mani\`{e}re suivante
+l'Imputation s\'{e}ffective donc de la mani\`{e}re suivante
 \begin{equation}
   \hat{X}_{c, t} = X_{c, t-1} \times r_{s, t}
 \end{equation}
@@ -252,21 +252,22 @@ faiblesse principale vient du fait que la production et la surface
 sont estim\'{e}es de mani\`{e}re ind\'{e}pendante. Des cas de
 divergence entre la production et la surface ont \'{e}t\'{e}
 observ\'{e}s, r\'{e}sultant en incoh\'{e}rences entre les tendances,
-ou en rendements bien trop \'{e}lev\'{e}es.
+ou en rendements bien trop \'{e}lev\'{e}s.
 
 
 Ce probl\`{e}me prend sa source dans le calcul du taux de croissance
-agr\'{e}g\'{e}e.
+agr\'{e}g\'{e}.
 
 Du fait des donn\'{e}es manquantes, le panier calcul\'{e} peut ne pas
-\^{e}tre comparable au cours du temps, induisant ainsi des erreurs dans le
-calcul de la croissance ou de la contraction de la production. De
-plus, les paniers permettant de calculer les changements de production
-ou de surface cultiv\'{e}es peuvent \^{e}tre consid\'{e}rablement
-diff\'{e}rents. Finalement, la m\'{e}thodologie ne donne aucun aper\c{c}u
-des facteurs sous-jacents dirigeant la production, qui sont pourtant
-n\'{e}cessaires \`{a} une meilleure compr\'{e}hension des
-ph\'{e}nom\`{e}nes en jeux et donc \`{a} l'interpr\'{e}tation.
+\^{e}tre comparable au cours du temps, induisant ainsi des erreurs
+dans le calcul de la croissance de la production. De plus, les paniers
+permettant de calculer les changements de production ou de surface
+cultiv\'{e}es peuvent \^{e}tre consid\'{e}rablement
+diff\'{e}rents. Finalement, la m\'{e}thodologie ne donne aucun
+aper\c{c}u des facteurs sous-jacents d\'{e}terminant la production,
+qui sont pourtant n\'{e}cessaires \`{a} une meilleure
+compr\'{e}hension des ph\'{e}nom\`{e}nes en jeux et donc \`{a}
+l'interpr\'{e}tation.
 
 
 \section{Premi\`{e}re analyse de donn\'{e}es}
@@ -275,13 +276,13 @@ ph\'{e}nom\`{e}nes en jeux et donc \`{a} l'interpr\'{e}tation.
 
 
 Avant qu'aucune mod\'{e}lisation ou analyse statistique ne soit faite,
-un aperçu des donn\'{e}es est essentiel. Cette section est
+un aper\c{c}u des donn\'{e}es est essentiel. Cette section est
 d\'{e}di\'{e}e a l'exploration des donn\'{e}es afin de comprendre la
 nature des s\'{e}ries et leurs d\'{e}terminants. En premier lieu, nous
 explorerons la relation d\'{e}crite par l'\'{e}quation
 \ref{eq:identity}. Pour simplifier, nous avons appliqu\'{e} aux
-donn\'{e}es un logarithme, afin de transformer la relation
-multiplicative en une relation additive.
+donn\'{e}es un logarithme, afin de transformer lin\'{e}ariser la
+relation.
 
 \begin{equation}
   \label{eq:logIdentity}
@@ -341,7 +342,7 @@ r\'{e}sultats ne varient pas selon les produits consid\'{e}r\'{e}s.
 
 Nous allons maintenant explorer plus en d\'{e}tail l'\'{e}volution du
 rendement et de la surface. Les graphiques ci-dessous repr\'{e}sentent
-la surface et le rendement pour le même ensemble de produit, mais
+la surface et le rendement pour le m\^{e}me ensemble de produit, mais
 cette fois sans transformation des donn\'{e}es.
 
 
@@ -375,7 +376,7 @@ cultiv\'{e}e sont en g\'{e}n\'{e}ral plus stables et lisses que celles
 qui repr\'{e}sentent le rendement. Le rendement fluctue d'une
 ann\'{e}e sur l'autre tout en pr\'{e}sentant une certaine
 corr\'{e}lation, qui est plus durablement observ\'{e} dans la
-s\'{e}rie du bl\'{e}. Ceci peut être expliqu\'{e} par des facteurs
+s\'{e}rie du bl\'{e}. Ceci peut \^{e}tre expliqu\'{e} par des facteurs
 sous-jacents, comme des facteurs climatiques, qui impacteraient les
 rendements de diff\'{e}rents pays simultan\'{e}ment. Cependant cette
 caract\'{e}ristique n'est pas observ\'{e}e dans la cat\'{e}gorie NES
@@ -390,8 +391,8 @@ cultiv\'{e}e, mais la variation d'une ann\'{e}e \`{a} l'autre est en
 revanche d\'{e}termin\'{e}e par le rendement, qui peut \^{e}tre
 associ\'{e} aux changements climatiques. L'analyse exploratoire des
 donn\'{e}es nous \'{e}claire sur la nature de la s\'{e}rie
-temporelle. Elle soutient le mod\`{e}le de d\'{e}composition de la
-variance propos\'{e} en attribuant les fluctuations \`{a} la surface
+temporelle. Elle soutientl'utilisation d'aa mod\`{e}le de d\'{e}composition de la
+variance qui attribuerait les fluctuations \`{a} la surface
 et aux rendements.
 
 
@@ -411,12 +412,12 @@ divergent pas comme elles le font dans l'approche actuelle.
 Le mod\`{e}le propos\'{e} pour estimer le rendement est un mod\`{e}le
 lin\'{e}aire mixte, l'usage de ce mod\`{e}le permet d'incorporer \`{a}
 la fois l'information transversale et l'information
-historique. D'autres indicateurs, comme l'indexe de v\'{e}g\'{e}tation
-$\text{CO}_2$, de concentration peuvent aussi être test\'{e}s et
-incorpor\'{e}s si ils am\'{e}liorent la pr\'{e}vision.
+historique. D'autres indicateurs, comme de v\'{e}g\'{e}tation
+$\text{CO}_2$, de concentration peuvent aussi \^{e}tre l'indice
+test\'{e}s et incorpor\'{e}s s\'{i} ils am\'{e}liorent la pr\'{e}vision.
 
-La forme g\'{e}n\'{e}rale du mod\`{e}le peut être sp\'{e}cifi\'{e}e de
-la mani\`{e}re suivante :
+La forme g\'{e}n\'{e}rale du mod\`{e}le peut \^{e}tre
+sp\'{e}cifi\'{e}e de la mani\`{e}re suivante :
 \begin{align}
   \mathbf{y_i} &= \mathbf{X_i}\boldsymbol{\beta} +
   \mathbf{Z_i}\mathbf{b_i} + \epsilon_i \nonumber\\
@@ -425,8 +426,8 @@ la mani\`{e}re suivante :
   \boldsymbol{\sigma^2}\boldsymbol{\Lambda_i})
 \end{align}
 
-Où la composante fixe $\mathbf{X_i}\boldsymbol{\beta}$ d\'{e}signe le
-niveau r\'{e}gional et la tendance , tandis que la composante
+O\`{u} la composante fixe $\mathbf{X_i}\boldsymbol{\beta}$ d\'{e}signe
+le niveau r\'{e}gional et la tendance , tandis que la composante
 al\'{e}atoire $\mathbf{Z_i}\mathbf{b_i}$ capture la variation
 sp\'{e}cifique du pays autour du niveau r\'{e}gional. Plus
 sp\'{e}cifiquement, le mod\`{e}le propos\'{e} pour la production dans
@@ -439,7 +440,7 @@ FAOSTAT est le suivant :
 \end{align}
 
 O\`{u} $Y$ d\'{e}signe le rendement, $\bar{Y}$ d\'{e}signe le rendement
-moyen du groupe, $i$ indique le pay , $j$ le groupe r\'{e}gional, et
+moyen du groupe, $i$ indique le pays, $j$ le groupe r\'{e}gional, et
 $t$ le temps. La moyenne du groupe est calcul\'{e}e de la mani\`{e}re
 suivante :
 \begin{equation}
@@ -449,7 +450,7 @@ suivante :
 
 Cependant, comme le rendement moyen du groupe est seulement
 partiellement observ\'{e} compte tenu des donn\'{e}es manquantes, le
-rendement moyen est estim\'{e} grâce a l'algorithme EM (maximisation
+rendement moyen est estim\'{e} gr\^{a}ce a l'algorithme EM (maximisation
 de l'esp\'{e}rance).
 
 L'estimation du rendement est bas\'{e}e sur le niveau sp\'{e}cifique
@@ -457,23 +458,24 @@ du pays et sur la tendance historique r\'{e}gionale, tout en tenant
 compte de la corr\'{e}lation entre les pays et des variations
 r\'{e}gionales.
 
-Contrairement a la m\'{e}thodologie pr\'{e}c\'{e}demment utilis\'{e}e,
-où la variation \'{e}tait appliqu\'{e}e enti\`{e}rement, la
-m\'{e}thodologie propos\'{e}e mesure la taille de la relation entre la
-s\'{e}rie individuelle et les variations r\'{e}gionales pour estimer
-l'effet al\'{e}atoire du pays. Comme \`{a} la fois les donn\'{e}es
-historiques et transversales sont utilis\'{e}s, les donn\'{e}es
-estim\'{e}es pr\'{e}sentent des caract\'{e}ristiques stables tout en
-refl\'{e}tant les changements climatiques.
+Contrairement \'{a} la m\'{e}thodologie pr\'{e}c\'{e}demment
+utilis\'{e}e, o\'{u} la variation \'{e}tait appliqu\'{e}e
+enti\`{e}rement, la m\'{e}thodologie propos\'{e}e mesure le degr\'{e}
+de la relation entre la s\'{e}rie individuelle et les variations
+r\'{e}gionales pour estimer l'effet al\'{e}atoire du pays. Comme \`{a}
+la fois les donn\'{e}es historiques et transversales sont
+utilis\'{e}s, les donn\'{e}es estim\'{e}es pr\'{e}sentent des
+caract\'{e}ristiques stables tout en refl\'{e}tant les changements
+climatiques.
 
 
 Afin de mieux comprendre la m\'{e}thodologie, nous pr\'{e}sentons
 ci-dessous le niveau r\'{e}gional (ligne noire), et le rendement moyen
-des pays du groupe (ligne bleue fonc\'{e}e) sur le m\^{e}me graphique. Le
-mod\`{e}le attribue a chaque s\'{e}ries une tendance et un niveau
-r\'{e}gional (repr\'{e}sent\'{e} par la ligne noire), et mod\'{e}lise
-la corr\'{e}lation avec la s\'{e}rie du rendement moyen r\'{e}gional
-repr\'{e}sent\'{e} par ligne bleue fonc\'{e}e.
+des pays du groupe (ligne bleue fonc\'{e}e) sur le m\^{e}me
+graphique. Le mod\`{e}le attribue \`{a} chaque s\'{e}rie une tendance
+et un niveau r\'{e}gional (repr\'{e}sent\'{e} par la ligne noire), et
+mod\'{e}lise la corr\'{e}lation avec la s\'{e}rie du rendement moyen
+r\'{e}gional repr\'{e}sent\'{e} par ligne bleue fonc\'{e}e.
 
 
 \begin{knitrout}
@@ -516,8 +518,8 @@ production cesse, les chiffres de la production et la surface
 s'\'{e}tablissant a z\'{e}ro l'ann\'{e}e pr\'{e}c\'{e}dente, nous
 n'imputerons pas une donn\'{e}e positive.
 
-Nous continuons n\'{e}anmoins a explorer les donn\'{e}es et a
-\'{e}tudier des m\'{e}thodes plus efficaces qui pourraient être
+Nous continuons n\'{e}anmoins \`{a} explorer les donn\'{e}es et \`{a}
+\'{e}tudier des m\'{e}thodes plus efficaces qui pourraient \^{e}tre
 appliqu\'{e}es \`{a} l'estimation des donn\'{e}es manquantes pour la
 surface.
 
@@ -526,9 +528,9 @@ surface.
   \hat{A}_t = A_{t_a} + (t - a) \times \frac{A_{t_b} - A_{t_a}}{t_b - t_a}
 \end{equation}
 
-Pour les donn\'{e}es manquantes pour lesquelles nous ne pouvons
-imputer \`{a} l'aide de l'interpolation lin\'{e}aire, nous rempla\c{c}ons
-par la derni\`{e}re valeur disponible.
+Pour les donn\'{e}es manquantes que nous ne pouvons imputer \`{a}
+l'aide de l'interpolation lin\'{e}aire, nous rempla\c{c}ons par la
+derni\`{e}re valeur disponible.
 
 \begin{equation}
   \label{eq:locf}
@@ -538,12 +540,12 @@ par la derni\`{e}re valeur disponible.
 
 \section{Conclusion et am\'{e}liorations futures}
 
-Le but de ce papier est de r\'{e}viser la m\'{e}thodologie actuelle,
-et produire une m\'{e}thodologie plus pertinente et plus performante.
+Le but de ce papier est de r\'{e}viser la m\'{e}thodologie actuelle et
+de produire une m\'{e}thodologie plus pertinente et plus performante.
 
 
 Le mod\`{e}le propos\'{e} permet de r\'{e}soudre des probl\`{e}mes
-pos\'{e}s par les s\'{e}ries de donn\'{e}es de production et de
+pos\'{e}s par les s\'{e}ries de de production et de
 surface divergentes ou les biais dans le calcul croissance
 r\'{e}sultant des donn\'{e}es manquantes. De plus, la proposition
 offre la possibilit\'{e} d'incorporer l'information ad\'{e}quate tout
@@ -554,12 +556,12 @@ Les \'{e}quipes techniques continuent de collaborer afin
 d'am\'{e}liorer le mod\`{e}le et de mieux comprendre les
 donn\'{e}es. Un mod\`{e}le espace-\'{e}tat pourrait \^{e}tre un bon
 candidat \`{a} cette m\'{e}thodologie car il permettrait \`{a} la
-production, l'espace et le rendement d'être imput\'{e}s
+production, l'espace et le rendement d'\^{e}tre imput\'{e}s
 simultan\'{e}ment.
 
 
 
-\section*{Annex 1: G\'{e}ographie et classification}
+\section*{Annexe 1: Classification G\'{e}ographie}
 
 La classification g\'{e}ographique suit la classification UNSD M49
 \url{http://unstats.un.org/unsd/methods/m49/m49regin.htm}. La
@@ -567,10 +569,10 @@ d\'{e}finition est aussi disponible dans le \code{FAOregionProfile} du
 package R \pkg{FAOSTAT}.
 
 
-\section*{Annex 2: Code}
+\section*{Annexe 2: Code}
 
 
-Les codes et les donn\'{e}es sont disponibles dans le fichier github 
+Code et les donn\'{e}es sont disponibles dans le fichier github
 \url{https://github.com/mkao006/Imputation}.
 
 \begin{algorithm}
