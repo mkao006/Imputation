@@ -4,44 +4,39 @@
 ########################################################################
 
 lmeEMImpute = function(Data, value, country, group, year, commodity,
-  n.iter = 1000, tol = 1e-6){
+  n.iter = 1000, tol = 1e-6, silent = TRUE){
   setnames(Data, old = c(value, country, group, year, commodity),
            new = c("value", "country", "group", "year", "commodity"))
+  setkeyv(Data, c("country", "commodity", "group", "year"))
   for(i in unique(Data$commodity)){
     print(i)
-    ll = double(n.iter)
+    ## Initialization
+    ll = rep(NA, n.iter + 1)
     ll[1] = -Inf
     missInd = is.na(Data[, value])    
     Data[commodity == i, estValue := value]
-    Data[commodity == i, estValue := na.locf(na.locf(na.approx2(estValue,
-                           na.rm = FALSE), na.rm = FALSE), fromLast = TRUE),
-         by = "country"]
-    ## Data[commodity == i & is.na(estValue),
-    ##      estValue := .SD[, Data[, mean(estValue, na.rm = TRUE)]], by = "year"]
-    ## Data[, randSample := sample(na.omit(estValue), length(estValue),
-    ##                     replace = TRUE), by = c("country", "group")]
-    ## Data[is.na(estValue), estValue := randSample]
-    ## Data[commodity == i & is.na(estValue),
-    ##      estValue := .SD[, randomImp(estValue)], by = "country"]
-       
-    for(j in 2:n.iter){
+    method = "naive"
+    
+    ## Naive imputation
+    Data[commodity == i, estValue := naiveImp(estValue), by = "country"]
+    
+    ## EM-lme
+    for(j in 1:n.iter){
       Data[commodity == i, avgValue := mean(estValue, na.rm = TRUE),
            by = c("year", "group")]
       fit = try(
-        lme(value ~ year * group, random= ~avgValue|country,
+        lme(value ~ year * group, random = ~avgValue|country,
             na.action = na.omit, data = Data[commodity == i, ])
             )
-        ## fit = try(lmer(value ~ year * group + (1 + avgValue + year|country),
-        ##   na.action = na.omit, data = Data[commodity == i, ]))
       fit.ll = try(logLik(fit))
-      try(print(fit.ll))
+      if(!silent)
+        try(print(fit.ll))
       if(!inherits(fit, "try-error")){
-        if(fit.ll - ll[j - 1] > tol){
-          Data[commodity == i, estValue := predict(fit, Data[commodity == i, ])]
-          ## Data[commodity == i & !missInd,
-          ##      fittedValue := predict(fit, Data[commodity == i & !missInd, ])]
-          Data[commodity == i & !missInd, fittedValue := fitted(fit)]
-          ll[j] = fit.ll
+        if(fit.ll - ll[j] > tol){
+          Data[commodity == i,
+                   estValue := predict(fit, Data[commodity == i, ])]
+          ll[j + 1] = fit.ll
+          method = "LME"
         } else {
           break
         }
@@ -50,6 +45,8 @@ lmeEMImpute = function(Data, value, country, group, year, commodity,
       }
     }
   }
+  ## Outputs
   setnames(Data, old = c("value", "country", "group", "year", "commodity"),
            new = c(value, country, group, year, commodity))
+  list(imputed = Data, method = method)
 }
