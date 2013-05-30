@@ -115,9 +115,9 @@
 
 \Address{
   Michael. C. J. Kao\\
-  Economics and Social Statistics Division\\
-  Economic and Social Development Department\\
-  United Nations Food and Agriculture Organization\\
+  Economics and Social Statistics Division (ESS)\\
+  Economic and Social Development Department (ES)\\
+  Food and Agriculture Organization of the United Nations (FAO\\
   Viale delle Terme di Caracalla 00153 Rome, Italy\\
   E-mail: \email{michael.kao@fao.org}\\
   URL: \url{https://github.com/mkao006/Imputation}
@@ -137,6 +137,16 @@
 %% are published to elicit comments and to further discussion.
 
 %% \tableofcontents
+
+\section*{Avertissement}
+Ce document de travail ne repr\'{e}sente pas les vues de la FAO. les
+points de vue exprim\'{e}es dans ce document de travail sont celles de
+l'auteur et ne refl\'{e}tent pas nécessairement celles de la politique
+de la FAO. Les Documents de travail d\'{e}crivent les recherches en
+cours par l'auteur et visent \`{a} susciter commentaires et
+discussions.
+
+
 \section{Introduction}
 Les probl\`{e}mes de donn\'{e}es manquantes sont courants dans le
 domaine de la production agricole. Ils peuvent \^{e}tre dus a une
@@ -202,9 +212,9 @@ l'imputation.
 
 Les r\'{e}sultats obtenus par les essais pr\'{e}c\'{e}dents indiquent
 que l'interpolation lin\'{e}aire est une m\'{e}thode stable et
-pr\'{e}cise. Elle ne permet cependant pas d'utiliser des
-\'{e}chantillons transversaux, ni d'extrapoler lorsque les points de
-connexion ne sont pas disponibles.
+pr\'{e}cise. Elle ne permet cependant pas d'utiliser des donn\'{e}es
+transversales, ni d'extrapoler lorsque les points de connexion ne sont
+pas disponibles.
 
 En cons\'{e}quent, la m\'{e}thode d'agr\'{e}gation a \'{e}t\'{e}
 pr\'{e}f\'{e}r\'{e}e car elle permet d'atteindre un taux de couverture
@@ -310,7 +320,7 @@ relation.
 \begin{knitrout}
 \definecolor{shadecolor}{rgb}{0.969, 0.969, 0.969}\color{fgcolor}
 
-{\centering \includegraphics[width=\linewidth,height=20cm]{figure/plot-decomposition} 
+{\centering \includegraphics[width=\linewidth,height=16cm]{figure/plot-decomposition} 
 
 }
 
@@ -329,8 +339,8 @@ principalement d\'{e}termin\'{e} par le niveau de surface
 cultiv\'{e}e. Les chocs sur la production sont par ailleurs li\'{e}s a
 des changements affectant la surface plus que les rendements. La
 surface cultiv\'{e}e est habituellement consid\'{e}r\'{e}e comme
-stable et pr\'{e}visible dans le temps, bien que vuln\'{e}rable aux
-chocs naturels.
+stable et pr\'{e}visible dans le temps, bien que vuln\'{e}rable \`{a}
+des climatiques.
 
 
 Le second aspect notable est que l'intervalle de variation du taux de
@@ -391,9 +401,9 @@ cultiv\'{e}e, mais la variation d'une ann\'{e}e \`{a} l'autre est en
 revanche d\'{e}termin\'{e}e par le rendement, qui peut \^{e}tre
 associ\'{e} aux changements climatiques. L'analyse exploratoire des
 donn\'{e}es nous \'{e}claire sur la nature de la s\'{e}rie
-temporelle. Elle soutientl'utilisation d'aa mod\`{e}le de d\'{e}composition de la
-variance qui attribuerait les fluctuations \`{a} la surface
-et aux rendements.
+temporelle. Elle soutient l'utilisation d'un mod\`{e}le de
+d\'{e}composition de la variance qui attribuerait les fluctuations
+\`{a} la surface et aux rendements.
 
 
 
@@ -401,20 +411,22 @@ et aux rendements.
 
 \section{M\'{e}thodologie propos\'{e}e}
 
-Afin d'\'{e}viter des probl\`{e}mes d'identification, et de capturer
-la corr\'{e}lation des rendements entre diff\'{e}rents pays, nous
-proposons d'imputer les rendements et la surface, et non la production
-et la surface. Le second avantage de cette approche et qu'associ\'{e}e
-a un system de validation, elle garantie que les s\'{e}ries ne
-divergent pas comme elles le font dans l'approche actuelle.
+Afin d'\'{e}viter des probl\`{e}mes d'identification, et de tenir
+compte de la corr\'{e}lation des rendements entre diff\'{e}rents pays,
+nous proposons d'imputer les rendements et la surface, et non la
+production et la surface. Le second avantage de cette approche et
+qu'associ\'{e}e a un system de validation, elle garantie que les
+s\'{e}ries ne divergent pas comme elles le font dans l'approche
+actuelle.
 
 \subsection{Imputation pour le rendement}
 Le mod\`{e}le propos\'{e} pour estimer le rendement est un mod\`{e}le
-lin\'{e}aire mixte, l'usage de ce mod\`{e}le permet d'incorporer \`{a}
+lin\'{e}aire mixte. L'usage de ce mod\`{e}le permet d'incorporer \`{a}
 la fois l'information transversale et l'information
-historique. D'autres indicateurs, comme de v\'{e}g\'{e}tation
-$\text{CO}_2$, de concentration peuvent aussi \^{e}tre l'indice
-test\'{e}s et incorpor\'{e}s s\'{i} ils am\'{e}liorent la pr\'{e}vision.
+historique. D'autres indicateurs, comme l'indice de
+v\'{e}g\'{e}tation, la concentration en $CO_2$ peuvent aussi \^{e}tre
+l'indice test\'{e}s et incorpor\'{e}s s\'{}ils am\'{e}liorent la
+pr\'{e}vision.
 
 La forme g\'{e}n\'{e}rale du mod\`{e}le peut \^{e}tre
 sp\'{e}cifi\'{e}e de la mani\`{e}re suivante :
@@ -464,7 +476,7 @@ enti\`{e}rement, la m\'{e}thodologie propos\'{e}e mesure le degr\'{e}
 de la relation entre la s\'{e}rie individuelle et les variations
 r\'{e}gionales pour estimer l'effet al\'{e}atoire du pays. Comme \`{a}
 la fois les donn\'{e}es historiques et transversales sont
-utilis\'{e}s, les donn\'{e}es estim\'{e}es pr\'{e}sentent des
+utilis\'{e}es, les donn\'{e}es estim\'{e}es pr\'{e}sentent des
 caract\'{e}ristiques stables tout en refl\'{e}tant les changements
 climatiques.
 
@@ -475,7 +487,7 @@ des pays du groupe (ligne bleue fonc\'{e}e) sur le m\^{e}me
 graphique. Le mod\`{e}le attribue \`{a} chaque s\'{e}rie une tendance
 et un niveau r\'{e}gional (repr\'{e}sent\'{e} par la ligne noire), et
 mod\'{e}lise la corr\'{e}lation avec la s\'{e}rie du rendement moyen
-r\'{e}gional repr\'{e}sent\'{e} par ligne bleue fonc\'{e}e.
+r\'{e}gional repr\'{e}sent\'{e}e par ligne bleue fonc\'{e}e.
 
 
 \begin{knitrout}
@@ -518,15 +530,16 @@ production cesse, les chiffres de la production et la surface
 s'\'{e}tablissant a z\'{e}ro l'ann\'{e}e pr\'{e}c\'{e}dente, nous
 n'imputerons pas une donn\'{e}e positive.
 
-Nous continuons n\'{e}anmoins \`{a} explorer les donn\'{e}es et \`{a}
-\'{e}tudier des m\'{e}thodes plus efficaces qui pourraient \^{e}tre
-appliqu\'{e}es \`{a} l'estimation des donn\'{e}es manquantes pour la
-surface.
 
 \begin{equation}
   \label{eq:linearInterpolation}
   \hat{A}_t = A_{t_a} + (t - a) \times \frac{A_{t_b} - A_{t_a}}{t_b - t_a}
 \end{equation}
+
+Nous continuons n\'{e}anmoins \`{a} explorer les donn\'{e}es et \`{a}
+\'{e}tudier des m\'{e}thodes plus efficaces qui pourraient \^{e}tre
+appliqu\'{e}es \`{a} l'estimation des donn\'{e}es manquantes pour la
+surface.
 
 Pour les donn\'{e}es manquantes que nous ne pouvons imputer \`{a}
 l'aide de l'interpolation lin\'{e}aire, nous rempla\c{c}ons par la
@@ -545,11 +558,11 @@ de produire une m\'{e}thodologie plus pertinente et plus performante.
 
 
 Le mod\`{e}le propos\'{e} permet de r\'{e}soudre des probl\`{e}mes
-pos\'{e}s par les s\'{e}ries de de production et de
-surface divergentes ou les biais dans le calcul croissance
-r\'{e}sultant des donn\'{e}es manquantes. De plus, la proposition
-offre la possibilit\'{e} d'incorporer l'information ad\'{e}quate tout
-en maintenant un cadre souple permettant de traiter des informations
+pos\'{e}s par les s\'{e}ries de de production et de surface
+divergentes ou les biais dans le calcul croissance r\'{e}sultant des
+donn\'{e}es manquantes. De plus, la proposition offre la
+possibilit\'{e} d'incorporer l'information ad\'{e}quate tout en
+maintenant un cadre souple permettant de tenir compte des informations
 suppl\'{e}mentaires.
 
 Les \'{e}quipes techniques continuent de collaborer afin
@@ -560,7 +573,16 @@ production, l'espace et le rendement d'\^{e}tre imput\'{e}s
 simultan\'{e}ment.
 
 
+\section*{Remerciements}
+Ce travail a \'{e}t\'{e} supervise\'{e} par Adam Prakash, avec l'aide
+du Nicolas Sakoff, Onno Hoffmeister and Hansdeep Khaira essentielle
+pour le d\'{e}veloppment de la m\'{e}thodologie. L' auteur voutrait
+aussi remercier les membres de l'\'{e}quipe qui ont particip\'{e} aux
+discussions. Nous remercions \'{e}galement C\'{e}cile Fanton et Franck
+Cachia pour la traduction en fran\c{c}ais.
 
+
+\newpage
 \section*{Annexe 1: Classification G\'{e}ographie}
 
 La classification g\'{e}ographique suit la classification UNSD M49

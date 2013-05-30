@@ -106,9 +106,9 @@
 
 \Address{
   Michael. C. J. Kao\\
-  Economics and Social Statistics Division\\
-  Economic and Social Development Department\\
-  United Nations Food and Agriculture Organization\\
+  Economics and Social Statistics Division (ESS)\\
+  Economic and Social Development Department (ES)\\
+  Food and Agriculture Organization of the United Nations (FAO)\\
   Viale delle Terme di Caracalla 00153 Rome, Italy\\
   E-mail: \email{michael.kao@fao.org}\\
   URL: \url{https://github.com/mkao006/Imputation}
@@ -129,7 +129,7 @@ are published to elicit comments and to further discussion.
 
 %% \tableofcontents
 \section{Introduction}
-Missing values are commonplace in the agriculturl production domain,
+Missing values are commonplace in the agricultural production domain,
 stemming from non-response in surveys or a lack of capacity by the
 reporting entity to provide measurement. Yet a consistent and
 non-sparse production domain is of critical importance to Food Balance
@@ -163,7 +163,7 @@ food supply in FBS.
 
 There have been two classes of methodology proposed in the past in
 order to account for missing values in the production domain. The
-first type utilises historical information and implements methods such
+first type utilizes historical information and implements methods such
 as linear interpolation and trend regression; while the second class
 aims to capture the variation of relevant commodity
 and/or spatial characteristics through the application of
@@ -171,10 +171,10 @@ aggregated growth rates. The imputation is carried out independently
 on both area and production, with the yield calculated implicitly as
 an identity.
 
-Nevertheless, both approaches only utilise one dimension of
+Nevertheless, both approaches only utilize one dimension of
 information and improvements can be obtained if information usage
 can be married. Furthermore, these methods lack the ability to
-incorporate external information such as vegetaion indices,
+incorporate external information such as vegetation indices,
 precipitation or temperature that may provide valuable information and
 enhance the accuracy of imputation.
 
@@ -215,8 +215,8 @@ Imputation can then be computed as:
   
 
 There are, however, several shortcomings of this methodology. The
-Achillies heel lies in the fact that area and production are imputed
-independently, cases of diverging area havrvested and production have
+Achilles heel lies in the fact that area and production are imputed
+independently, cases of diverging area harvested and production have
 been observed that result in inconsistency between trends as well as
 exploding yields. The source of this undesirable characteristic is
 nested in the computation of the aggregated growth rate. Owing to
@@ -227,31 +227,20 @@ production and area may be considerably different.
 
 Finally, the methodology does not provide insight into the
 underlying driving factors of production that are required to better understand the phenomenon and hence for
-intepretation.
+interpretation.
 
 
 
 \section{Exploratory Data Analysis}
 
-\begin{knitrout}
-\definecolor{shadecolor}{rgb}{0.969, 0.969, 0.969}\color{fgcolor}\begin{kframe}
 
-
-{\ttfamily\noindent\bfseries\color{errorcolor}{\#\# Error: cannot open the connection}}
-
-{\ttfamily\noindent\bfseries\color{errorcolor}{\#\# Error: object 'official.dt' not found}}
-
-{\ttfamily\noindent\bfseries\color{errorcolor}{\#\# Error: object 'tmp.dt' not found}}
-
-{\ttfamily\noindent\bfseries\color{errorcolor}{\#\# Error: object 'plot.df' not found}}\end{kframe}
-\end{knitrout}
 
 
 Before any modelling or statistical analysis, a grasp of the data is
 essential. This section is devoted to some basic exploratory analysis
 of the data in order to understand the nature of the series and their
 drivers. First, let us explore the relationship between the identity
-in equation \ref{eq:identity}. To make the relationshp clearer we have
+in equation \ref{eq:identity}. To make the relations hp clearer we have
 log-transformed the data so the relationship becomes an additive one
 rather than multiplicative.
 
@@ -261,48 +250,32 @@ rather than multiplicative.
 \end{equation}
 
 
-\begin{knitrout}
-\definecolor{shadecolor}{rgb}{0.969, 0.969, 0.969}\color{fgcolor}\begin{kframe}
-
-
-{\ttfamily\noindent\bfseries\color{errorcolor}{\#\# Error: object 'plot.df' not found}}\end{kframe}
-\end{knitrout}
 
 
 
-\begin{knitrout}
-\definecolor{shadecolor}{rgb}{0.969, 0.969, 0.969}\color{fgcolor}\begin{kframe}
 
 
-{\ttfamily\noindent\bfseries\color{errorcolor}{\#\# Error: object 'plot.df' not found}}\end{kframe}
-\end{knitrout}
 
 
-\begin{knitrout}
-\definecolor{shadecolor}{rgb}{0.969, 0.969, 0.969}\color{fgcolor}\begin{kframe}
 
 
-{\ttfamily\noindent\bfseries\color{errorcolor}{\#\# Error: object 'plot.df' not found}}\end{kframe}
-\end{knitrout}
+
+
+
+
 
 
 
 
 \begin{knitrout}
-\definecolor{shadecolor}{rgb}{0.969, 0.969, 0.969}\color{fgcolor}\begin{kframe}
+\definecolor{shadecolor}{rgb}{0.969, 0.969, 0.969}\color{fgcolor}
+
+{\centering \includegraphics[width=\linewidth,height=20cm]{figure/plot-decomposition} 
+
+}
 
 
-{\ttfamily\noindent\bfseries\color{errorcolor}{\#\# Error: object 'plot.df' not found}}\end{kframe}
-\end{knitrout}
 
-
-
-
-\begin{knitrout}
-\definecolor{shadecolor}{rgb}{0.969, 0.969, 0.969}\color{fgcolor}\begin{kframe}
-
-
-{\ttfamily\noindent\bfseries\color{errorcolor}{\#\# Error: object 'dwheat' not found}}\end{kframe}
 \end{knitrout}
 
 
@@ -322,57 +295,41 @@ a given size of area. The results are very similar even between
 different commodities.
 
 After exploring the relationship between the identity, let us delve
-deeper into the constitutents of production: area and yield. Depicted
+deeper into the constituents of production: area and yield. Depicted
 below are area and yields for the same set of commodities but on an
 original scale.
 
 
-\begin{knitrout}
-\definecolor{shadecolor}{rgb}{0.969, 0.969, 0.969}\color{fgcolor}\begin{kframe}
 
 
-{\ttfamily\noindent\bfseries\color{errorcolor}{\#\# Error: object 'plot.df' not found}}\end{kframe}
-\end{knitrout}
 
 
-\begin{knitrout}
-\definecolor{shadecolor}{rgb}{0.969, 0.969, 0.969}\color{fgcolor}\begin{kframe}
 
 
-{\ttfamily\noindent\bfseries\color{errorcolor}{\#\# Error: object 'plot.df' not found}}\end{kframe}
-\end{knitrout}
 
 
-\begin{knitrout}
-\definecolor{shadecolor}{rgb}{0.969, 0.969, 0.969}\color{fgcolor}\begin{kframe}
 
 
-{\ttfamily\noindent\bfseries\color{errorcolor}{\#\# Error: object 'plot.df' not found}}\end{kframe}
-\end{knitrout}
+
 
 
 
 \begin{knitrout}
-\definecolor{shadecolor}{rgb}{0.969, 0.969, 0.969}\color{fgcolor}\begin{kframe}
+\definecolor{shadecolor}{rgb}{0.969, 0.969, 0.969}\color{fgcolor}
+
+{\centering \includegraphics[width=\linewidth,height=18cm]{figure/plot-area-yield} 
+
+}
 
 
-{\ttfamily\noindent\bfseries\color{errorcolor}{\#\# Error: object 'plot.df' not found}}\end{kframe}
-\end{knitrout}
 
-
-
-\begin{knitrout}
-\definecolor{shadecolor}{rgb}{0.969, 0.969, 0.969}\color{fgcolor}\begin{kframe}
-
-
-{\ttfamily\noindent\bfseries\color{errorcolor}{\#\# Error: object 'wheatAreaYield' not found}}\end{kframe}
 \end{knitrout}
 
 
 We can first observe that area is in general much more stable and
-smoother when compared to yield. The yield fluctutates from
+smoother when compared to yield. The yield fluctuates from
 year-to-year with correlation to a certain extent, which is more
-preminently observed in wheat. This implies that there maybe
+prominently observed in wheat. This implies that there maybe
 underlying factors such as climatic shocks, which may impact the yield
 in different countries simultaneously. However, this characteristic is
 not observed in the NES (none elsewhere specified) category which
@@ -405,11 +362,11 @@ approach.
 The proposed model for imputing the yield is a linear mixed model, the
 usage of this model enables all information available both
 historical and cross-sectional to be incorporated. In addition,
-proposed indicators such as the vegetaion index, $\text{CO}_2$
+proposed indicators such as the vegetation index, $\text{CO}_2$
 concentration and other drivers can be tested and incorporated if
 proven to improve predictive power.
 
-The general form of the model can be specified as:
+The general form of the model can be expressed as:
 
 \begin{align}
   \mathbf{y_i} &= \mathbf{X_i}\boldsymbol{\beta} +
@@ -467,16 +424,14 @@ and models the correlation with the dark blue grouped yield series.
 
 
 \begin{knitrout}
-\definecolor{shadecolor}{rgb}{0.969, 0.969, 0.969}\color{fgcolor}\begin{kframe}
+\definecolor{shadecolor}{rgb}{0.969, 0.969, 0.969}\color{fgcolor}
+
+{\centering \includegraphics[width=\maxwidth,height=18cm]{figure/wheat-yield} 
+
+}
 
 
-{\ttfamily\noindent\bfseries\color{errorcolor}{\#\# Error: object 'plot.df' not found}}
 
-{\ttfamily\noindent\bfseries\color{errorcolor}{\#\# Error: object 'gmean.df' not found}}
-
-{\ttfamily\noindent\bfseries\color{errorcolor}{\#\# Error: object 'plot.df' not found}}
-
-{\ttfamily\noindent\bfseries\color{errorcolor}{\#\# Error: object 'tmp.df' not found}}\end{kframe}
 \end{knitrout}
 
 
@@ -526,7 +481,7 @@ The proposed model demonstrates the ability to resolve issues such as
 diverging area and production series and biased growth as a result of
 missing values. Furthermore, the proposal takes into account the
 attribute of incorporating relevant information as well as
-establishing a flexible framework to accomodate additional
+establishing a flexible framework to accommodate additional
 information.
 
 This is, however, work in progress, as the technical teams are
@@ -535,6 +490,14 @@ the data in order to improve on the model. Application of the
 state-space model might be a candidate to succeed in this regard, as
 it allows for production, area and yield to be imputed simultaneously.
 
+\section{Acknowledgement}
+This work is supervised by Adam Prakash with assistance from Nicolas
+Sakoff, Onno Hoffmeister and Hansdeep Khaira whom were crucial in the
+development of the methodology. The author would also like to thank
+the team members which participated in the first round of the
+discussion providing valuable feedbacks. Finally, credits to Cecile
+Fanton and Frank Cachia whom devoted their time to translate the paper
+into French.
 
 
 
@@ -545,10 +508,7 @@ The geographic classification follows the UNSD M49 classification at
 definition is also available in the \code{FAOregionProfile} of the R
 package \pkg{FAOSTAT}.
 
-\section*{Annex 2: Code implementation}
-
-The codes and data can be find at the github repository at
-\url{https://github.com/mkao006/Imputation}.
+\section*{Annex 2: Pseudo Codes}
 
 \begin{algorithm}
   \SetAlgoLined
@@ -568,7 +528,7 @@ The codes and data can be find at the github repository at
         $\bar{Y}_{j, t} \leftarrow 1/N \sum_{i \in j} \hat{Y}_{i}$\;
         \Indm\Indm\Indm 
         
-        M-step: Fit the Linear Mix Model in \ref{eq:lmeImpute}\;
+        M-step: Estimate the Linear Mix Model in \ref{eq:lmeImpute}\;
         \If{$\cal{L}_{\text{new}} - \cal{L}_{\text{old}} \ge
           \cal{E}$}{ $\hat{Y}_{i, t} \leftarrow \hat{\beta}_{0j} +
           \hat{\beta}_{1j}t + \hat{b}_{0i} + \hat{b}_{1i}t +
@@ -639,17 +599,50 @@ The codes and data can be find at the github repository at
         }
       }
   }
-  \caption{Imputation Process}
+  \caption{Imputation Procedure}
 \end{algorithm}
 
-%% \begin{thebibliography}{9}
-%% \bibitem{impWorkingPaper2011}
-%%   Data Collection, Workflows and Methodology (DCWM) team,
-%%   \emph{Imputation and Validation Methodologies for the FAOSTAT
-%%     Production Domain}.
-%%   Economics and Social Statistics Division,
-%%   2011  
-%% \end{thebibliography}
+  
+\section*{Annex 3: Supplementary Resources}
+
+The data, codes implementation and documentation can all be found and
+downloaded from \url{https://github.com/mkao006/Imputation}. This
+paper is generated on \today and is subject to changes and updates
+everyday.
+  
+\begin{thebibliography}{9}
+\bibitem{impWorkingPaper2011}
+  Data Collection, Workflows and Methodology (DCWM) team,
+  \emph{Imputation and Validation Methodologies for the FAOSTAT Production Domain}.
+  Economics and Social Statistics Division,
+  2011.
+  
+\bibitem{lairdWare1982}
+  Nan M. Laird, James H. Ware,
+  \emph{Random-Effects Models for Longitudinal Data}.
+  Biometrics Volume 38, 963-974,
+  1982.
+  
+\bibitem{rCore}
+  R Core Team,
+  \emph{A language and environment for statistical computing.}
+  R Foundation for Statistical Computing, Vienna, Austria.
+  ISBN 3-900051-07-0, URL http://www.R-project.org/,
+  2013.
+  
+\bibitem{nlme}
+  Jose Pinheiro, Douglas Bates, Saikat DebRoy, Deepayan Sarkar and the
+  R Development Core Team,
+  \emph{nlme: Linear and Nonlinear Mixed Effects Models.} 
+  R package version 3.1-108.
+  2013
+  
+\bibitem{rubin1976}
+  Donald B. Rubin,
+  \emph{Inference and Missing Data},
+  Biometrika, Volume 63, Issue 3, 581-592,
+  1976
+\end{thebibliography}
   
   
 \end{document}
