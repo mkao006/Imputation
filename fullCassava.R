@@ -8,13 +8,14 @@ library(reshape2)
 library(FAOSTAT)
 library(nlme)
 library(zoo)
-library(VIM)
-
-## Run the data manipulation
-## source("dataManipulation.R")
 source("diffv.R")
-source("lmeImpute.R")
 source("lmeEMImpute.R")
+source("checkSparsity.R")
+source("computeYield.R")
+source("randomImp.R")
+source("fullImputation.R")
+source("naiveImpute.R")
+
 
 fc.df = read.csv(file = "fullCassava.csv", header = TRUE,
   stringsAsFactors = FALSE)
@@ -65,15 +66,6 @@ cmfc.df[which(cmfc.df$valueArea == 0 & cmfc.df$valueProd != 0),
 cmfc.df[which(cmfc.df$valueArea != 0 & cmfc.df$valueProd == 0),
            "valueProd"] = NA
 
-## A function to compute yield to account for zeros in area and
-## production. To account fo identification problem, we compute yield
-## as NA if one of area or production is zero or NA.
-computeYield = function(production, area){
-  if(length(production) != length(area))
-    stop("Length of prodduction is not the same as area")
-  ifelse(production != 0 & area != 0, production/area, NA)
-}
-
 cmfc.df$valueYield = with(cmfc.df, computeYield(valueProd, valueArea))
 cmfc.df$ovalueYield = with(cmfc.df, computeYield(ovalueProd, ovalueArea))
 
@@ -98,157 +90,105 @@ cmfc.df[which(cmfc.df$FAOST_CODE == 164), "UNSD_SUB_REG"] = "Polynesia"
 
 ## Western Asia is removed because there is no information
 final.dt = data.table(cmfc.df[cmfc.df$UNSD_SUB_REG != "Western Asia", ])
+final.dt[, UNSD_MACRO_REG := factor(UNSD_MACRO_REG)]
+final.dt[, UNSD_SUB_REG := factor(UNSD_SUB_REG)]
 setkeyv(final.dt, c("FAOST_CODE", "FAOST_NAME", "Year"))
 
 ## Number of official and semi officail data
 final.dt[symbArea %in% c(" ", "*"), sum(!is.na(ovalueArea))]
 final.dt[symbProd %in% c(" ", "*"), sum(!is.na(ovalueProd))]
 
-## Compute the quantile group of the country, this is to account for
-## higher missing value with lower production
-final.dt[, qntGroup := factor(findQGroup(FAOST_CODE, valueProd,
-             probs = seq(0, 1, length = 11)))]
 
-ggplot(data = final.dt,
-       aes(y = log(valueProd), x = valueYield)) +
-  geom_point() +
-  facet_wrap(~Year, ncol = 5)
-
-
-ggplot(data = final.dt,
-       aes(y = log(valueProd), x = valueYield)) +
-  geom_point(aes(col = factor(UNSD_MACRO_REG)))
-
-
-ggplot(data = final.dt,
-       aes(y = log(valueProd), x = log(valueArea))) +
-  geom_point(aes(col = UNSD_MACRO_REG)) +
-  facet_wrap(~Year, ncol = 5)
-
-
-## Function to check the sparsity of the data
-checkSparsity = function(Data){
-  image(data.matrix(is.na(Data)))
-  text(rep(0.5, NCOL(Data)), seq(0, 1, length = NCOL(Data)),
-       labels = paste(colnames(Data), " (", round(sapply(X = Data,
-         FUN = function(x) 100 * sum(is.na(x))/length(x)), 2), "%)", sep = ""))
-}
-
-## Diagnose of the sparsity and the missing values
-checkSparsity(final.dt)
-sparsityHeatMap(data = data.frame(final.dt), country = "FAOST_NAME", year = "Year",
-                var = "valueProd", ncol = 3)
-dataDensity(final.dt)
-barMiss(final.dt[, list(Year, valueProd)], interactive = FALSE)
-barMiss(final.dt[, list(UNSD_SUB_REG, valueArea)], interactive = FALSE)
-scattJitt(final.dt[, list(valueProd, valueArea)])
-
-ggplot(final.dt, aes(x = Year, y = valueYield)) +
-  geom_line(aes(col = factor(FAOST_CODE))) +
-  facet_wrap(~qntGroup) +
-  geom_smooth(method = "lm", se = FALSE, lwd = 2) +
-  theme(legend.position = "none")
+## Imputation
+## ---------------------------------------------------------------------
+imputed.dt = fullImputation(final.dt, area = "valueArea", prod = "valueProd",
+  yield = "valueYield", country = "FAOST_CODE",
+  group = "UNSD_SUB_REG", year = "Year",  commodity = "itemCode")
 
 
 
 
-
-## Function to carry out linear interpolation
-na.approx2 = function(x, na.rm = FALSE){
-  if(length(na.omit(x)) < 2){
-    tmp = x
-  } else {
-    tmp = na.approx(x, na.rm = na.rm)
-  }
-  c(tmp)
-}
-
-## lmeImpute(Data = final.dt, value = "valueYield", country = "FAOST_CODE",
-##           group = "UNSD_SUB_REG", year = "Year", commodity = "itemCode")
-## setnames(final.dt, old = "imputedValue", new = "imputedYield")
-
-
-
-lmeEMImpute(final.dt, "valueYield", "FAOST_CODE", "UNSD_SUB_REG", "Year",
-            "itemCode")
-setnames(final.dt, old = "estValue", new = "imputedYield")
-
-
-
-## Create the impute column
-## final.dt[!is.na(valueYield), imputedYield := valueYield]
-final.dt[!is.na(valueYield), imputedYield := as.numeric(NA)]
-checkSparsity(final.dt)
-
-
-final.dt[, imputedArea := valueArea]
-final.dt[, imputedProd := valueProd]
-
-## Impute area and production if the other one exist
-final.dt[is.na(imputedArea) & !is.na(imputedProd),
-         imputedArea := imputedProd/imputedYield]
-final.dt[!is.na(imputedArea) & is.na(imputedProd),
-         imputedProd := imputedArea * imputedYield]
-
-
-## Impute area with linear interpolation and last observation carry
-## forward.
-final.dt[, imputedArea := na.locf(na.locf(na.approx2(imputedArea), na.rm = FALSE),
-             fromLast = TRUE, na.rm = FALSE),
-         by = c("FAOST_CODE", "itemCode")]
-
-
-## Impute the remaining production
-final.dt[is.na(imputedProd), imputedProd := imputedArea * imputedYield]
-
-checkSparsity(final.dt)
-
-## Percentage of missing value imputed
-NROW(final.dt[is.na(valueProd) & !is.na(imputedProd), ])/
-  NROW(final.dt[is.na(valueProd), ])
-
-NROW(final.dt[is.na(valueArea) & !is.na(imputedArea), ])/
-  NROW(final.dt[is.na(valueArea), ])
-
-final.dt[, avgYield := mean(valueYield, na.rm = TRUE),
-         by = c("Year", "UNSD_SUB_REG")]
-final.dt[imputedProd == 0 & imputedArea == 0, imputedYield := as.numeric(NA)]
-
-## Examination and plots
+## Simulation
 ## ---------------------------------------------------------------------
 
-pdf(file = "cassvaBreakDown.pdf", width = 15)
-print(ggplot(data = final.dt[UNSD_SUB_REG != "Western Asia", ],
-             aes(x = Year, y = valueYield)) +
-      geom_line(aes(col = factor(FAOST_CODE))) +
-      geom_point(aes(col = factor(FAOST_CODE)), size = 1) +  
-      scale_color_manual(values = rep("gold",
-                           length(unique(final.dt$FAOST_CODE)))) +
-      geom_line(aes(x = Year, y = avgYield), col = "black", alpha = 0.5) +
-      geom_line(aes(x = Year, y = avgValue), col = "blue", alpha = 0.5) + 
-      facet_wrap(~UNSD_SUB_REG, ncol = 4, scales = "free_y") + 
-      theme(legend.position = "none"))
-graphics.off()
-system("evince cassvaBreakDown.pdf&")
+n.sim = 2000
+sim.df = data.frame(propSim = runif(n.sim, 1e-05, 1 - 1e-05),
+  propReal = rep(NA, n.sim), MAPE = rep(NA, n.sim), method = rep(NA, n.sim))
+for(i in 1:n.sim){
+  print(paste0("Simulation Number: ", i))
+  tmp.dt = final.dt
+  prop = sim.df[i, "propSim"]
+  ## set.seed(587)
+  simMissArea = sample(which(tmp.dt$symbArea %in% c(" ", "*")),
+    length(which(tmp.dt$symbArea %in% c(" ", "*"))) * prop)
+  tmp.dt[, simArea := valueArea]
+  tmp.dt[simMissArea, "simArea"] = NA
+  ## set.seed(587)
+  simMissProd = sample(which(tmp.dt$symbProd %in% c(" ", "*")),
+    length(which(tmp.dt$symbProd %in% c(" ", "*"))) * prop)
+  tmp.dt[, simProd := valueProd]
+  tmp.dt[simMissProd, "simProd"] = NA 
+  tmp.dt[, simYield := computeYield(simProd, simArea)]
+  sim.df[i, "propReal"] = tmp.dt[, sum(is.na(simYield))/length(simYield)]  
+  impSim.dt = try(fullImputation(tmp.dt, area = "simArea", prod = "simProd",
+    yield = "simYield", country = "FAOST_CODE",
+    group = "UNSD_SUB_REG", year = "Year",  commodity = "itemCode"))
+  if(!inherits(impSim.dt, "try-error")){
+    sim.df[i, "method"] = unique(impSim.dt[, yieldMethodology])
+    ## Check the MAPE of the imputation
+    sim.df[i, "MAPE"] = 
+      impSim.dt[1:nrow(impSim.dt) %in% simMissProd & ovalueProd != 0 &
+                !is.na(imputedProd),
+                sum(abs((ovalueProd - imputedProd)/(ovalueProd)))/
+                length(simMissProd)]
+  } else {
+    sim.df[i, c("MAPE", "method")] = NA
+  }
+}
 
-pdf(file = "checkCassavaImputation.pdf", width = 10)
-## for(i in c(32, 45, 46, 61, 74, 144, 181, 215, 251)){
-for(i in unique(final.dt$FAOST_CODE)){
-  tmp = final.dt[FAOST_CODE == i, ]
+
+with(sim.df[sim.df$method == "LME", ], plot(propReal, MAPE, xlim = c(0, 1),
+              ylim = c(range(sim.df$MAPE, na.rm = TRUE))))
+with(sim.df[sim.df$method != "LME", ], points(propReal, MAPE, col = "red"))
+
+ggplot(sim.df, aes(x = propReal, y = MAPE)) + geom_point() + geom_smooth()
+
+pdf(file = "cassavaSimulationResult.pdf", width = 10)
+with(sim.df[sim.df$MAPE < 1.0, ], plot(propReal, MAPE, xlim = c(0, 1),
+          ylim = c(range(MAPE, na.rm = TRUE)),
+     xlab = "Missing proportion in yield",
+     ylab = "Mean absolute percentage error"))
+with(sim.df[sim.df$MAPE < 1.0 & !is.na(sim.df$MAPE), ],
+     lines(lowess(propReal, MAPE), col = "red", lwd = 2), xlim = c(0, 1),
+           ylim = c(range(MAPE, na.rm = TRUE)))
+abline(h = seq(0, 1, by = 0.05), lty = 2, col = "grey50")
+graphics.off()
+system("evince cassavaSimulationResult.pdf&")
+
+
+with(sim.df[sim.df$method == "LME", ], plot(propSim, MAPE, xlim = c(0, 1),
+              ylim = c(range(sim.df$MAPE, na.rm = TRUE))))
+with(sim.df[sim.df$method != "LME", ], points(propSim, MAPE, col = "red"))
+
+
+pdf(file = "checkCassavaSim.pdf", width = 10)
+for(i in unique(imputed.dt$FAOST_CODE)){
+  tmp = impSim.dt[FAOST_CODE == i, ]
 
   myCountry = FAOcountryProfile[which(FAOcountryProfile$FAOST_CODE ==
-    i), "LAB_NAME"]
+    i), "FAO_TABLE_NAME"]
   myItem = unique(FAOmetaTable$itemTable[FAOmetaTable$itemTable$itemCode ==
-    unique(final.dt$itemCode), "itemName"])
+    unique(imputed.dt$itemCode), "itemName"])
   par(mfrow = c(3, 1), mar = c(2.1, 4.1, 3.1, 2.1))
   try({
     ymax = max(tmp[, list(valueProd, imputedProd)], na.rm = TRUE) * 1.2
     with(tmp, plot(Year, valueProd, ylim = c(0, ymax), type = "b",
                    col = "black", xlab = "", ylab = "Production",
                    main = paste0(myCountry, " (", i, ") - ",
-                     myItem, " (", unique(final.dt$itemCode), ")"),
+                     myItem, " (", unique(imputed.dt$itemCode), ")"),
                    cex = 2))
-    with(tmp, points(Year, imputedProd, col = "red", pch = 19))
+    with(tmp[is.na(simProd), ],
+         points(Year, imputedProd, col = "blue", pch = 19))
   })
   
   try({
@@ -256,7 +196,8 @@ for(i in unique(final.dt$FAOST_CODE)){
     with(tmp, plot(Year, valueArea, ylim = c(0, ymax), type = "b",
                    col = "black", xlab = "", ylab = "Area",
                    cex = 2))
-    with(tmp, points(Year, imputedArea, col = "red", pch = 19))
+    with(tmp[is.na(simArea),],
+         points(Year, imputedArea, col = "blue", pch = 19))
   })
   
   
@@ -264,9 +205,77 @@ for(i in unique(final.dt$FAOST_CODE)){
     ymax = max(tmp[, list(valueYield, imputedYield)], na.rm = TRUE) * 1.2
     with(tmp, plot(Year, valueYield, ylim = c(0, ymax), type = "b",
                    col = "black", xlab = "", ylab = "Yield",
+                    cex = 2))
+    with(tmp[!is.na(valueYield), ],
+         points(Year, imputedYield, col = "red", pch = 19))
+    with(tmp[is.na(simYield), ],
+         points(Year, imputedYield, col = "blue", pch = 19))    
+  })
+  
+}
+graphics.off()
+system("evince checkCassavaSim.pdf&")
+
+
+
+## Percentage of missing value imputed
+NROW(imputed.dt[is.na(valueProd) & !is.na(imputedProd), ])/
+  NROW(imputed.dt[is.na(valueProd), ])
+
+NROW(imputed.dt[is.na(valueArea) & !is.na(imputedArea), ])/
+  NROW(imputed.dt[is.na(valueArea), ])
+
+## Remove yield where area or produciton are zero
+imputed.dt[imputedProd == 0 | imputedArea == 0, imputedYield := as.numeric(NA)]
+
+
+## Examination and plots
+## ---------------------------------------------------------------------
+
+pdf(file = "checkCassavaImputation.pdf", width = 10)
+for(i in unique(imputed.dt$FAOST_CODE)){
+  tmp = imputed.dt[FAOST_CODE == i, ]
+
+  myCountry = FAOcountryProfile[which(FAOcountryProfile$FAOST_CODE ==
+    i), "FAO_TABLE_NAME"]
+  myItem = unique(FAOmetaTable$itemTable[FAOmetaTable$itemTable$itemCode ==
+    unique(imputed.dt$itemCode), "itemName"])
+  par(mfrow = c(4, 1), mar = c(2.1, 4.1, 3.1, 2.1))
+  try({
+    ymax = max(tmp[, list(valueProd, imputedProd)], na.rm = TRUE) * 1.2
+    with(tmp, plot(Year, valueProd, ylim = c(0, ymax), type = "b",
+                   col = "black", xlab = "", ylab = "Production",
+                   main = paste0(myCountry, " (", i, ") - ",
+                     myItem, " (", unique(imputed.dt$itemCode), ")"),
                    cex = 2))
-    with(tmp, points(Year, imputedYield, col = "red", pch = 19))
-    with(tmp, points(Year, fittedValue, col = "blue", pch = 19))    
+    with(tmp[is.na(valueProd), ],
+         points(Year, imputedProd, col = "blue", pch = 19))
+  })
+  
+  try({
+    ymax = max(tmp[, list(valueArea, imputedArea)], na.rm = TRUE) * 1.2  
+    with(tmp, plot(Year, valueArea, ylim = c(0, ymax), type = "b",
+                   col = "black", xlab = "", ylab = "Area",
+                   cex = 2))
+    with(tmp[is.na(valueArea),],
+         points(Year, imputedArea, col = "blue", pch = 19))
+  })
+  
+  
+  try({
+    ymax = max(tmp[, list(valueYield, imputedYield, avgValue)],
+      na.rm = TRUE) * 1.2
+    with(tmp, plot(Year, valueYield, ylim = c(0, ymax), type = "b",
+                   col = "black", xlab = "", ylab = "Yield",
+                    cex = 2))
+    with(tmp[!is.na(valueYield), ],
+         points(Year, imputedYield, col = "red", pch = 19))
+    with(tmp[is.na(valueYield), ],
+         points(Year, imputedYield, col = "blue", pch = 19))
+  })
+  try({
+    with(tmp, plot(Year, avgValue, ylab = "Average Yield",
+                   ylim = c(0, ymax), type = "b"))
   })
   
 }
@@ -296,22 +305,9 @@ graphics.off()
 
 
 
-print(ggplot(data = final.dt[!UNSD_SUB_REG %in% c("Western Asia", "Micronesia"), ],
-             aes(x = Year, y = valueArea)) +
-      geom_line(aes(col = factor(FAOST_CODE))) +
-      geom_point(aes(col = factor(FAOST_CODE)), size = 1) +  
-      scale_color_manual(values = rep("gold",
-                           length(unique(final.dt$FAOST_CODE)))) +
-      geom_smooth(method = "lm") + 
-      facet_wrap(~UNSD_SUB_REG, ncol = 4, scales = "free_y") +
-      labs(x = NULL, y = NULL, title = "Yield of Cassava by sub-region") + 
-      theme(legend.position = "none"))
 
-
-
-
-
-
+## Presentation slides
+## ---------------------------------------------------------------------
 plot.df = melt(final.dt[symbArea %in% c(" ", "*") & symbProd %in% c(" ", "*"),
   list(FAOST_CODE, FAOST_NAME, Year, UNSD_SUB_REG,
   valueArea, valueProd, valueYield)],

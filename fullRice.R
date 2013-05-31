@@ -10,13 +10,13 @@ library(nlme)
 library(zoo)
 
 ## Run the data manipulation
-source("na.approx2.R")
 source("diffv.R")
 source("lmeEMImpute.R")
 source("checkSparsity.R")
 source("computeYield.R")
 source("randomImp.R")
 source("fullImputation.R")
+source("naiveImpute.R")
 
 ## Data preperation
 ## ---------------------------------------------------------------------
@@ -126,49 +126,75 @@ imputed.dt = fullImputation(final.dt, area = "valueArea", prod = "valueProd",
 ## Simulation
 ## ---------------------------------------------------------------------
 
-n.sim = 1000
+n.sim = 2000
 sim.df = data.frame(propSim = runif(n.sim, 1e-05, 1 - 1e-05),
-  propReal = rep(NA, n.sim),
-  MAPE = rep(NA, n.sim))
+  propReal = rep(NA, n.sim), MAPE = rep(NA, n.sim), method = rep(NA, n.sim))
 for(i in 1:n.sim){
   print(paste0("Simulation Number: ", i))
   tmp.dt = final.dt
   prop = sim.df[i, "propSim"]
+  ## set.seed(587)
   simMissArea = sample(which(tmp.dt$symbArea %in% c(" ", "*")),
     length(which(tmp.dt$symbArea %in% c(" ", "*"))) * prop)
-  tmp.dt[simMissArea, "valueArea"] = NA
+  tmp.dt[, simArea := valueArea]
+  tmp.dt[simMissArea, "simArea"] = NA
+  ## set.seed(587)
   simMissProd = sample(which(tmp.dt$symbProd %in% c(" ", "*")),
     length(which(tmp.dt$symbProd %in% c(" ", "*"))) * prop)
-  tmp.dt[simMissProd, "valueProd"] = NA 
-  sim.df[i, "propReal"] = tmp.dt[, sum(is.na(valueProd))/length(valueProd)]
-  sim.dt = fullImputation(tmp.dt, area = "valueArea", prod = "valueProd",
-    yield = "valueYield", country = "FAOST_CODE",
-    group = "UNSD_SUB_REG", year = "Year",  commodity = "itemCode")
-  ## Check the MAPE of the imputation
-  sim.df[i, "MAPE"] = 
-    sim.dt[1:nrow(sim.dt) %in% simMissProd & ovalueProd != 0 &
-           !is.na(imputedProd),
-           sum(abs((ovalueProd - imputedProd)/(ovalueProd)))/length(simMissProd)]
+  tmp.dt[, simProd := valueProd]
+  tmp.dt[simMissProd, "simProd"] = NA 
+  tmp.dt[, simYield := computeYield(simProd, simArea)]
+  sim.df[i, "propReal"] = tmp.dt[, sum(is.na(simYield))/length(simYield)]  
+  impSim.dt = try(fullImputation(tmp.dt, area = "simArea", prod = "simProd",
+    yield = "simYield", country = "FAOST_CODE",
+    group = "UNSD_SUB_REG", year = "Year",  commodity = "itemCode"))
+  if(!inherits(impSim.dt, "try-error")){
+    sim.df[i, "method"] = unique(impSim.dt[, yieldMethodology])
+    ## Check the MAPE of the imputation
+    sim.df[i, "MAPE"] = 
+      impSim.dt[1:nrow(impSim.dt) %in% simMissProd & ovalueProd != 0 &
+                !is.na(imputedProd),
+                sum(abs((ovalueProd - imputedProd)/(ovalueProd)))/
+                length(simMissProd)]
+  } else {
+    sim.df[i, c("MAPE", "method")] = NA
+  }
 }
 
 
+with(sim.df[sim.df$method == "LME", ], plot(propReal, MAPE, xlim = c(0, 1),
+              ylim = c(range(sim.df$MAPE, na.rm = TRUE)),
+     xlab = "Missing proportion in yield",
+     ylab = "Mean absolute percentage error"))
+with(sim.df[sim.df$method != "LME", ], points(propReal, MAPE, col = "red"))
+abline(h = seq(0, 1, by = 0.05), lty = 2, col = "grey50")
 
-with(sim.df, plot(propReal, MAPE))
-abline(h = 0.1, col = "red", lty = 2)
-hist(sim.df[sim.df$propReal <= 0.5, "MAPE"], breaks = 100)
-mean(sim.df[sim.df$propReal <= 0.5, "MAPE"])
-sim.df$MAPEbin = as.numeric(sim.df$MAPE >= 0.1)
-with(sim.df, plot(propReal, MAPEbin))
-bin.fit = glm(MAPEbin ~ propReal, sim.df, family = binomial)
-curve(1/(1 + exp(-(coef(bin.fit)[1] + coef(bin.fit)[2] * x))),
-      add = TRUE, col = "red")
+ggplot(sim.df, aes(x = propReal, y = MAPE)) + geom_point() + geom_smooth()
+
+pdf(file = "riceSimulationResult.pdf", width = 10)
+with(sim.df[sim.df$MAPE < 1.0, ], plot(propReal, MAPE, xlim = c(0, 1),
+          ylim = c(range(MAPE, na.rm = TRUE)),
+     xlab = "Missing proportion in yield",
+     ylab = "Mean absolute percentage error"))
+with(sim.df[sim.df$MAPE < 1.0 & !is.na(sim.df$MAPE), ],
+     lines(lowess(propReal, MAPE), col = "red", lwd = 2), xlim = c(0, 1),
+           ylim = c(range(MAPE, na.rm = TRUE)))
+abline(h = seq(0, 1, by = 0.05), lty = 2, col = "grey50")
+graphics.off()
+system("evince riceSimulationResult.pdf&")
+
+
+
+with(sim.df[sim.df$method == "LME", ], plot(propSim, MAPE, xlim = c(0, 1),
+              ylim = c(range(sim.df$MAPE, na.rm = TRUE))))
+with(sim.df[sim.df$method != "LME", ], points(propSim, MAPE, col = "red"))
 
 
 ## Examination and plots
 ## ---------------------------------------------------------------------
 
+
 pdf(file = "checkRiceImputation.pdf", width = 10)
-## for(i in c(32, 45, 46, 61, 74, 144, 181, 215, 251)){
 for(i in unique(imputed.dt$FAOST_CODE)){
   tmp = imputed.dt[FAOST_CODE == i, ]
 
@@ -176,7 +202,7 @@ for(i in unique(imputed.dt$FAOST_CODE)){
     i), "FAO_TABLE_NAME"]
   myItem = unique(FAOmetaTable$itemTable[FAOmetaTable$itemTable$itemCode ==
     unique(imputed.dt$itemCode), "itemName"])
-  par(mfrow = c(3, 1), mar = c(2.1, 4.1, 3.1, 2.1))
+  par(mfrow = c(4, 1), mar = c(2.1, 4.1, 3.1, 2.1))
   try({
     ymax = max(tmp[, list(valueProd, imputedProd)], na.rm = TRUE) * 1.2
     with(tmp, plot(Year, valueProd, ylim = c(0, ymax), type = "b",
@@ -184,7 +210,8 @@ for(i in unique(imputed.dt$FAOST_CODE)){
                    main = paste0(myCountry, " (", i, ") - ",
                      myItem, " (", unique(imputed.dt$itemCode), ")"),
                    cex = 2))
-    with(tmp, points(Year, imputedProd, col = "red", pch = 19))
+    with(tmp[is.na(valueProd), ],
+         points(Year, imputedProd, col = "blue", pch = 19))
   })
   
   try({
@@ -192,19 +219,26 @@ for(i in unique(imputed.dt$FAOST_CODE)){
     with(tmp, plot(Year, valueArea, ylim = c(0, ymax), type = "b",
                    col = "black", xlab = "", ylab = "Area",
                    cex = 2))
-    with(tmp, points(Year, imputedArea, col = "red", pch = 19))
+    with(tmp[is.na(valueArea),],
+         points(Year, imputedArea, col = "blue", pch = 19))
   })
   
   
   try({
-    ymax = max(tmp[, list(valueYield, imputedYield)], na.rm = TRUE) * 1.2
+    ymax = max(tmp[, list(valueYield, imputedYield, avgValue)],
+      na.rm = TRUE) * 1.2
     with(tmp, plot(Year, valueYield, ylim = c(0, ymax), type = "b",
                    col = "black", xlab = "", ylab = "Yield",
                     cex = 2))
-    with(tmp, points(Year, imputedYield, col = "red", pch = 19))
-    with(tmp, points(Year, fittedValue, col = "blue", pch = 19))    
+    with(tmp[!is.na(valueYield), ],
+         points(Year, imputedYield, col = "red", pch = 19))
+    with(tmp[is.na(valueYield), ],
+         points(Year, imputedYield, col = "blue", pch = 19))
   })
-  
+  try({
+    with(tmp, plot(Year, avgValue, ylab = "Average Yield",
+                   ylim = c(0, ymax), type = "b"))
+  })
 }
 graphics.off()
 system("evince checkRiceImputation.pdf&")
