@@ -28,13 +28,19 @@ lmeEMImpute = function(Data, value, country, group, year, commodity,
         lme(value ~ year * group, random = ~avgValue|country,
             na.action = na.omit, data = Data[commodity == i, ])
             )
+      ## if(inherits(fit, "try-error"))
+      ##   fit = try(
+      ##     lme(value ~ year * group, random = ~1|country,
+      ##         na.action = na.omit, data = Data[commodity == i, ])
+      ##     )
       fit.ll = try(logLik(fit))
       if(!silent)
         try(print(fit.ll))
       if(!inherits(fit, "try-error")){
         if(fit.ll - ll[j] > tol){
-          Data[commodity == i,
-                   estValue := predict(fit, Data[commodity == i, ])]
+          Data[commodity == i & !is.na(avgValue),
+                   estValue := predict(fit,
+                              Data[commodity == i & !is.na(avgValue), ])]
           ll[j + 1] = fit.ll
           method = "LME"
         } else {
