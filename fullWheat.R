@@ -10,11 +10,7 @@ library(nlme)
 library(zoo)
 
 ## Run the data manipulation
-## source("na.approx2.R")
-source("diffv.R")
-## source("lmeImpute.R")
 source("lmeEMImpute.R")
-source("checkSparsity.R")
 source("computeYield.R")
 source("randomImp.R")
 source("fullImputation.R")
@@ -42,9 +38,6 @@ cmfc.df$Year = as.integer(cmfc.df$Year)
 cmfc.df$valueArea = as.numeric(cmfc.df$valueArea)
 cmfc.df$valueProd = as.numeric(cmfc.df$valueProd)
 
-## Only use data from 1980
-## cmfc.df = cmfc.df[cmfc.df$Year >= 1980, ]
-
 ## Save the original value
 cmfc.df$ovalueArea = cmfc.df$valueArea
 cmfc.df$ovalueProd = cmfc.df$valueProd
@@ -69,9 +62,6 @@ cmfc.df[which(duplicated(cmfc.df[, c("FAOST_CODE", "itemCode", "symbArea")]) &
 cmfc.df[which(duplicated(cmfc.df[, c("FAOST_CODE", "itemCode", "symbProd")]) &
               cmfc.df$symbProd == "F"),
          "valueProd"] = NA
-
-
-
 
 
 ## Remove error where area or production are zero while the other is not
@@ -115,8 +105,8 @@ final.dt[symbArea %in% c(" ", "*"), sum(!is.na(ovalueArea))]
 final.dt[symbProd %in% c(" ", "*"), sum(!is.na(ovalueProd))]
 
 
-## We see no evidence of the change distribution dependent on the
-## missing values.
+## NOTE (Michael): We see no evidence of the change distribution
+##                 dependent on the missing values.
 ## final.dt[, dvalueYield := c(NA, diff(valueYield)), by = "FAOST_CODE"]
 ## final.dt[, missBin := sum(is.na(valueYield))/length(valueYield) > 0.2,
 ##          by = "FAOST_CODE"]
