@@ -12,7 +12,6 @@ library(zoo)
 ## Run the data manipulation
 source("lmeEMImpute.R")
 source("computeYield.R")
-source("randomImp.R")
 source("fullImputation.R")
 source("naiveImpute.R")
 
@@ -300,13 +299,13 @@ system("evince checkWheatImputation.pdf&")
 
 
 pdf(file = "wheatYieldSubregion.pdf", width = 11)
-print(ggplot(data = final.dt,
+print(ggplot(data = imputed.dt,
              aes(x = Year, y = valueYield)) +
       geom_line(aes(col = factor(FAOST_CODE))) +
       geom_point(aes(col = factor(FAOST_CODE)), size = 1) +  
       scale_color_manual(values = rep("gold",
                            length(unique(final.dt$FAOST_CODE)))) +
-      geom_line(aes(x = Year, y = avgYield), col = "black", alpha = 0.5) +      
+      ## geom_line(aes(x = Year, y = avgYield), col = "black", alpha = 0.5) +      
       geom_line(aes(x = Year, y = avgValue), col = "steelblue", alpha = 0.5) +
       ## geom_smooth(method = "lm") + 
       ## geom_line(aes(x = Year, y = avgValue), col = "blue", alpha = 0.5) +      
@@ -334,8 +333,8 @@ print(ggplot(data = final.dt[!UNSD_SUB_REG %in% c("Western Asia", "Micronesia"),
 
 
 
-## Plots for presentation
-## ---------------------------------------------------------------------
+## ## Plots for presentation
+## ## ---------------------------------------------------------------------
 ## plot.df = melt(final.dt[symbArea %in% c(" ", "*") & symbProd %in% c(" ", "*"),
 ##   list(FAOST_CODE, FAOST_NAME, Year, UNSD_SUB_REG,
 ##   valueArea, valueProd, valueYield)],
@@ -366,6 +365,7 @@ print(ggplot(data = final.dt[!UNSD_SUB_REG %in% c("Western Asia", "Micronesia"),
 ##   labs(x = NULL, y = NULL,
 ##        title = "Relation of Wheat production, area and yield on log scale")
 ## graphics.off()
+## system("evince wheatIdentityBreakDown.pdf&")
 
 ## pdf(file = "wheatAreaYield.pdf", width = 10, height = 5)
 ## ggplot(data = plot.df[plot.df$variable != "Prod", ],
@@ -377,7 +377,7 @@ print(ggplot(data = final.dt[!UNSD_SUB_REG %in% c("Western Asia", "Micronesia"),
 ##   labs(x = NULL, y = NULL,
 ##        title = "Area and Yield series of Wheat on original scale")
 ## graphics.off()
-
+## system("evince wheatAreaYield.pdf&")
 
 
 ## ## Check the missing mechanism
@@ -392,13 +392,3 @@ print(ggplot(data = final.dt[!UNSD_SUB_REG %in% c("Western Asia", "Micronesia"),
 ##                   country = "FAOST_NAME", year = "Year",
 ##                 var = "valueProd", ncol = 3)
 ## graphics.off()
-
-
-
-
-
-
-
-
-
-                

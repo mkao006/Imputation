@@ -1,11 +1,10 @@
 \beamer@endinputifotherversion {3.10pt}
 \beamer@sectionintoc {1}{Current Methodology}{4}{0}{1}
 \beamer@sectionintoc {2}{Case Study and Exploratory Data Analysis}{8}{0}{2}
-\beamer@sectionintoc {3}{Proposed Methodology}{15}{0}{3}
-\beamer@subsectionintoc {3}{1}{Imputation for Yield}{17}{0}{3}
-\beamer@subsectionintoc {3}{2}{Imputation for Area Harvested}{21}{0}{3}
-\beamer@sectionintoc {4}{Results}{22}{0}{4}
-\beamer@subsectionintoc {4}{1}{Results for Wheat}{23}{0}{4}
-\beamer@subsectionintoc {4}{2}{Results for Cassava}{26}{0}{4}
-\beamer@sectionintoc {5}{Further Improvements}{31}{0}{5}
-\beamer@sectionintoc {6}{Discussion}{33}{0}{6}
+\beamer@sectionintoc {3}{Proposed Methodology}{13}{0}{3}
+\beamer@subsectionintoc {3}{1}{Imputation for Yield}{15}{0}{3}
+\beamer@subsectionintoc {3}{2}{Imputation for Area Harvested}{18}{0}{3}
+\beamer@sectionintoc {4}{Results}{19}{0}{4}
+\beamer@subsectionintoc {4}{1}{Results for Wheat}{20}{0}{4}
+\beamer@sectionintoc {5}{Further Improvements}{23}{0}{5}
+\beamer@sectionintoc {6}{Discussion}{25}{0}{6}
