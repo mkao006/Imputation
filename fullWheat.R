@@ -41,6 +41,9 @@ cmfc.df$valueProd = as.numeric(cmfc.df$valueProd)
 cmfc.df$ovalueArea = cmfc.df$valueArea
 cmfc.df$ovalueProd = cmfc.df$valueProd
 
+## Use data only from 1990
+cmfc.df = subset(cmfc.df, Year >= 1975)
+
 ## Replace values with symbol T or duplicated F with NA
 cmfc.df[which(cmfc.df$symbArea == "T"), "valueArea"] = NA
 cmfc.df[which(cmfc.df$symbProd == "T"), "valueProd"] = NA
@@ -127,7 +130,7 @@ imputed.dt = fullImputation(final.dt, area = "valueArea", prod = "valueProd",
 ## Simulation
 ## ---------------------------------------------------------------------
 
-n.sim = 2000
+n.sim = 5000
 sim.df = data.frame(propSim = runif(n.sim, 1e-05, 1 - 1e-05),
   propReal = rep(NA, n.sim), MAPE = rep(NA, n.sim), method = rep(NA, n.sim))
 for(i in 1:n.sim){
@@ -162,27 +165,28 @@ for(i in 1:n.sim){
   }
 }
 
+subSim.df = sim.df[sim.df$MAPE <= 100, ]
 
-with(sim.df[sim.df$method == "LME", ], plot(propReal, MAPE, xlim = c(0, 1),
-              ylim = c(range(sim.df$MAPE, na.rm = TRUE))))
-with(sim.df[sim.df$method != "LME", ], points(propReal, MAPE, col = "red"))
+with(subSim.df[subSim.df$method == "LME", ], plot(propReal, MAPE, xlim = c(0, 1),
+              ylim = c(range(subSim.df$MAPE, na.rm = TRUE))))
+with(subSim.df[subSim.df$method != "LME", ], points(propReal, MAPE, col = "red"))
 
 pdf(file = "wheatSimulationResult.pdf", width = 10)
-with(sim.df[sim.df$MAPE < 1.0, ], plot(propReal, MAPE, xlim = c(0, 1),
+with(subSim.df[subSim.df$MAPE < 1.0, ], plot(propReal, MAPE, xlim = c(0, 1),
           ylim = c(range(MAPE, na.rm = TRUE)),
      xlab = "Missing proportion in yield",
      ylab = "Mean absolute percentage error"))
-with(sim.df[sim.df$MAPE < 1.0 & !is.na(sim.df$MAPE), ],
-     lines(lowess(propReal, MAPE), col = "red", lwd = 2), xlim = c(0, 1),
+with(subSim.df[subSim.df$MAPE < 1.0 & !is.na(subSim.df$MAPE), ],
+     lines(lowess(propReal, MAPE, f = 0.2), col = "red", lwd = 2), xlim = c(0, 1),
            ylim = c(range(MAPE, na.rm = TRUE)))
 abline(h = seq(0, 1, by = 0.05), lty = 2, col = "grey50")
 graphics.off()
 system("evince wheatSimulationResult.pdf&")
 
 
-with(sim.df[sim.df$method == "LME", ], plot(propSim, MAPE, xlim = c(0, 1),
-              ylim = c(range(sim.df$MAPE, na.rm = TRUE))))
-with(sim.df[sim.df$method != "LME", ], points(propSim, MAPE, col = "red"))
+with(subSim.df[subSim.df$method == "LME", ], plot(propSim, MAPE, xlim = c(0, 1),
+              ylim = c(range(subSim.df$MAPE, na.rm = TRUE))))
+with(subSim.df[subSim.df$method != "LME", ], points(propSim, MAPE, col = "red"))
 
 
 pdf(file = "checkWheatSim.pdf", width = 10)
