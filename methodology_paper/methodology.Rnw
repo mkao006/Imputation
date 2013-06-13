@@ -412,7 +412,7 @@ FAOSTAT production has the following expression:
   \label{eq:lmeImpute}
   \text{Y}_{i,t} &= \overbrace{\beta_{0j} + \beta_{1j}t}^{\text{Fixed
       effect}} + \overbrace{b_{0,i} + b_{1,i}t +
-    b_{2,i}\bar{Y}_{j,t}}^{\text{Random effect}} + \epsilon_{i,t}
+    b_{2,i, t}\bar{Y}_{j,t}}^{\text{Random effect}} + \epsilon_{i,t}
 \end{align}
 
 Where $Y$ denotes yield with $\bar{Y}$ being the grouped averaged

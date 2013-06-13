@@ -5,6 +5,7 @@
 \beamer@subsectionintoc {3}{1}{Imputation for Yield}{15}{0}{3}
 \beamer@subsectionintoc {3}{2}{Imputation for Area Harvested}{18}{0}{3}
 \beamer@sectionintoc {4}{Results}{19}{0}{4}
-\beamer@subsectionintoc {4}{1}{Results for Wheat}{20}{0}{4}
-\beamer@sectionintoc {5}{Further Improvements}{23}{0}{5}
-\beamer@sectionintoc {6}{Discussion}{25}{0}{6}
+\beamer@subsectionintoc {4}{1}{Individual imputation}{20}{0}{4}
+\beamer@subsectionintoc {4}{2}{Simulation Results}{25}{0}{4}
+\beamer@sectionintoc {5}{Further Improvements}{26}{0}{5}
+\beamer@sectionintoc {6}{Discussion}{28}{0}{6}

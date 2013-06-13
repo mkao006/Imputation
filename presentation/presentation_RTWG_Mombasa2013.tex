@@ -104,68 +104,68 @@
   \end{itemize}
 \end{frame}
 
-\section{Case Study and Exploratory Data Analysis}
+%% \section{Case Study and Exploratory Data Analysis}
 
-\frame{
+%% \frame{
 
-  To illustrate the proposed imputation, we have chosen Wheat from the
-  crop group and Cassava from the root group as case studies. Both are important
-  agricultural products but Wheat is much more commercialised and traded
-  than is Cassava.
+%%   To illustrate the proposed imputation, we have chosen Wheat from the
+%%   crop group and Cassava from the root group as case studies. Both are important
+%%   agricultural products but Wheat is much more commercialised and traded
+%%   than is Cassava.
 
-  \vspace{0.5cm}
+%%   \vspace{0.5cm}
   
-  We have log-transformed the data to make the relationsihp an
-  additive one, so that the production can be decomposed.
+%%   We have log-transformed the data to make the relationsihp an
+%%   additive one, so that the production can be decomposed.
   
-  \begin{equation}
-    \log(P_t) = \log(A_t) + \log(Y_t)
-  \end{equation}
+%%   \begin{equation}
+%%     \log(P_t) = \log(A_t) + \log(Y_t)
+%%   \end{equation}
 
-}
+%% }
 
 
-\frame{
-  \frametitle{Area dictates the level and changes in the production}
-  \includegraphics[scale = 0.45]{wheatIdentityBreakDown}
-}
+%% \frame{
+%%   \frametitle{Area dictates the level and changes in the production}
+%%   \includegraphics[scale = 0.45]{wheatIdentityBreakDown}
+%% }
 
 %% \frame{
 %%   \frametitle{Same for Cassava}
 %%   \includegraphics[scale = 0.45]{cassavaIdentityBreakDown}
 %% }
 
-\frame{
-  \frametitle{Let us dig deeper}
-  \includegraphics[scale = 0.45]{wheatAreaYield}
-}
+%% \frame{
+%%   \frametitle{Let us dig deeper}
+%%   \includegraphics[scale = 0.45]{wheatAreaYield}
+%% }
 
 %% \frame{
 %%   \frametitle{The co-movement appears weaker}
 %%   \includegraphics[scale = 0.45]{cassavaAreaYield}
 %% }
 
-\frame{
-  \frametitle{What is the data telling us?}
+%% \frame{
+%%   \frametitle{What is the data telling us?}
 
-  What the data have shown is that the level, trend of the production
-  is mainly determined by a smooth monotonic area occasionally
-  affected by shocks, while the yield generates the variation from
-  year-to-year reflecting climate or economic conditions.
+%%   What the data have shown is that the level, trend of the production
+%%   is mainly determined by a smooth monotonic area occasionally
+%%   affected by shocks, while the yield generates the variation from
+%%   year-to-year reflecting climate or economic conditions.
 
-  \vspace{0.5cm}
+%%   \vspace{0.5cm}
   
-  This leads to the proposed methodology to estimate the year-to-year
-  variation of yield while a stable method for area.
+%%   This leads to the proposed methodology to estimate the year-to-year
+%%   variation of yield while a stable method for area.
 
-}
+%% }
 
 
 \section{Proposed Methodology}
 
 \frame{
 
-  First of all, we propose to impute the yield and area, and along with
+  In the new methodology, we propose to impute the yield and area, and along with
   the restriction of the new model this almost guarantees that area
   and production will not diverge.\\
   \vspace{0.5cm}
@@ -178,6 +178,33 @@
   improve the accuracy of the imputation.
 
 }
+\subsection{Imputation for Area Harvested}
+\frame{
+
+  Currently we have adopted \textbf{linear interpolation} and
+  \textbf{last observation carry forward} to impute area
+  harvestd. This is what we called the naive imputation.
+  
+  \vspace{0.5cm}
+
+  First the area harvested and particularly carcass weight per animal
+  displays close to monotonic behaviour and much little year-to-year
+  fluctuation and thus linear interpolation is suitable. Furthermore,
+  a previous simulation study has shown linear interpolation gives
+  best result.
+
+  %% \vspace{0.5cm} 
+
+  %% While "last observation carry forward" is useful when the last
+  %% observed value is a true zero, we will not impute a positive value.
+
+  %% \vspace{0.5cm}
+
+  %% We are, however, investigating improvements in the imputation of area
+  %% harvested using information such as area sown.
+
+}
+
 
 \subsection{Imputation for Yield}
 \frame{
@@ -223,7 +250,7 @@
 }
 
 \frame{
-  \includegraphics[scale = 0.4]{wheatYieldSubregion}
+  \includegraphics[scale = 0.4]{sweetPotatoYieldSubregion}
 }
 
 
@@ -231,60 +258,36 @@
 %%   \includegraphics[scale = 0.4]{cassavaYieldSubregion}
 %% }
 
-\subsection{Imputation for Area Harvested}
-\frame{
-
-  Currently we have adopted \textbf{linear interpolation} and
-  \textbf{last observation carry forward} to impute area harvestd.
-  
-  \vspace{0.5cm}
-
-  First the area harvested displays close to monotonic behaviour and
-  much little year-to-year fluctuation and thus linear interpolation
-  is suitable. Furthermore, a previous simulation study has shown linear
-  interpolation gives best result.
-
-  \vspace{0.5cm} 
-
-  While "last observation carry forward" is useful when the last
-  observed value is a true zero, we will not impute a positive value.
-
-  \vspace{0.5cm}
-
-  We are, however, investigating improvements in the imputation of area
-  harvested using information such as area sown.
-
-}
 
 \section{Results}
 
 \subsection{Individual imputation}
 
 \frame{
-  \includegraphics[page = 17, scale = 0.4]{checkWheatImputation}
+  \includegraphics[page = 18, scale = 0.4]{checkSweetPotatoImputation}
 }
 
 
 \frame{
-  \includegraphics[page = 54, scale = 0.4]{checkWheatImputation}
+  \includegraphics[page = 57, scale = 0.4]{checkSweetPotatoImputation}
 }
 
 \frame{
-  \includegraphics[page = 92, scale = 0.4]{checkWheatImputation}
+  \includegraphics[page = 90, scale = 0.4]{checkSweetPotatoImputation}
 }
 
 \frame{
-  \includegraphics[page = 109, scale = 0.4]{checkWheatImputation}
+  \includegraphics[page = 104, scale = 0.4]{checkSweetPotatoImputation}
 }
 
 
 \frame{
-  \includegraphics[page = 115, scale = 0.4]{checkWheatImputation}
+  \includegraphics[page = 108, scale = 0.4]{checkSweetPotatoImputation}
 }
 
 \subsection{Simulation Results}
 \frame{
-  \includegraphics[scale = 0.4]{wheatSimulationResult}
+  \includegraphics[scale = 0.4]{sweetPotatoSimulationResult}
 }
 
 
@@ -317,8 +320,8 @@
 %% }
 
 
-\section{Further Improvements}
-
+%% \section{Further Improvements}
+\section{Discussion}
 \frame{
 
 \begin{itemize}
@@ -326,27 +329,27 @@
   \item Develope a better grouping classification.
 \end{itemize}
 
+  Thank you for your time and attention.
+
 }
 
 %% \frame{
 %% \includegraphics[scale = 0.3]{EMmeanCheck}
 %% }
 
-\section{Discussion}
-\frame{
 
-  The newly proposed methodology demonstrates the ability to resolve
-  issues in the current methodology and extended to incorporate
-  additional information.
+%% \frame{
 
-  \vspace{0.5cm}
-  We welcome any information which can enhance the performance of the
-  imputation.
-  \vspace{0.5cm}
+%%   The newly proposed methodology demonstrates the ability to resolve
+%%   issues in the current methodology and extended to incorporate
+%%   additional information.
 
-  Thank you for your time and attention.
+%%   \vspace{0.5cm}
+%%   We welcome any information which can enhance the performance of the
+%%   imputation.
+%%   \vspace{0.5cm}
 
-}
+%% }
 
 
 \end{document}

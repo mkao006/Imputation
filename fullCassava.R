@@ -8,45 +8,41 @@ library(reshape2)
 library(FAOSTAT)
 library(nlme)
 library(zoo)
-source("diffv.R")
+
+## Run the data manipulation
 source("lmeEMImpute.R")
-source("checkSparsity.R")
 source("computeYield.R")
-source("randomImp.R")
 source("fullImputation.R")
 source("naiveImpute.R")
 
+## Data preperation
+## ---------------------------------------------------------------------
 
+## Read and manipulate the data
 fc.df = read.csv(file = "fullCassava.csv", header = TRUE,
   stringsAsFactors = FALSE)
-
-
 mfc.df = melt(fc.df, id.var = c("Area.Code", "Area.Name",
                        "Item.Code", "Element.Code"))
 ind = sapply(regexpr("_", mfc.df$variable), function(x) x[[1]])
 mfc.df$Year = substring(mfc.df$variable, ind + 1)
 mfc.df$type = substring(mfc.df$variable, 1, ind - 1)
 mfc.df$variable = NULL
-
 mfc.df$Element.Code = ifelse(mfc.df$Element.Code == 31, "valueArea",
   "valueProd")
-
 cmfc.df = dcast(mfc.df, Area.Code + Area.Name + Item.Code + Year ~ Element.Code +
   type, value.var = "value")
 colnames(cmfc.df) = c("FAOST_CODE", "FAOST_NAME", "itemCode", "Year",
           "valueArea", "symbArea", "valueProd", "symbProd")
-
-
 cmfc.df$Year = as.integer(cmfc.df$Year)
 cmfc.df$valueArea = as.numeric(cmfc.df$valueArea)
 cmfc.df$valueProd = as.numeric(cmfc.df$valueProd)
 
-## Only use data from 1980
-cmfc.df = cmfc.df[cmfc.df$Year >= 1980, ]
-
 ## Save the original value
 cmfc.df$ovalueArea = cmfc.df$valueArea
 cmfc.df$ovalueProd = cmfc.df$valueProd
+
+## Use data only from 1990
+cmfc.df = subset(cmfc.df, Year >= 1980)
 
 ## Replace values with symbol T or duplicated F with NA
 cmfc.df[which(cmfc.df$symbArea == "T"), "valueArea"] = NA
@@ -54,18 +50,29 @@ cmfc.df[which(cmfc.df$symbProd == "T"), "valueProd"] = NA
 cmfc.df[which(cmfc.df$symbArea == "E"), "valueArea"] = NA
 cmfc.df[which(cmfc.df$symbProd == "E"), "valueProd"] = NA
 
-cmfc.df[which(duplicated(cmfc.df[, c("FAOST_CODE", "itemCode", "symbArea",
-                                 "valueArea")]) & cmfc.df$symbArea == "F"),
+## Replace all duplicated F
+## cmfc.df[which(duplicated(cmfc.df[, c("FAOST_CODE", "itemCode", "symbArea",
+##                                  "valueArea")]) & cmfc.df$symbArea == "F"),
+##          "valueArea"] = NA
+## cmfc.df[which(duplicated(cmfc.df[, c("FAOST_CODE", "itemCode", "symbProd",
+##                                  "valueProd")]) & cmfc.df$symbProd == "F"),
+##          "valueProd"] = NA
+
+cmfc.df[which(duplicated(cmfc.df[, c("FAOST_CODE", "itemCode", "symbArea")]) &
+              cmfc.df$symbArea == "F"),
          "valueArea"] = NA
-cmfc.df[which(duplicated(cmfc.df[, c("FAOST_CODE", "itemCode", "symbProd",
-                                 "valueProd")]) & cmfc.df$symbProd == "F"),
+cmfc.df[which(duplicated(cmfc.df[, c("FAOST_CODE", "itemCode", "symbProd")]) &
+              cmfc.df$symbProd == "F"),
          "valueProd"] = NA
 
+
+## Remove error where area or production are zero while the other is not
 cmfc.df[which(cmfc.df$valueArea == 0 & cmfc.df$valueProd != 0),
            "valueArea"] = NA
 cmfc.df[which(cmfc.df$valueArea != 0 & cmfc.df$valueProd == 0),
            "valueProd"] = NA
 
+## Compute the implied yield
 cmfc.df$valueYield = with(cmfc.df, computeYield(valueProd, valueArea))
 cmfc.df$ovalueYield = with(cmfc.df, computeYield(ovalueProd, ovalueArea))
 
@@ -84,12 +91,13 @@ cmfc.df = merge(cmfc.df,
 cmfc.df$UNSD_SUB_REG_CODE = NULL
 cmfc.df$UNSD_MACRO_REG_CODE = NULL
 
-## These had no areas
-cmfc.df[which(cmfc.df$FAOST_CODE == 164), "UNSD_MACRO_REG"] = "Oceania"
-cmfc.df[which(cmfc.df$FAOST_CODE == 164), "UNSD_SUB_REG"] = "Polynesia"
+## Remove country which does not have a sub-region, they are typically
+## former countries
+cmfc.df = cmfc.df[!is.na(cmfc.df$UNSD_SUB_REG), ]
 
 ## Western Asia is removed because there is no information
-final.dt = data.table(cmfc.df[cmfc.df$UNSD_SUB_REG != "Western Asia", ])
+## final.dt = data.table(cmfc.df[cmfc.df$UNSD_SUB_REG != "Western Asia", ])
+final.dt = data.table(cmfc.df)
 final.dt[, UNSD_MACRO_REG := factor(UNSD_MACRO_REG)]
 final.dt[, UNSD_SUB_REG := factor(UNSD_SUB_REG)]
 setkeyv(final.dt, c("FAOST_CODE", "FAOST_NAME", "Year"))
@@ -97,6 +105,17 @@ setkeyv(final.dt, c("FAOST_CODE", "FAOST_NAME", "Year"))
 ## Number of official and semi officail data
 final.dt[symbArea %in% c(" ", "*"), sum(!is.na(ovalueArea))]
 final.dt[symbProd %in% c(" ", "*"), sum(!is.na(ovalueProd))]
+
+
+## NOTE (Michael): We see no evidence of the change distribution
+##                 dependent on the missing values.
+## final.dt[, dvalueYield := c(NA, diff(valueYield)), by = "FAOST_CODE"]
+## final.dt[, missBin := sum(is.na(valueYield))/length(valueYield) > 0.2,
+##          by = "FAOST_CODE"]
+## ggplot(data = final.dt, aes(x = dvalueYield)) +
+##   geom_histogram(binwidth = 0.1) +
+##   facet_wrap(~missBin, scales = "free_y")
+
 
 
 ## Imputation
@@ -111,7 +130,7 @@ imputed.dt = fullImputation(final.dt, area = "valueArea", prod = "valueProd",
 ## Simulation
 ## ---------------------------------------------------------------------
 
-n.sim = 2000
+n.sim = 1000
 sim.df = data.frame(propSim = runif(n.sim, 1e-05, 1 - 1e-05),
   propReal = rep(NA, n.sim), MAPE = rep(NA, n.sim), method = rep(NA, n.sim))
 for(i in 1:n.sim){
@@ -146,29 +165,28 @@ for(i in 1:n.sim){
   }
 }
 
+subSim.df = sim.df[sim.df$MAPE <= 100, ]
 
-with(sim.df[sim.df$method == "LME", ], plot(propReal, MAPE, xlim = c(0, 1),
-              ylim = c(range(sim.df$MAPE, na.rm = TRUE))))
-with(sim.df[sim.df$method != "LME", ], points(propReal, MAPE, col = "red"))
-
-ggplot(sim.df, aes(x = propReal, y = MAPE)) + geom_point() + geom_smooth()
+with(subSim.df[subSim.df$method == "LME", ], plot(propReal, MAPE, xlim = c(0, 1),
+              ylim = c(range(subSim.df$MAPE, na.rm = TRUE))))
+with(subSim.df[subSim.df$method != "LME", ], points(propReal, MAPE, col = "red"))
 
 pdf(file = "cassavaSimulationResult.pdf", width = 10)
-with(sim.df[sim.df$MAPE < 1.0, ], plot(propReal, MAPE, xlim = c(0, 1),
+with(subSim.df[subSim.df$MAPE < 1.0, ], plot(propReal, MAPE, xlim = c(0, 1),
           ylim = c(range(MAPE, na.rm = TRUE)),
      xlab = "Missing proportion in yield",
      ylab = "Mean absolute percentage error"))
-with(sim.df[sim.df$MAPE < 1.0 & !is.na(sim.df$MAPE), ],
-     lines(lowess(propReal, MAPE), col = "red", lwd = 2), xlim = c(0, 1),
+with(subSim.df[subSim.df$MAPE < 1.0 & !is.na(subSim.df$MAPE), ],
+     lines(lowess(propReal, MAPE, f = 0.2), col = "red", lwd = 2), xlim = c(0, 1),
            ylim = c(range(MAPE, na.rm = TRUE)))
 abline(h = seq(0, 1, by = 0.05), lty = 2, col = "grey50")
 graphics.off()
 system("evince cassavaSimulationResult.pdf&")
 
 
-with(sim.df[sim.df$method == "LME", ], plot(propSim, MAPE, xlim = c(0, 1),
-              ylim = c(range(sim.df$MAPE, na.rm = TRUE))))
-with(sim.df[sim.df$method != "LME", ], points(propSim, MAPE, col = "red"))
+with(subSim.df[subSim.df$method == "LME", ], plot(propSim, MAPE, xlim = c(0, 1),
+              ylim = c(range(subSim.df$MAPE, na.rm = TRUE))))
+with(subSim.df[subSim.df$method != "LME", ], points(propSim, MAPE, col = "red"))
 
 
 pdf(file = "checkCassavaSim.pdf", width = 10)
@@ -285,67 +303,96 @@ system("evince checkCassavaImputation.pdf&")
 
 
 pdf(file = "cassavaYieldSubregion.pdf", width = 11)
-print(ggplot(data = final.dt[!UNSD_SUB_REG %in% c("Western Asia", "Micronesia",
-               "Northern Africa"), ],
+print(ggplot(data = imputed.dt,
              aes(x = Year, y = valueYield)) +
       geom_line(aes(col = factor(FAOST_CODE))) +
       geom_point(aes(col = factor(FAOST_CODE)), size = 1) +  
       scale_color_manual(values = rep("gold",
                            length(unique(final.dt$FAOST_CODE)))) +
-      geom_line(aes(x = Year, y = avgYield), col = "black", alpha = 0.5) +      
-      ## geom_line(aes(x = Year, y = avgValue), col = "steelblue", alpha = 0.5) +
-      geom_smooth(method = "lm") + 
+      ## geom_line(aes(x = Year, y = avgYield), col = "black", alpha = 0.5) +      
+      geom_line(aes(x = Year, y = avgValue), col = "steelblue", alpha = 0.5) +
+      ## geom_smooth(method = "lm") + 
       ## geom_line(aes(x = Year, y = avgValue), col = "blue", alpha = 0.5) +      
-      facet_wrap(~UNSD_SUB_REG, ncol = 3) +
+      facet_wrap(~UNSD_SUB_REG, ncol = 4) +
       labs(x = NULL, y = NULL,
-           title = "Yield of Cassava by sub-region with average and least square line") + 
+      title = "Yield of Cassava by sub-region with average and least square line") + 
       theme(legend.position = "none"))
 graphics.off()
+system("evince cassavaYieldSubregion.pdf&")
+
+
+
+print(ggplot(data = final.dt[!UNSD_SUB_REG %in% c("Western Asia", "Micronesia"), ],
+             aes(x = Year, y = valueArea)) +
+      geom_line(aes(col = factor(FAOST_CODE))) +
+      geom_point(aes(col = factor(FAOST_CODE)), size = 1) +  
+      scale_color_manual(values = rep("gold",
+                           length(unique(final.dt$FAOST_CODE)))) +
+      geom_smooth(method = "lm") + 
+      facet_wrap(~UNSD_SUB_REG, ncol = 4, scales = "free_y") +
+      labs(x = NULL, y = NULL, title = "Yield of Cassava by sub-region") + 
+      theme(legend.position = "none"))
 
 
 
 
 
-## Presentation slides
-## ---------------------------------------------------------------------
-plot.df = melt(final.dt[symbArea %in% c(" ", "*") & symbProd %in% c(" ", "*"),
-  list(FAOST_CODE, FAOST_NAME, Year, UNSD_SUB_REG,
-  valueArea, valueProd, valueYield)],
-  id.var = c("FAOST_CODE", "FAOST_NAME", "Year", "UNSD_SUB_REG"))
-plot.df$variable = factor(gsub("value", "", plot.df$variable),
-  levels = c("Prod", "Area", "Yield"))
+## ## Plots for presentation
+## ## ---------------------------------------------------------------------
+## plot.df = melt(final.dt[symbArea %in% c(" ", "*") & symbProd %in% c(" ", "*"),
+##   list(FAOST_CODE, FAOST_NAME, Year, UNSD_SUB_REG,
+##   valueArea, valueProd, valueYield)],
+##   id.var = c("FAOST_CODE", "FAOST_NAME", "Year", "UNSD_SUB_REG"))
+## plot.df$variable = factor(gsub("value", "", plot.df$variable),
+##   levels = c("Prod", "Area", "Yield"))
 
-tmp = data.table(plot.df[plot.df$variable == "Prod", ])
-tmp[ ,avgValue := mean(value, na.rm = TRUE), by = c("Year", "UNSD_SUB_REG")]
+## tmp = data.table(plot.df[plot.df$variable == "Prod", ])
+## tmp[ ,avgValue := mean(value, na.rm = TRUE), by = c("Year", "UNSD_SUB_REG")]
 
-ggplot(data = tmp,
-       aes(x = Year, y = value)) +
-  geom_line(aes(col = factor(FAOST_CODE)), alpha = 0.3) +
-  scale_color_manual(values = rep("black", length(unique(plot.df$FAOST_CODE)))) +
-  geom_line(aes(x = Year, y = avgValue), col = "blue") +
-  facet_wrap(~UNSD_SUB_REG, ncol = 4, scales = "free_y") + 
-  theme(legend.position = "none") +
-  labs(x = NULL, y = NULL,
-       title = "Area and Yield series of Cassava on original scale")
+## ggplot(data = tmp,
+##        aes(x = Year, y = value)) +
+##   geom_line(aes(col = factor(FAOST_CODE)), alpha = 0.3) +
+##   scale_color_manual(values = rep("black", length(unique(plot.df$FAOST_CODE)))) +
+##   geom_line(aes(x = Year, y = avgValue), col = "blue") +
+##   facet_wrap(~UNSD_SUB_REG, ncol = 4, scales = "free_y") + 
+##   theme(legend.position = "none") +
+##   labs(x = NULL, y = NULL,
+##        title = "Area and Yield series of Cassava on original scale")
 
-pdf(file = "cassavaIdentityBreakDown.pdf", width = 10, height = 5)
-ggplot(data = plot.df[which(plot.df$value > 0), ],
-       aes(x = Year, y = log(value))) +
-  geom_line(aes(col = factor(FAOST_CODE)), alpha = 0.3) +
-  scale_color_manual(values = rep("black", length(unique(plot.df$FAOST_CODE)))) +
-  facet_wrap(~variable, ncol = 1) +
-  theme(legend.position = "none") +
-  labs(x = NULL, y = NULL,
-       title = "Relation of Cassava production, area and yield on log scale")
-graphics.off()
+## pdf(file = "cassavaIdentityBreakDown.pdf", width = 10, height = 5)
+## ggplot(data = plot.df[which(plot.df$value > 0), ],
+##        aes(x = Year, y = log(value))) +
+##   geom_line(aes(col = factor(FAOST_CODE)), alpha = 0.3) +
+##   scale_color_manual(values = rep("black", length(unique(plot.df$FAOST_CODE)))) +
+##   facet_wrap(~variable, ncol = 1) +
+##   theme(legend.position = "none") +
+##   labs(x = NULL, y = NULL,
+##        title = "Relation of Cassava production, area and yield on log scale")
+## graphics.off()
+## system("evince cassavaIdentityBreakDown.pdf&")
 
-pdf(file = "cassavaAreaYield.pdf", width = 10, height = 5)
-ggplot(data = plot.df[plot.df$variable != "Prod", ],
-       aes(x = Year, y = value)) +
-  geom_line(aes(col = factor(FAOST_CODE)), alpha = 0.3) +
-  scale_color_manual(values = rep("black", length(unique(plot.df$FAOST_CODE)))) +
-  facet_wrap(~variable, ncol = 1, scales = "free_y") +
-  theme(legend.position = "none") +
-  labs(x = NULL, y = NULL,
-       title = "Area and Yield series of Cassava on original scale")
-graphics.off()
+## pdf(file = "cassavaAreaYield.pdf", width = 10, height = 5)
+## ggplot(data = plot.df[plot.df$variable != "Prod", ],
+##        aes(x = Year, y = value)) +
+##   geom_line(aes(col = factor(FAOST_CODE)), alpha = 0.3) +
+##   scale_color_manual(values = rep("black", length(unique(plot.df$FAOST_CODE)))) +
+##   facet_wrap(~variable, ncol = 1, scales = "free_y") +
+##   theme(legend.position = "none") +
+##   labs(x = NULL, y = NULL,
+##        title = "Area and Yield series of Cassava on original scale")
+## graphics.off()
+## system("evince cassavaAreaYield.pdf&")
+
+
+## ## Check the missing mechanism
+## pdf(file = "cassavaAreaMiss.pdf", width = 10)
+## sparsityHeatMap(data = data.frame(final.dt[symbArea %in% c(" ", "*"), ]),
+##                 country = "FAOST_NAME", year = "Year",
+##                 var = "valueArea", ncol = 3)
+## graphics.off()
+
+## pdf(file = "cassavaProdMiss.pdf", width = 10)
+## sparsityHeatMap(data = data.frame(final.dt[symbProd %in% c(" ", "*"), ]),
+##                   country = "FAOST_NAME", year = "Year",
+##                 var = "valueProd", ncol = 3)
+## graphics.off()
