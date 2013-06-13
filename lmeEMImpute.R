@@ -24,15 +24,17 @@ lmeEMImpute = function(Data, value, country, group, year, commodity,
     for(j in 1:n.iter){
       Data[commodity == i, avgValue := mean(estValue, na.rm = TRUE),
            by = c("year", "group")]
+      ## fit = try(
+      ##   lme(value ~ year * group, random = ~avgValue|country,
+      ##       na.action = na.omit, data = Data[commodity == i, ])
+      ##       )
+
+      ## Test avg value in fixed effect
       fit = try(
-        lme(value ~ year * group, random = ~avgValue|country,
+        lme(value ~ year * group + avgValue, random = ~year|country,
             na.action = na.omit, data = Data[commodity == i, ])
-            )
-      ## if(inherits(fit, "try-error"))
-      ##   fit = try(
-      ##     lme(value ~ year * group, random = ~1|country,
-      ##         na.action = na.omit, data = Data[commodity == i, ])
-      ##     )
+            )      
+
       fit.ll = try(logLik(fit))
       if(!silent)
         try(print(fit.ll))
