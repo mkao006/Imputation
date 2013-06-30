@@ -39,6 +39,7 @@ manipulation code and runs the out-of-sample simulation.
 
 
 **Supplementary script**
+
 These are the functions that performs or assists the imutation process.
 
 1. *computeYield.R* - This function is used to compute the yield and
@@ -48,6 +49,10 @@ to avoid infinity or NaN.
 is, linear interpolation followed by last/first observation carrid
 forward/backward.
 
-3. *lmeEMImpute.R* - This is the core function which performs the
+3. *lmeImpute.R* - This is the core function which performs the
 imputation based on linear mixed model with EM estimation of the
 average value.
+
+4. *FAOProductionImputation.R* - This is a wrapper function of the
+*lmeImpute* function which imputes the area, production and yield for
+a single commodity.
