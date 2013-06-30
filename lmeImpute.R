@@ -27,8 +27,9 @@ lmeImpute = function(fixed = value ~ 0, random = ~1|country,
   
   ## Null model without grouped average effects
   null.fit = try(
-    do.call("lme", list(fixed = fixed, random = random, na.action = na.omit,
-                        data = Data)), silent = TRUE
+    do.call("lme",
+            list(fixed = fixed, random = random, na.action = na.omit, data = Data,
+                 method = "ML")), silent = TRUE
     )
 
   if(is.finite(logLik(null.fit))){
@@ -47,8 +48,9 @@ lmeImpute = function(fixed = value ~ 0, random = ~1|country,
     groupedFixed = update(fixed, ~. + groupAverage)
 
     fit = try(
-      do.call("lme", list(fixed = groupedFixed, random = random,
-                          na.action = na.omit, data = Data)), silent = TRUE
+      do.call("lme",
+              list(fixed = groupedFixed, random = random, na.action = na.omit,
+                   data = Data, method = "ML")), silent = TRUE
       )
 
     if(is.finite(logLik(fit))){
