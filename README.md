@@ -56,3 +56,12 @@ average value.
 4. *FAOProductionImputation.R* - This is a wrapper function of the
 *lmeImpute* function which imputes the area, production and yield for
 a single commodity.
+
+
+To install the imputation package, simply run the following command
+
+```r
+library(devtools)
+install_github(repo = "Imputation", 
+	       username = "mkao006", subdir = "FAOProductionImputation")
+```
