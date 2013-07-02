@@ -1,8 +1,12 @@
-########################################################################
-## Title: Function to compute yield when area and production can be
-##        zero or NA's
-## Date: 2013-05-09
-########################################################################
+##' This function computes the yield given area and production
+##'
+##' This function avoids Inf, NAN when calculating the yield
+##'
+##' @param production The production time series
+##' @param area The area time series
+##'
+##' @export
+
 
 computeYield = function(production, area){
   if(length(production) != length(area))
