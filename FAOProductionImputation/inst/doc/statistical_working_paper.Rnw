@@ -1,0 +1,4 @@
+%\VignetteIndexEntry{Statistical Working Paper on Imputation and Validation Methodology for the FAOSTAT Production Domain}
+\documentclass{article}
+\begin{document}
+\end{document}
