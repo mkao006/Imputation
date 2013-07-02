@@ -1,10 +1,19 @@
-########################################################################
-## Title: The naive imputation of linear interpolation followed by
-##        last/first observation carried over.
-## Date: 2013-05-29
-########################################################################
+##' This function computes the naive imputation
+##'
+##' The function performs imputation by linear interpolation followed
+##' by last observation carry forward and backwards.
+##'
+##' @param x The series to put imputed
+##' @export
+##'
+##' @examples
+##' rand = rnorm(20)
+##' (rand[sample(1:length(rand), size = 10)] = NA)
+##' naiveImp(rand)
+##'
 
 naiveImp = function(x){
+  require(zoo)
   nobserved = length(na.omit(x))
   n = length(x)
   type = ifelse(nobserved == 0, "none",
