@@ -5,7 +5,7 @@
 \title{Imputation Methodology for FAOSTAT Production Domain}
 \author{\it Michael. C. J.  Kao}
 \institute{Food and Agriculture Organization \\of the United Nation}
-\date{}
+\date{\today}
 
 
 \AtBeginSection[]
@@ -26,6 +26,17 @@
   \frametitle{Outline}
   \tableofcontents
 \end{frame}
+
+\section{Introduction}
+\frame{
+
+  The aim of this presentation to give an over view of the current
+  status of the newly proposed imputation methodology for the FAOSTAT
+  production domain.\\
+
+  The work presented is the current status at the date of the
+  presentation, and is subject to further changes.
+}
 
 
 
@@ -179,6 +190,34 @@
 
 }
 
+
+\subsection{Imputation for Area Harvested}
+\frame{
+
+  Currently we have adopted \textbf{linear interpolation} and
+  \textbf{last observation carry forward} to impute area harvestd or
+  what we called the naive imputation.
+  
+  \vspace{0.5cm}
+
+  First the area harvested and in particular carcass weight per animal
+  displays close to monotonic behaviour and much little year-to-year
+  fluctuation and thus linear interpolation is suitable. Furthermore,
+  a previous simulation study has shown linear interpolation gives
+  best result.
+
+  \vspace{0.5cm} 
+
+  While "last observation carry forward" is useful when the last
+  observed value is a true zero, we will not impute a positive value.
+
+  \vspace{0.5cm}
+
+  We are, however, investigating improvements in the imputation of area
+  harvested using information such as area sown.
+
+}
+
 \subsection{Imputation for Yield}
 \frame{
   \frametitle{Linear Mixed Model}
@@ -200,11 +239,12 @@
 \frame{
   
   More specifically, the equation for the imputation is
+
   \begin{align}
     \label{eq:lmeImpute}
-  \text{Y}_{i,t} &= \overbrace{\beta_{0j} + \beta_{1j}t}^{\text{Fixed
-      effect}} + \overbrace{b_{0,i} + b_{1,i}t +
-    b_{2,i, t}\bar{Y}_{j,t}}^{\text{Random effect}} + \epsilon_{i,t}
+  \text{Y}_{i,t} &= \overbrace{\beta_{0j} + \beta_{1j}t + b_{2,i,
+      t}\bar{Y}_{j,t}}^{\text{Fixed effect}} + \overbrace{b_{0,i} +
+    b_{1,i}t}^{\text{Random effect}} + \epsilon_{i,t}
   \end{align}
 
   The average yield can be calculated as follow,
@@ -226,35 +266,37 @@
   \includegraphics[scale = 0.4]{wheatYieldSubregion}
 }
 
-
-%% \frame{
-%%   \includegraphics[scale = 0.4]{cassavaYieldSubregion}
-%% }
-
-\subsection{Imputation for Area Harvested}
+\subsection{Imputation Procedure}
 \frame{
-
-  Currently we have adopted \textbf{linear interpolation} and
-  \textbf{last observation carry forward} to impute area harvestd.
-  
-  \vspace{0.5cm}
-
-  First the area harvested displays close to monotonic behaviour and
-  much little year-to-year fluctuation and thus linear interpolation
-  is suitable. Furthermore, a previous simulation study has shown linear
-  interpolation gives best result.
-
-  \vspace{0.5cm} 
-
-  While "last observation carry forward" is useful when the last
-  observed value is a true zero, we will not impute a positive value.
-
-  \vspace{0.5cm}
-
-  We are, however, investigating improvements in the imputation of area
-  harvested using information such as area sown.
-
+  \includegraphics[page = 1, scale = 0.4]{wheatImputationStep}
 }
+
+
+\frame{
+  \includegraphics[page = 2, scale = 0.4]{wheatImputationStep}
+}
+
+
+\frame{
+  \includegraphics[page = 3, scale = 0.4]{wheatImputationStep}
+}
+
+
+\frame{
+  \includegraphics[page = 4, scale = 0.4]{wheatImputationStep}
+}
+
+
+\frame{
+  \includegraphics[page = 5, scale = 0.4]{wheatImputationStep}
+}
+
+
+\frame{
+  \includegraphics[page = 6, scale = 0.4]{wheatImputationStep}
+}
+
+
 
 \section{Results}
 
@@ -287,50 +329,26 @@
   \includegraphics[scale = 0.4]{wheatSimulationResult}
 }
 
-
-%% \frame{
-%%   \includegraphics[page = 20, scale = 0.4]{checkWheatImputation}
-%% }
-
-
-
-%% \subsection{Results for Cassava}
-%% \frame{
-%%   \includegraphics[page = 23, scale = 0.4]{checkCassavaImputation}
-%% }
-
-%% \frame{
-%%   \includegraphics[page = 15, scale = 0.4]{checkCassavaImputation}
-%% }
-
-%% \frame{
-%%   \includegraphics[page = 36, scale = 0.4]{checkCassavaImputation}
-%% }
-
-%% \frame{
-%%   \includegraphics[page = 14, scale = 0.4]{checkCassavaImputation}
-%% }
-
-
-%% \frame{
-%%   \includegraphics[page = 92, scale = 0.4]{checkCassavaImputation}
-%% }
-
-
-\section{Further Improvements}
-
+\section{Implementation}
 \frame{
+  What we have presented is the methodology, now we will present how the
+  methodology will be integrated into the Food Balance Sheet cycle.
 
-\begin{itemize}
-  \item Incorporation additional information for imputation.
-  \item Develope a better grouping classification.
-\end{itemize}
+  Imputation does not create information, and it should be used as a
+  last resort.
 
+  \begin{enumerate}
+    \item Receive data from production questionaire, countrySTAT or
+      other official/semi-official source.
+  
+    \item Perform the imputation with data since 1980 to the most recent
+    data, but only use the imputation for the years that are relevant
+    to the preperation of the current Food Balance Sheet.
+  
+  \item Conduct expert assessment, and revise the imputation.
+  \end{enumerate}
 }
 
-%% \frame{
-%% \includegraphics[scale = 0.3]{EMmeanCheck}
-%% }
 
 \section{Discussion}
 \frame{
@@ -344,7 +362,15 @@
   imputation.
   \vspace{0.5cm}
 
-  Thank you for your time and attention.
+  You can find all the data, codes implementation, documentation, and
+  the wiki page at the following repository.
+  \url{https://github.com/mkao006/Imputation} 
+
+}
+
+\frame{
+  
+  Thank you for your time and attention!
 
 }
 
