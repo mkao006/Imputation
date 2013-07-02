@@ -4,15 +4,15 @@
 ########################################################################
 
 source("wheatDataManipulation.R")
-source("fullImputation.R")
-source("lmeEMImpute.R")
+source("FAOProductionImpute.R")
+source("lmeImpute.R")
 source("naiveImpute.R")
 
 ## Imputation
 ## ---------------------------------------------------------------------
-imputed.dt = fullImputation(wheatPrep.dt, area = "valueArea", prod = "valueProd",
-  yield = "valueYield", country = "FAOST_CODE", region = "UNSD_SUB_REG",
-  year = "Year")
+imputed.dt = FAOProductionImpute(wheatPrep.dt, area = "valueArea",
+  prod = "valueProd", yield = "valueYield", country = "FAOST_CODE",
+  region = "UNSD_SUB_REG", year = "Year")
 
 
 ## TODO (Michael): Move the following in to the fullImputation
