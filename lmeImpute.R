@@ -1,11 +1,27 @@
-########################################################################
-## Title: Function to impute data with LME and EM estimation of average
-## Date: 2013-05-06
-########################################################################
+##' This function performs imputation by linear mixed model
+##'
+##' There are three imputation method associated with the function,
+##' the function will select whether between the null model excluding
+##' the grouped average fixed effect and the full model.
+##'
+##' @param fixed The fixed effect of the model excluding the grouping variable.
+##' @param random The random effect of the model
+##' @param group The grouped effect of the model, the mean are
+##' computed based on this formula
+##' @param Data the data.frame or data.table containing the data
+##' @param n.iter The number of iteration for the EM-algorithm for
+##' estimating the grouped average effect.
+##' @param tol The tolerance, stopping criteria for the likelihood.
+##'
+##' @seealso \code{\link{FAOProductionImpute}}
+##' @export
+
 
 lmeImpute = function(fixed = value ~ 0, random = ~1|country,
-  group = ~ year * region, Data, n.iter = 1000, tol = 1e-6, silent = TRUE){
+  group = ~ year * region, Data, n.iter = 1000, tol = 1e-6){
 
+  require(nlme)
+  
   old.class = class(Data)
   Data = data.table(Data)
 
@@ -37,12 +53,14 @@ lmeImpute = function(fixed = value ~ 0, random = ~1|country,
     Data[, lmeImp := predict(null.fit, Data)]
   }
   
+
   ## lme with grouped average effects
+  Data[, lmeMeanImp := naiveImp]
+  
   for(j in 1:n.iter){
     if(j == n.iter)
       print("maximum iteration reached, model may have not converged")
 
-    Data[, lmeMeanImp := naiveImp]
     Data[, groupAverage := mean(lmeMeanImp, na.rm = TRUE), by = groupVar]
 
     groupedFixed = update(fixed, ~. + groupAverage)
