@@ -9,12 +9,12 @@ source("wheatDataManipulation.R")
 ## Simulation
 ## ---------------------------------------------------------------------
 
-n.sim = 5000
+n.sim = 300
 sim.df = data.frame(propSim = runif(n.sim, 1e-05, 1 - 1e-05),
   propReal = rep(NA, n.sim), MAPE = rep(NA, n.sim), method = rep(NA, n.sim))
 for(i in 1:n.sim){
   print(paste0("Simulation Number: ", i))
-  tmp.dt = final.dt
+  tmp.dt = wheatPrep.dt
   prop = sim.df[i, "propSim"]
   ## set.seed(587)
   simMissArea = sample(which(tmp.dt$symbArea %in% c(" ", "*")),
@@ -28,9 +28,9 @@ for(i in 1:n.sim){
   tmp.dt[simMissProd, "simProd"] = NA 
   tmp.dt[, simYield := computeYield(simProd, simArea)]
   sim.df[i, "propReal"] = tmp.dt[, sum(is.na(simYield))/length(simYield)]  
-  impSim.dt = try(fullImputation(tmp.dt, area = "simArea", prod = "simProd",
-    yield = "simYield", country = "FAOST_CODE",
-    group = "UNSD_SUB_REG", year = "Year",  commodity = "itemCode"))
+  impSim.dt = try(FAOProductionImpute(Data = tmp.dt, area = "simArea",
+    prod = "simProd", yield = "simYield", country = "FAOST_CODE",
+    region = "UNSD_SUB_REG", year = "Year"))
   if(!inherits(impSim.dt, "try-error")){
     sim.df[i, "method"] = unique(impSim.dt[, yieldMethodology])
     ## Check the MAPE of the imputation
@@ -44,11 +44,13 @@ for(i in 1:n.sim){
   }
 }
 
-subSim.df = sim.df[sim.df$MAPE <= 100, ]
+subSim.df = sim.df[sim.df$MAPE <= 1, ]
 
-with(subSim.df[subSim.df$method == "LME", ], plot(propReal, MAPE, xlim = c(0, 1),
-              ylim = c(range(subSim.df$MAPE, na.rm = TRUE))))
-with(subSim.df[subSim.df$method != "LME", ], points(propReal, MAPE, col = "red"))
+with(subSim.df[subSim.df$method == "lmeMeanImp", ],
+     plot(propReal, MAPE, xlim = c(0, 1), ylim = c(range(subSim.df$MAPE,
+                                            na.rm = TRUE))))
+with(subSim.df[subSim.df$method != "lmeMeanImp", ],
+     points(propReal, MAPE, col = "red"))
 
 pdf(file = "wheatSimulationResult.pdf", width = 10)
 with(subSim.df[subSim.df$MAPE < 1.0, ], plot(propReal, MAPE, xlim = c(0, 1),
