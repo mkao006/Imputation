@@ -32,7 +32,7 @@ lmeImpute = function(fixed = value ~ 0, random = ~1|country,
   setkeyv(Data, cols = c(condVar, groupVar))
   fixed = update(old = fixed, new = group)
   null.ll = -Inf
-  naive.ll = -Inf
+  naive.AIC = -Inf
   lme.ll = rep(NA, n.iter + 1)
   lme.ll[1] = -Inf  
   missInd = is.na(Data[, eval(parse(text = imputeVar))])
@@ -87,7 +87,7 @@ lmeImpute = function(fixed = value ~ 0, random = ~1|country,
 
   ## Select imputation method
   bestImp = c("naiveImp", "lmeImp", "lmeMeanImp")[
-    which.max(c(naive.ll, null.ll, fit.ll))]
+    which.max(c(naive.AIC, AIC(null.fit), AIC(fit)))]
   
   Data[, eval(parse(text = paste0("impValue := ", bestImp)))]
   
