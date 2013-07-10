@@ -40,13 +40,13 @@ cmfc.df$ovalueProd = cmfc.df$valueProd
 ## Use data only from 1990
 cmfc.df = subset(cmfc.df, Year >= 1975)
 
-## Replace values with symbol T or duplicated F with NA
+## Replace values with symbol T or E  with NA
 cmfc.df[which(cmfc.df$symbArea == "T"), "valueArea"] = NA
 cmfc.df[which(cmfc.df$symbProd == "T"), "valueProd"] = NA
 cmfc.df[which(cmfc.df$symbArea == "E"), "valueArea"] = NA
 cmfc.df[which(cmfc.df$symbProd == "E"), "valueProd"] = NA
 
-## Replace all duplicated F
+## Replace all duplicated F with NA
 cmfc.df[which(duplicated(cmfc.df[, c("FAOST_CODE", "itemCode", "symbArea",
                                  "valueArea")]) & cmfc.df$symbArea == "F"),
          "valueArea"] = NA
