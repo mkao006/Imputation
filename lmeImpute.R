@@ -32,7 +32,7 @@ lmeImpute = function(fixed = value ~ 0, random = ~1|country,
   setkeyv(Data, cols = c(condVar, groupVar))
   fixed = update(old = fixed, new = group)
   null.ll = -Inf
-  naive.AIC = -Inf
+  naive.AIC = Inf
   lme.ll = rep(NA, n.iter + 1)
   lme.ll[1] = -Inf  
   missInd = is.na(Data[, eval(parse(text = imputeVar))])
@@ -50,7 +50,7 @@ lmeImpute = function(fixed = value ~ 0, random = ~1|country,
 
   if(is.finite(logLik(null.fit))){
     null.ll = logLik(null.fit)
-    Data[, lmeImp := predict(null.fit, Data)]
+    Data[, lmeImp := predict(null.fit, Data, level = 1)]
   }
   
 
@@ -75,7 +75,7 @@ lmeImpute = function(fixed = value ~ 0, random = ~1|country,
       fit.ll = logLik(fit)
       if(fit.ll - lme.ll[j] > tol){
         Data[!is.na(groupAverage),
-             lmeMeanImp := predict(fit, Data[!is.na(groupAverage), ])]
+             lmeMeanImp := predict(fit, Data[!is.na(groupAverage), ], level = 1)]
         lme.ll[j + 1] = fit.ll
       } else {
         break
@@ -87,11 +87,9 @@ lmeImpute = function(fixed = value ~ 0, random = ~1|country,
 
   ## Select imputation method
   bestImp = c("naiveImp", "lmeImp", "lmeMeanImp")[
-    which.max(c(naive.AIC, AIC(null.fit), AIC(fit)))]
-  
+    which.min(c(naive.AIC, AIC(null.fit), AIC(fit)))]  
   Data[, eval(parse(text = paste0("impValue := ", bestImp)))]
   
-  
   class(Data) = old.class
-  list(imputed = Data, method = bestImp, model = fit)
+  list(imputed = Data, method = bestImp)
 }
