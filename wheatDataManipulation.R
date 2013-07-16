@@ -37,8 +37,8 @@ cmfc.df$valueProd = as.numeric(cmfc.df$valueProd)
 cmfc.df$ovalueArea = cmfc.df$valueArea
 cmfc.df$ovalueProd = cmfc.df$valueProd
 
-## Use data only from 1990
-cmfc.df = subset(cmfc.df, Year >= 1975)
+## Use data only from 1980
+cmfc.df = subset(cmfc.df, Year >= 1980)
 
 ## Replace values with symbol T or E  with NA
 cmfc.df[which(cmfc.df$symbArea == "T"), "valueArea"] = NA
@@ -86,6 +86,6 @@ wheatPrep.dt[symbProd %in% c(" ", "*"), sum(!is.na(ovalueProd))]
 
 
 wheatImputeExample = data.frame(subset(wheatPrep.dt,
-  select = c("FAOST_NAME", "Year", "valueArea", "valueProd",
+  select = c("FAOST_CODE", "FAOST_NAME", "Year", "valueArea", "valueProd",
     "valueYield", "UNSD_SUB_REG", "UNSD_MACRO_REG")))
 save(wheatImputeExample, file = "wheatImputeExample.RData")
