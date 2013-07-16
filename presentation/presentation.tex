@@ -34,6 +34,7 @@
   status of the newly proposed imputation methodology for the FAOSTAT
   production domain.\\
 
+  \vspace{0.5cm}
   The work presented is the current status at the date of the
   presentation, and is subject to further changes.
 }
@@ -49,7 +50,15 @@
   Owing to the potential impact of imputation when often data are
   missing, accuracy and reliability of food estimates cannot be
   compromised.
-  
+
+  \vspace{0.5cm}
+
+  However, it must be recognized that imputation should only be used
+  as a last resort.
+
+\end{frame}
+
+\begin{frame}  
   \vspace{0.5cm}
   The relationship of production and its components can be expressed as:
 
@@ -57,8 +66,9 @@
     P_t = A_t \times Y_t
   \end{equation}
   
-  Where $P_t$, $A_t$ and $Y_t$ denotes production, area harvested and
-  yield, respectively, at time $t$.
+  Where $P_t$, $A_t$ and $Y_t$ denotes production, area
+  harvested/animal slaughtered and yield/carcass weight, respectively,
+  at time $t$.
 
 \end{frame}  
 
@@ -115,20 +125,28 @@
   \end{itemize}
 \end{frame}
 
-\section{Case Study and Exploratory Data Analysis}
+\section{Exploratory Data Analysis}
 
 \frame{
 
-  To illustrate the proposed imputation, we have chosen Wheat from the
-  crop group and Cassava from the root group as case studies. Both are important
-  agricultural products but Wheat is much more commercialised and traded
-  than is Cassava.
+  To give a brief demonstration, we have chosen Wheat to illustrate
+  the properties and relationships between the time series.
 
   \vspace{0.5cm}
-  
-  We have log-transformed the data to make the relationsihp an
-  additive one, so that the production can be decomposed.
-  
+
+  The following graph illustrates the relationship between the
+  production, area and yield.
+
+}
+
+\frame{
+  \includegraphics[scale = 0.45]{wheatAreaYield}
+}
+
+\frame{  
+
+  Now let us log transform the data so it becomes an additive
+  relationshp.
   \begin{equation}
     \log(P_t) = \log(A_t) + \log(Y_t)
   \end{equation}
@@ -141,28 +159,14 @@
   \includegraphics[scale = 0.45]{wheatIdentityBreakDown}
 }
 
-%% \frame{
-%%   \frametitle{Same for Cassava}
-%%   \includegraphics[scale = 0.45]{cassavaIdentityBreakDown}
-%% }
-
-\frame{
-  \frametitle{Let us dig deeper}
-  \includegraphics[scale = 0.45]{wheatAreaYield}
-}
-
-%% \frame{
-%%   \frametitle{The co-movement appears weaker}
-%%   \includegraphics[scale = 0.45]{cassavaAreaYield}
-%% }
 
 \frame{
   \frametitle{What is the data telling us?}
 
   What the data have shown is that the level, trend of the production
-  is mainly determined by a smooth monotonic area occasionally
-  affected by shocks, while the yield generates the variation from
-  year-to-year reflecting climate or economic conditions.
+  is mainly determined by a smooth area occasionally affected by
+  shocks, while the yield generates the variation from year-to-year
+  reflecting climate or economic conditions.
 
   \vspace{0.5cm}
   
@@ -176,17 +180,18 @@
 
 \frame{
 
-  First of all, we propose to impute the yield and area, and along with
-  the restriction of the new model this almost guarantees that area
-  and production will not diverge.\\
+  First of all, we propose to impute the yield and area. This along
+  with the restriction of the new model and the decomposition strategy
+  almost guarantees that area and production will not diverge.\\
   \vspace{0.5cm}
   Second, instead of applying the changes directly, the model
   estimates the relationship between the country and the aggregated
   series and applies the factors accordingly.\\
   \vspace{0.5cm}  
+
   Finally the proposed model allows incorporation of additional
-  information such as prices, vegetation indices and other data that may
-  improve the accuracy of the imputation.
+  information such as prices, precipitation and other information that
+  may improve the accuracy of the imputation.
 
 }
 
@@ -201,20 +206,15 @@
   \vspace{0.5cm}
 
   First the area harvested and in particular carcass weight per animal
-  displays close to monotonic behaviour and much little year-to-year
-  fluctuation and thus linear interpolation is suitable. Furthermore,
-  a previous simulation study has shown linear interpolation gives
-  best result.
+  and trees displays extremely smooth behaviour and little
+  year-to-year fluctuation and thus linear interpolation is
+  suitable. Furthermore, a previous simulation study has shown linear
+  interpolation gives best result in some cases.
 
   \vspace{0.5cm} 
 
-  While "last observation carry forward" is useful when the last
+  In addtion, "last observation carry forward" is useful when the last
   observed value is a true zero, we will not impute a positive value.
-
-  \vspace{0.5cm}
-
-  We are, however, investigating improvements in the imputation of area
-  harvested using information such as area sown.
 
 }
 
@@ -242,8 +242,8 @@
 
   \begin{align}
     \label{eq:lmeImpute}
-  \text{Y}_{i,t} &= \overbrace{\beta_{0j} + \beta_{1j}t + b_{2,i,
-      t}\bar{Y}_{j,t}}^{\text{Fixed effect}} + \overbrace{b_{0,i} +
+  \text{Y}_{i,t} &= \overbrace{\beta_{0j} + \beta_{1j}t +
+    \beta_{2,i}\bar{Y}_{j,t}}^{\text{Fixed effect}} + \overbrace{b_{0,i} +
     b_{1,i}t}^{\text{Random effect}} + \epsilon_{i,t}
   \end{align}
 
@@ -251,14 +251,32 @@
 
   \begin{align}
     \label{eq:averageYield}
-    \bar{Y}_{j, t} = \sum_{i \in j} \omega_i Y_{i,t}
+    \bar{Y}_{j, t} = \sum_{i \in j} \omega_{i,t} Y_{i,t}
   \end{align}
 
   Which acts as a proxy to reflect the change in climatics conditions
   and other factors which can simultaneously affect multiple
-  countries. However, due to missing values, this quantity is not
-  computed directly from the raw data. The EM-algorithm is implemented
-  for the estimation for the unbiased average.
+  countries. 
+
+}
+
+\frame{
+
+However, due to missing values, this quantity is not computed directly
+from the raw data. The EM-algorithm is implemented for the estimation
+for the unbiased average.
+
+\vspace{0.5cm}
+
+The average yield is only required if there are factors which can
+simultaneously affect several countries within the region. That is,
+the effect is only inlcluded when it improves the model.
+
+\vspace{0.5cm}
+
+The algorithm starts with the null model without the average effect,
+then \textbf{AIC} is used as the decision criteria as whether the model with
+average effect is needed.
 
 }
 
@@ -305,24 +323,27 @@
 \frame{
   \includegraphics[page = 17, scale = 0.4]{checkWheatImputation}
 }
-
-
 \frame{
-  \includegraphics[page = 54, scale = 0.4]{checkWheatImputation}
-}
-
-\frame{
-  \includegraphics[page = 92, scale = 0.4]{checkWheatImputation}
-}
-
-\frame{
-  \includegraphics[page = 109, scale = 0.4]{checkWheatImputation}
+  \includegraphics[page = 18, scale = 0.4]{checkWheatImputation}
 }
 
 
 \frame{
-  \includegraphics[page = 115, scale = 0.4]{checkWheatImputation}
+  \includegraphics[page = 55, scale = 0.4]{checkWheatImputation}
 }
+
+\frame{
+  \includegraphics[page = 61, scale = 0.4]{checkWheatImputation}
+}
+
+\frame{
+  \includegraphics[page = 63, scale = 0.4]{checkWheatImputation}
+}
+
+\frame{
+  \includegraphics[page = 98, scale = 0.4]{checkWheatImputation}
+}
+
 
 \subsection{Simulation Results}
 \frame{
@@ -330,12 +351,13 @@
 }
 
 \section{Implementation}
-\frame{
-  What we have presented is the methodology, now we will present how the
-  methodology will be integrated into the Food Balance Sheet cycle.
+\frame{ 
+
+  Following the methodology, we will now present how the methodology
+  will be integrated into the Food Balance Sheet cycle.
 
   Imputation does not create information, and it should be used as a
-  last resort.
+  last resort. Model can only be as good as data.
 
   \begin{enumerate}
     \item Receive data from production questionaire, countrySTAT or
@@ -351,6 +373,18 @@
 
 
 \section{Discussion}
+
+\frame{
+  Some on going work
+  \begin{itemize}
+    \item Investigate the performance of state-space model.
+    \item Investigate ensemble models.
+    \item Design a measure to quantify variance, in particular the
+      frequency of fluctuation.
+  \end{itemize}
+
+}
+
 \frame{
 
   The newly proposed methodology demonstrates the ability to resolve
@@ -363,16 +397,12 @@
   \vspace{0.5cm}
 
   You can find all the data, codes implementation, documentation, and
-  the wiki page at the following repository.
-  \url{https://github.com/mkao006/Imputation} 
+  the wiki page at the following repository. You can also install the
+  package following the instruction on the page.
+
+  \vspace{0.5cm}
+  \url{https://github.com/mkao006/Imputation}
 
 }
-
-\frame{
-  
-  Thank you for your time and attention!
-
-}
-
 
 \end{document}
