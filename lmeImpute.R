@@ -17,8 +17,8 @@
 ##' @export
 
 
-lmeImpute = function(fixed = value ~ 0, random = ~1|country,
-  group = ~ year * region, Data, n.iter = 1000, tol = 1e-6){
+lmeImpute = function(fixed, random,
+  groupVar = c(year, region), Data, n.iter = 1000, tol = 1e-6){    
 
   require(nlme)
   
@@ -28,9 +28,7 @@ lmeImpute = function(fixed = value ~ 0, random = ~1|country,
   ## Initialization
   imputeVar = as.character(fixed[[2]])
   condVar = as.character(random[[2]][[3]])
-  groupVar = all.vars(group[[2]])
   setkeyv(Data, cols = c(condVar, groupVar))
-  fixed = update(old = fixed, new = group)
   null.ll = -Inf
   naive.AIC = Inf
   lme.ll = rep(NA, n.iter + 1)
@@ -44,8 +42,9 @@ lmeImpute = function(fixed = value ~ 0, random = ~1|country,
   ## Null model without grouped average effects
   null.fit = try(
     do.call("lme",
-            list(fixed = fixed, random = random, na.action = na.omit, data = Data,
-                 method = "ML")), silent = TRUE
+            list(fixed = fixed, random = random, na.action = na.omit,
+                 data = Data, method = "ML")),
+    silent = TRUE
     )
 
   if(is.finite(logLik(null.fit))){
@@ -63,19 +62,22 @@ lmeImpute = function(fixed = value ~ 0, random = ~1|country,
 
     Data[, groupAverage := mean(lmeMeanImp, na.rm = TRUE), by = groupVar]
 
-    groupedFixed = update(fixed, ~. + groupAverage)
+    ## Move grouped average from fixed to random effect
+    random = as.formula(paste("~ -1 + ", random[[2]][[2]],
+      " + groupAverage|", random[[2]][[3]]))
 
-    fit = try(
+    fit <<- try(
       do.call("lme",
-              list(fixed = groupedFixed, random = random, na.action = na.omit,
-                   data = Data, method = "ML")), silent = TRUE
+              list(fixed = fixed, random = random,
+                   na.action = na.omit, data = Data, method = "ML")),
+      silent = TRUE
       )
-
     if(is.finite(logLik(fit))){
       fit.ll = logLik(fit)
       if(fit.ll - lme.ll[j] > tol){
         Data[!is.na(groupAverage),
-             lmeMeanImp := predict(fit, Data[!is.na(groupAverage), ], level = 1)]
+             lmeMeanImp := predict(fit, Data[!is.na(groupAverage), ],
+                          level = 1)]
         lme.ll[j + 1] = fit.ll
       } else {
         break
@@ -89,7 +91,7 @@ lmeImpute = function(fixed = value ~ 0, random = ~1|country,
   bestImp = c("naiveImp", "lmeImp", "lmeMeanImp")[
     which.min(c(naive.AIC, AIC(null.fit), AIC(fit)))]  
   Data[, eval(parse(text = paste0("impValue := ", bestImp)))]
-  
+
   class(Data) = old.class
   list(imputed = Data, method = bestImp)
 }
