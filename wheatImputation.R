@@ -17,7 +17,7 @@ imputed.dt = FAOProductionImpute(wheatPrep.dt, area = "valueArea",
 
 ## TODO (Michael): Move the following in to the fullImputation
 ##                 function, in addition should find a way to account
-##                 for non-eisting country.
+##                 for non-existing country.
 
 ## Percentage of missing value imputed
 NROW(imputed.dt[is.na(valueProd) & !is.na(imputedProd), ])/
@@ -27,8 +27,12 @@ NROW(imputed.dt[is.na(valueArea) & !is.na(imputedArea), ])/
   NROW(imputed.dt[is.na(valueArea), ])
 
 
-## Examination and plots
+## Diagnosis and plots
 ## ---------------------------------------------------------------------
+
+## Check coefficients and standard deviation
+cbind(coef = round(fit$coefficients$fixed, 4),
+      sd = sqrt(diag(fit$varFix)))
 
 
 ## Check all individual imputation
@@ -36,10 +40,11 @@ pdf(file = "checkWheatImputation.pdf", width = 10)
 for(i in unique(imputed.dt$FAOST_CODE)){
   tmp = imputed.dt[FAOST_CODE == i, ]
 
-  myCountry = FAOcountryProfile[which(FAOcountryProfile$FAOST_CODE ==
-    i), "FAO_TABLE_NAME"]
-  myItem = unique(FAOmetaTable$itemTable[FAOmetaTable$itemTable$itemCode ==
-    unique(imputed.dt$itemCode), "itemName"])
+  myCountry =
+    FAOcountryProfile[which(FAOcountryProfile$FAOST_CODE == i),
+                      "FAO_TABLE_NAME"]
+  myItem = with(FAOmetaTable, unique(itemTable[itemTable$itemCode ==
+    unique(imputed.dt$itemCode), "itemName"]))
   par(mfrow = c(4, 1), mar = c(2.1, 4.1, 3.1, 2.1))
   try({
     ymax = max(tmp[, list(valueProd, imputedProd)], na.rm = TRUE) * 1.2
@@ -83,6 +88,7 @@ graphics.off()
 system("evince checkWheatImputation.pdf&")
 
 
+
 ## Check the sub-regional fit
 pdf(file = "wheatYieldSubregion.pdf", width = 11)
 print(ggplot(data = imputed.dt,
@@ -91,7 +97,8 @@ print(ggplot(data = imputed.dt,
       geom_point(aes(col = factor(FAOST_CODE)), size = 1) +  
       scale_color_manual(values = rep("gold",
                            length(unique(imputed.dt$FAOST_CODE)))) +
-      geom_line(aes(x = Year, y = groupAverage), col = "steelblue", alpha = 0.5) +
+      geom_line(aes(x = Year, y = groupAverage), col = "steelblue",
+                alpha = 0.5) +
       facet_wrap(~UNSD_SUB_REG, ncol = 4) +
       labs(x = NULL, y = NULL,
       title = "Yield of Wheat by sub-region with estimated average") + 
