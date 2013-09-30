@@ -38,7 +38,7 @@ cmfc.df$ovalueArea = cmfc.df$valueArea
 cmfc.df$ovalueProd = cmfc.df$valueProd
 
 ## Use data only from 1980
-cmfc.df = subset(cmfc.df, Year >= 1980)
+cmfc.df = subset(cmfc.df, Year >= 1993)
 
 ## Replace values with symbol T or E  with NA
 cmfc.df[which(cmfc.df$symbArea == "T"), "valueArea"] = NA
