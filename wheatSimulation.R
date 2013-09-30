@@ -9,9 +9,12 @@ source("wheatDataManipulation.R")
 ## Simulation
 ## ---------------------------------------------------------------------
 
-n.sim = 300
-sim.df = data.frame(propSim = runif(n.sim, 1e-05, 1 - 1e-05),
-  propReal = rep(NA, n.sim), MAPE = rep(NA, n.sim), method = rep(NA, n.sim))
+n.sim = 100
+sim.df = data.frame(propSim = runif(n.sim, 0.05, 1 - 1e-05),
+    propReal = rep(NA, n.sim), MAPE = rep(NA, n.sim),
+    method = rep(NA, n.sim))
+
+## pdf(file = "checkImputation.pdf")
 for(i in 1:n.sim){
   print(paste0("Simulation Number: ", i))
   tmp.dt = wheatPrep.dt
@@ -36,15 +39,16 @@ for(i in 1:n.sim){
     ## Check the MAPE of the imputation
     sim.df[i, "MAPE"] = 
       impSim.dt[1:nrow(impSim.dt) %in% simMissProd & ovalueProd != 0 &
-                !is.na(imputedProd),
+                !is.na(imputedProd) & !is.na(imputedProd),
                 sum(abs((ovalueProd - imputedProd)/(ovalueProd)))/
-                length(simMissProd)]
+                length(imputedProd)]
   } else {
     sim.df[i, c("MAPE", "method")] = NA
   }
 }
 
-subSim.df = sim.df[sim.df$MAPE <= 1, ]
+summary(sim.df)
+subSim.df = sim.df[sim.df$MAPE <= 1e100, ]
 
 with(subSim.df[subSim.df$method == "lmeMeanImp", ],
      plot(propReal, MAPE, xlim = c(0, 1), ylim = c(range(subSim.df$MAPE,
@@ -63,11 +67,6 @@ with(subSim.df[subSim.df$MAPE < 1.0 & !is.na(subSim.df$MAPE), ],
 abline(h = seq(0, 1, by = 0.05), lty = 2, col = "grey50")
 graphics.off()
 system("evince wheatSimulationResult.pdf&")
-
-
-with(subSim.df[subSim.df$method == "LME", ], plot(propSim, MAPE, xlim = c(0, 1),
-              ylim = c(range(subSim.df$MAPE, na.rm = TRUE))))
-with(subSim.df[subSim.df$method != "LME", ], points(propSim, MAPE, col = "red"))
 
 
 pdf(file = "checkWheatSim.pdf", width = 10)
