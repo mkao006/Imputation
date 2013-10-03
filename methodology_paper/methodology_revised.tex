@@ -107,7 +107,7 @@
   Food and Agriculture Organization of the United Nations (FAO)\\
   Viale delle Terme di Caracalla 00153 Rome, Italy\\
   E-mail: \email{michael.kao@fao.org}\\
-  URL: \url{https://github.com/mkao006/Imputation}
+  URL: \url{https://github.com/mkao006/sws_imputation}
 }
 \IfFileExists{upquote.sty}{\usepackage{upquote}}{}
 
@@ -174,12 +174,13 @@ precipitation or temperature that may provide valuable information and
 enhance the accuracy of imputation.
 
 Simulation results of the prior attempts indicate that linear
-interpolation is a stable and accurate method but it lacks the
-capability to utilize cross-sectional information. Furthermore, it
-does not provide a solution for extrapolation where connection points
-are not available. As a result, the aggregation method was then
-implemented as it was found to provide a high coverage rate for
-imputation with seemingly satisfactory performance.
+interpolation over small period is a stable and accurate method but it
+lacks the capability to utilize cross-sectional
+information. Furthermore, it does not provide a solution for
+extrapolation where connection points are not available. As a result,
+the aggregation method was then implemented as it was found to provide
+a high coverage rate for imputation with seemingly satisfactory
+performance.
 
 In short, the aggregation imputation method computes the
 commodity/regional aggregated growth of both area and production, the
@@ -413,12 +414,14 @@ FAOSTAT production has the following expression:
 
 Where $Y$ denotes yield with $\bar{Y}$ being the grouped averaged
 yield, $i$ for country, $j$ represents the designated regional
-grouping and $t$ denotes time. Where the grouped averaged yield is
-computed as:
+grouping and $t$ denotes time. The fixed effect is left for external
+drivers such as precipitation, the grouped averaged yield is computed
+as:
 
 \begin{equation}
   \label{eq:averageYield}
-  \bar{Y}_{j, t} = \frac{1}{N_i}\sum_{i \in j} \hat{Y}_{i, t}
+  \bar{Y}_{j, t} = \frac{1}{N_i}\sum_{i \in j} \mathbb{1}_{Y_{i, t} not
+    missing}Y_{i, t} + \mathbb{1}_{Y_{i, t} missing}\hat{Y}_{i, t}
 \end{equation}
 
 However, as the grouped average yield is only partially observed
@@ -444,10 +447,9 @@ average regressor if it does not add value to the model.
 
 
 To better understand the methodology, shown below is the sub-regional
-decomposition with both the regional level (black line) and the
-grouped yield (dark blue line) superimposed. The model assigns a
-sub-regional level and trend depicted as the black line to each series
-and models the correlation with the dark blue grouped yield series.
+decomposition with the grouped average yield (dark blue line)
+superimposed. The model estimates the regional average while
+accounting for country specific deviation and effects.
 
 
 \begin{knitrout}
@@ -512,7 +514,7 @@ package \pkg{FAOSTAT}.
 
   (1) Estimate model without grouped average effect\;
   \Indp\Indp\Indp  
-  $\hat{Y}_{i, t} \leftarrow \hat{\beta}_{0j} + \hat{\beta}_{1j}t +
+  $\hat{Y}_{i, t} \leftarrow \hat{\beta}_{0,j} + \hat{\beta}_{1,j}t +
   \hat{b}_{0i} + \hat{b}_{1i}t $\;
   \Indm\Indm\Indm
   
@@ -526,12 +528,9 @@ package \pkg{FAOSTAT}.
         
         M-step: Estimate the Linear Mix Model in \ref{eq:lmeImpute}\;
         \If{$\cal{L}_{\text{new}} - \cal{L}_{\text{old}} \ge
-          \cal{E}$}{ $\hat{Y}_{i, t} \leftarrow \hat{\beta}_{0j} +
-          \hat{\beta}_{1j}t + \hat{\beta}_{2i}\bar{Y}_{j,t} + \hat{b}_{0i}
-          + \hat{b}_{1i}t $\; $\cal{L}_{\text{old}} \leftarrow
-          \cal{L}_{\text{new}}$\; } \Else{ break } 
-    } 
-    }
+          \cal{E}$}{ $\hat{Y}_{i, t} \leftarrow \text{fitted value of
+            the model}$\; $\cal{L}_{\text{old}} \leftarrow
+          \cal{L}_{\text{new}}$\; } \Else{ break } } }
     
     (3) Select model with the smallest AIC
     
@@ -593,13 +592,9 @@ package \pkg{FAOSTAT}.
         (4) Impute area ($A_{i, t}$) with equation
         \ref{eq:linearInterpolation} then \ref{eq:locf}\;
         
-        \ForAll{imputed area $\hat{A}_{i, t}$}{
-          \If{$\hat{Y}_{i, t} \ne \emptyset$}{
-            $\hat{P}_{i, t} \leftarrow \hat{A}_{i, t} \times \hat{Y}_{i, t}$\;
-          }
-        }
-      }
-  }
+        \ForAll{imputed area $\hat{A}_{i, t}$}{ \If{$\hat{Y}_{i, t}
+            \ne \emptyset$}{ $\hat{P}_{i, t} \leftarrow \hat{A}_{i, t}
+            \times \hat{Y}_{i, t}$\; } } } }
   \caption{Imputation Procedure}
 \end{algorithm}
 
@@ -607,7 +602,7 @@ package \pkg{FAOSTAT}.
 \section*{Annex 3: Supplementary Resources}
 
 The data, code implementation and documentation can all be found and
-downloaded from \url{https://github.com/mkao006/Imputation}. This
+downloaded from \url{https://github.com/mkao006/sws_imputation}. This
 paper is generated on \today and is subject to changes and updates.
   
 \begin{thebibliography}{9}

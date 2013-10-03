@@ -1,5 +1,25 @@
 %%
 %% This is file `jss.cls',
+%% generated with the docstrip utility.
+%%
+%% The original source files were:
+%%
+%% jss.dtx  (with options: `class')
+%% 
+%% IMPORTANT NOTICE:
+%% 
+%% For the copyright see the source file.
+%% 
+%% Any modified versions of this file must be renamed
+%% with new filenames distinct from jss.cls.
+%% 
+%% For distribution of the original source see the terms
+%% for copying and modification in the file jss.dtx.
+%% 
+%% This generated file may be distributed as long as the
+%% original source files, as listed above, are part of the
+%% same distribution. (The sources need not necessarily be
+%% in the same archive or directory.)
 \def\fileversion{2.1}
 \def\filename{jss}
 \def\filedate{2012/06/07}
