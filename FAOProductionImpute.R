@@ -66,6 +66,6 @@ FAOProductionImpute = function(Data, area, prod, yield, country,
   ## setnames(impYield.dt,
   ##          new = c(area, prod, yield, country, region, year),
   ##          old = c("area", "prod", "yield", "country", "region", "year"))
-  
-  impYield.dt
+
+  list(imputed = impYield.dt, model = impYield.lst$model)
 }
