@@ -91,7 +91,13 @@ lmeImpute = function(fixed, random,
   bestImp = c("naiveImp", "lmeImp", "lmeMeanImp")[
     which.min(c(naive.AIC, AIC(null.fit), AIC(fit)))]  
   Data[, eval(parse(text = paste0("impValue := ", bestImp)))]
-
   class(Data) = old.class
-  list(imputed = Data, method = bestImp)
+
+  if(!inherits(fit, "try-error")){
+      final.fit = fit
+  } else {
+      final.fit = fit
+  }
+
+  list(imputed = Data, method = bestImp, model = final.fit)
 }
