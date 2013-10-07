@@ -2,9 +2,8 @@
 \alias{lmeImpute}
 \title{This function performs imputation by linear mixed model}
 \usage{
-  lmeImpute(fixed = value ~ 0, random = ~1 | country,
-    group = ~year * region, Data, n.iter = 1000,
-    tol = 1e-06)
+  lmeImpute(fixed, random, groupVar = c(year, region),
+    Data, n.iter = 1000, tol = 1e-06)
 }
 \arguments{
   \item{fixed}{The fixed effect of the model excluding the

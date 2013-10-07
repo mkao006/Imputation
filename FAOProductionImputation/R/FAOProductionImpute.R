@@ -21,18 +21,20 @@
 ##' @export
 
 
-FAOProductionImpute = function(Data, area, prod, yield, country, region, year,
-  n.iter = 1000, tol = 1e-8){
+FAOProductionImpute = function(Data, area, prod, yield, country,
+  region, year, n.iter = 1000, tol = 1e-8){
+
   dataCopy = data.table(Data)
 
   ## Initiate the formula
-  fixed = formula(paste0(yield, " ~ 0"))
+  fixed = formula(paste0(yield, " ~ 1"))
   random = formula(paste("~", year, "|", country))
-  group = formula(paste("~", region, "*", year))
+  groupVar = c(region, year)
+
 
   ## Impute yield
   impYield.lst = lmeImpute(fixed = fixed, random = random,
-    group = group, Data = dataCopy)
+    groupVar = groupVar, Data = dataCopy)
 
   impYield.dt = data.table(impYield.lst$imputed)
   print(paste("yield methodology: ", impYield.lst$method))
@@ -42,9 +44,11 @@ FAOProductionImpute = function(Data, area, prod, yield, country, region, year,
   ## Impute area and produciton if available
   impYield.dt[, eval(parse(text = paste0("imputedArea := ", area)))]
   impYield.dt[, eval(parse(text = paste0("imputedProd := ", prod)))]
-  impYield.dt[is.na(imputedArea) & !is.na(imputedProd) & !is.na(imputedYield),
-           imputedArea := imputedProd/imputedYield]
-  impYield.dt[is.na(imputedProd) & !is.na(imputedArea) & !is.na(imputedYield),
+  impYield.dt[is.na(imputedArea) & !is.na(imputedProd) &
+              !is.na(imputedYield),
+              imputedArea := imputedProd/imputedYield]
+  impYield.dt[is.na(imputedProd) & !is.na(imputedArea) &
+              !is.na(imputedYield),
            imputedProd := imputedArea * imputedYield]
 
   ## Impute area with naive imputation
@@ -52,14 +56,16 @@ FAOProductionImpute = function(Data, area, prod, yield, country, region, year,
               by = country]
 
   ## Impute production where area and yield are available
-  impYield.dt[is.na(imputedProd), imputedProd := imputedArea * imputedYield]
+  impYield.dt[is.na(imputedProd),
+              imputedProd := imputedArea * imputedYield]
 
   ## Remove yield where area or produciton are zero
-  impYield.dt[imputedProd == 0 | imputedArea == 0, imputedYield := as.numeric(NA)]
+  impYield.dt[imputedProd == 0 | imputedArea == 0,
+              imputedYield := as.numeric(NA)]
   
   ## setnames(impYield.dt,
   ##          new = c(area, prod, yield, country, region, year),
   ##          old = c("area", "prod", "yield", "country", "region", "year"))
-  
-  impYield.dt
+
+  list(imputed = impYield.dt, model = impYield.lst$model)
 }
