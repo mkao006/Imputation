@@ -8,12 +8,16 @@ source("FAOProductionImpute.R")
 source("lmeImpute.R")
 source("naiveImpute.R")
 
+## Take only data from 1980 for linearity
+wheatPrep.dt = subset(wheatPrep.dt, Year >= 1980)
+
 ## Imputation
 ## ---------------------------------------------------------------------
-imputed.dt = FAOProductionImpute(wheatPrep.dt, area = "valueArea",
+imputed.lst = FAOProductionImpute(wheatPrep.dt, area = "valueArea",
   prod = "valueProd", yield = "valueYield", country = "FAOST_CODE",
   region = "UNSD_SUB_REG", year = "Year")
 
+imputed.dt = imputed.lst$imputed
 
 ## TODO (Michael): Move the following in to the fullImputation
 ##                 function, in addition should find a way to account
@@ -88,7 +92,6 @@ graphics.off()
 system("evince checkWheatImputation.pdf&")
 
 
-
 ## Check the sub-regional fit
 pdf(file = "wheatYieldSubregion.pdf", width = 11)
 print(ggplot(data = imputed.dt,
@@ -107,6 +110,23 @@ graphics.off()
 system("evince wheatYieldSubregion.pdf&")
 
 
+
+
+
+## Plot fit vs residuals and qqplot
+plot(imputed.lst$model,
+     residuals(., type = "pearson", level = 1) ~
+     fitted(., level = 1)|as.character(Year),
+     pch = 16, cex = 0.5)
+
+plot(imputed.lst$model, resid(., type = "response", level = 1) ~
+     fitted(., level = 1)|FAOST_NAME, pch = 16, cex = 0.5)
+
+qqnorm(imputed.lst$model, ~ resid(., type = "p") | FAOST_NAME,
+       abline = c(0, 1), pch = 16, cex = 0.8)
+
+acf(imputed.lst$model$residuals[, 1])
+acf(imputed.lst$model$residuals[, 2])
 
 
 ## Illustration of the impuation process.
