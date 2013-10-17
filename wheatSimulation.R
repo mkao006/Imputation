@@ -4,12 +4,12 @@
 ########################################################################
 
 source("wheatDataManipulation.R")
-
+library(FAOProductionImputation)
 
 ## Simulation
 ## ---------------------------------------------------------------------
 
-n.sim = 100
+n.sim = 2000
 sim.df = data.frame(propSim = runif(n.sim, 0.05, 1 - 1e-05),
     propReal = rep(NA, n.sim), MAPE = rep(NA, n.sim),
     method = rep(NA, n.sim))
@@ -33,7 +33,7 @@ for(i in 1:n.sim){
   sim.df[i, "propReal"] = tmp.dt[, sum(is.na(simYield))/length(simYield)]  
   impSim.dt = try(FAOProductionImpute(Data = tmp.dt, area = "simArea",
     prod = "simProd", yield = "simYield", country = "FAOST_CODE",
-    region = "UNSD_SUB_REG", year = "Year"))
+    region = "UNSD_SUB_REG", year = "Year")$imputed)
   if(!inherits(impSim.dt, "try-error")){
     sim.df[i, "method"] = unique(impSim.dt[, yieldMethodology])
     ## Check the MAPE of the imputation
@@ -48,13 +48,21 @@ for(i in 1:n.sim){
 }
 
 summary(sim.df)
-subSim.df = sim.df[sim.df$MAPE <= 1e100, ]
+subSim.df = sim.df[sim.df$MAPE <= 1, ]
 
 with(subSim.df[subSim.df$method == "lmeMeanImp", ],
      plot(propReal, MAPE, xlim = c(0, 1), ylim = c(range(subSim.df$MAPE,
                                             na.rm = TRUE))))
 with(subSim.df[subSim.df$method != "lmeMeanImp", ],
      points(propReal, MAPE, col = "red"))
+
+pdf(file = "wheatSimulationResult.pdf", width = 10)
+print(ggplot(subSim.df, aes(x = propReal, y = MAPE)) +
+    geom_point() + geom_smooth() +
+    coord_cartesian(xlim = c(0, 1)) +
+    labs(x = "Proportion of missing values",
+         y = "Mean Absolute Percentage Error"))
+graphics.off()
 
 pdf(file = "wheatSimulationResult.pdf", width = 10)
 with(subSim.df[subSim.df$MAPE < 1.0, ], plot(propReal, MAPE, xlim = c(0, 1),
