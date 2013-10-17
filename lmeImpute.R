@@ -55,16 +55,17 @@ lmeImpute = function(fixed, random,
 
   ## lme with grouped average effects
   Data[, lmeMeanImp := naiveImp]
-  
+
+  ## Move grouped average from fixed to random effect
+  ## random = as.formula(paste("~ -1 + ", random[[2]][[2]],
+  ##     " + groupAverage|", random[[2]][[3]]))
+  random = as.formula(paste0("~groupAverage|", random[[2]][[3]]))
+
   for(j in 1:n.iter){
     if(j == n.iter)
       print("maximum iteration reached, model may have not converged")
 
     Data[, groupAverage := mean(lmeMeanImp, na.rm = TRUE), by = groupVar]
-
-    ## Move grouped average from fixed to random effect
-    random = as.formula(paste("~ -1 + ", random[[2]][[2]],
-      " + groupAverage|", random[[2]][[3]]))
 
     fit <<- try(
       do.call("lme",
