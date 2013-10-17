@@ -25,8 +25,8 @@ mfc.df$type = substring(mfc.df$variable, 1, ind - 1)
 mfc.df$variable = NULL
 mfc.df$Element.Code = ifelse(mfc.df$Element.Code == 31, "valueArea",
   "valueProd")
-cmfc.df = dcast(mfc.df, Area.Code + Area.Name + Item.Code + Year ~ Element.Code +
-  type, value.var = "value")
+cmfc.df = dcast(mfc.df, Area.Code + Area.Name + Item.Code + Year ~
+    Element.Code + type, value.var = "value")
 colnames(cmfc.df) = c("FAOST_CODE", "FAOST_NAME", "itemCode", "Year",
           "valueArea", "symbArea", "valueProd", "symbProd")
 cmfc.df$Year = as.integer(cmfc.df$Year)
@@ -37,8 +37,6 @@ cmfc.df$valueProd = as.numeric(cmfc.df$valueProd)
 cmfc.df$ovalueArea = cmfc.df$valueArea
 cmfc.df$ovalueProd = cmfc.df$valueProd
 
-## Use data only from 1980
-cmfc.df = subset(cmfc.df, Year >= 1993)
 
 ## Replace values with symbol T or E  with NA
 cmfc.df[which(cmfc.df$symbArea == "T"), "valueArea"] = NA
@@ -86,6 +84,6 @@ wheatPrep.dt[symbProd %in% c(" ", "*"), sum(!is.na(ovalueProd))]
 
 
 wheatImputeExample = data.frame(subset(wheatPrep.dt,
-  select = c("FAOST_CODE", "FAOST_NAME", "Year", "valueArea", "valueProd",
-    "valueYield", "UNSD_SUB_REG", "UNSD_MACRO_REG")))
+  select = c("FAOST_CODE", "FAOST_NAME", "Year", "valueArea",
+      "valueProd", "valueYield", "UNSD_SUB_REG", "UNSD_MACRO_REG")))
 save(wheatImputeExample, file = "wheatImputeExample.RData")
