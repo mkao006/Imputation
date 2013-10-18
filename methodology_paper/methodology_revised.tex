@@ -86,14 +86,19 @@
 \Abstract{ 
 
   This paper proposes a new imputation method for the FAOSTAT
-  production domain.  The proposal provides resolve to many of the
-  shortcomings of the current approach, and offers a flexible
-  framework to incorporate further information to improve performance.
+  production domain based on linear mixed model and the EM-algorithm.
+  The proposal provides resolve to many of the shortcomings of the
+  current approach, and offers a flexible and robust framework to
+  incorporate further information to improve performance.  
+  
   We first examine the factors that drive changes in production by
   commodity, after which a brief acount of the current approach and
-  its shortcomings. Then, a description of the new methodology is
-  provided, with a visual decomposition of the model and accompanying
-  explanation.
+  its shortcomings. A description of the new methodology is provided,
+  with a visual decomposition of the model and accompanying
+  explanation. 
+  
+  Finally, a case study on wheat is given with the fit, diagnostic and
+  simulation results presented and closed with discussion.
 
 }
 
@@ -110,6 +115,7 @@
   URL: \url{https://github.com/mkao006/sws_imputation}
 }
 \IfFileExists{upquote.sty}{\usepackage{upquote}}{}
+
 
 
 \begin{document}
@@ -400,7 +406,7 @@ The general form of the model can be expressed as:
 \end{align}
 
 Where the fixed component $\mathbf{X_i}\boldsymbol{\beta}$ models the
-regional level and trend, while the random component of
+effect of exogenous variables, while the random component of
 $\mathbf{Z_i}\mathbf{b_i}$ captures the country specific variation
 around the regional level.  More specifically, the proposed model for
 FAOSTAT production has the following expression:
@@ -420,8 +426,8 @@ as:
 
 \begin{equation}
   \label{eq:averageYield}
-  \bar{Y}_{j, t} = \frac{1}{N_i}\sum_{i \in j} \mathbb{1}_{Y_{i, t} not
-    missing}Y_{i, t} + \mathbb{1}_{Y_{i, t} missing}\hat{Y}_{i, t}
+  \bar{Y}_{j, t} = \frac{1}{N_i}\sum_{i \in j} \mathbb{1}_{Y^O_{i, t}
+  }Y_{i, t} + \mathbb{1}_{Y^M_{i, t}}\hat{Y}_{i, t}
 \end{equation}
 
 However, as the grouped average yield is only partially observed
@@ -440,10 +446,10 @@ cross-sectional information are utilized, imputed values display
 stable characteristics while reflecting changes in climatic
 conditions.
 
-Nevertheless, we can observe that under the livestock circumstances
-the group average effet is not required. In this case, the algorithm
-will select the model with the lowest AIC and discard the group
-average regressor if it does not add value to the model.
+%% Nevertheless, we can observe that under the livestock circumstances
+%% the group average effet is not required. In this case, the algorithm
+%% will select the model with the lowest AIC and discard the group
+%% average regressor if it does not add value to the model.
 
 
 To better understand the methodology, shown below is the sub-regional
@@ -455,7 +461,7 @@ accounting for country specific deviation and effects.
 \begin{knitrout}
 \definecolor{shadecolor}{rgb}{0.969, 0.969, 0.969}\color{fgcolor}
 
-{\centering \includegraphics[width=\maxwidth,height=18cm]{figure/wheat-yield} 
+{\centering \includegraphics[width=\maxwidth,height=20cm]{figure/wheat-yield} 
 
 }
 
@@ -463,6 +469,150 @@ accounting for country specific deviation and effects.
 
 \end{knitrout}
 
+
+
+\section{Wheat Case Study}
+In this section we present the imputation result and diagnostic of the
+proposed methodology.
+
+
+\subsection{Model fit}
+Shown below is the model fitted to the wheat data set, the pink are
+the fitted value of the model and act as the imputation value where
+the original data is missing. Overall, we can see the fit is fine but
+there are several fit which shows sign of unsatisfactory. In
+particularly, Zimbabwe, United Arab Emirates, Oman and Kuwait. They
+all share the same characteristic of drastic change over a point in
+time or a certain period in which in-depth analysis is required for
+understanding.
+
+\begin{knitrout}
+\definecolor{shadecolor}{rgb}{0.969, 0.969, 0.969}\color{fgcolor}
+
+{\centering \includegraphics[width=\maxwidth]{figure/wheat-fit} 
+
+}
+
+
+
+\end{knitrout}
+
+
+
+\subsection{Diagnostic}
+In this section we provide diagnostic plots which will assist us in
+assess the validity and feasibility of the model for imputation.
+
+
+We first examine the linearity assumption with respect to time. The
+following two plots ilustrates the standardized residual against the
+fitted value, we can observe that both plot does display any peculiar
+pattern or information which we are able to utilize to enhance the
+model.
+\begin{knitrout}
+\definecolor{shadecolor}{rgb}{0.969, 0.969, 0.969}\color{fgcolor}
+
+{\centering \includegraphics[width=\maxwidth]{figure/linear-diagnostic-year-wheat} 
+
+}
+
+
+
+\end{knitrout}
+
+
+
+\begin{knitrout}
+\definecolor{shadecolor}{rgb}{0.969, 0.969, 0.969}\color{fgcolor}
+
+{\centering \includegraphics[width=\maxwidth]{figure/linear-diagnostic-year-chickenmeat} 
+
+}
+
+
+
+\end{knitrout}
+
+
+Secondly, the same plot is generated for at the country level. In some
+countries like Zambia, it seems that there is a positive associate
+with the residual and the fitted value. After examination, we found
+that this is caused by an influencial point where the linear fit was
+pulled towards. However, accounting for such influencial points on a
+case-to-case bassis maybe difficult and inpractical.
+
+\begin{knitrout}
+\definecolor{shadecolor}{rgb}{0.969, 0.969, 0.969}\color{fgcolor}
+
+{\centering \includegraphics[width=\maxwidth]{figure/linear-diagonostric-country-wheat} 
+
+}
+
+
+
+\end{knitrout}
+
+
+\begin{knitrout}
+\definecolor{shadecolor}{rgb}{0.969, 0.969, 0.969}\color{fgcolor}
+
+{\centering \includegraphics[width=\maxwidth]{figure/linear-diagonostric-country-chickenmeat} 
+
+}
+
+
+
+\end{knitrout}
+
+
+Finally, the qqnorm plot is depicted and remarkbly that most of the
+residuals does not depart from the normality assumption.
+\begin{knitrout}
+\definecolor{shadecolor}{rgb}{0.969, 0.969, 0.969}\color{fgcolor}
+
+{\centering \includegraphics[width=\maxwidth]{figure/normal-diagnostic-wheat} 
+
+}
+
+
+
+\end{knitrout}
+
+
+\begin{knitrout}
+\definecolor{shadecolor}{rgb}{0.969, 0.969, 0.969}\color{fgcolor}
+
+{\centering \includegraphics[width=\maxwidth]{figure/normal-diagnostic-chickenmeat} 
+
+}
+
+
+
+\end{knitrout}
+
+
+
+\subsection{Simulation Results}
+In order to assess the model, we have also carried out a simulation by
+which observation were withdrawn, imputed then benchmark with the
+original value.
+
+The wheat data set has been taken for the simulation study, the error
+rate will and very likely to differ between commodities. Two thousand
+simulation were performed, the result is given in the following
+figure.
+
+Given that approximately 25\% of the original production were missing
+we were only able to carry out the simulation for missing proportion
+greater than 25\%.
+
+The evaluation criteria used was the mean absolute percentage error
+(MAPE), the figure shows that even with 50\% data we can still achieve
+an out of sample error rate below 25\%. In practical modelling this is
+more than aceptable in particularly that the quality of the data
+contributes significantly to these error.
+
+\includegraphics[width = \maxwidth]{wheatSimulationResult}
 
 \section{Conclusion and Future improvements}
 The aim of the paper has been to overhaul the current imputation
@@ -480,6 +630,8 @@ continuing to collaborate in order to seek a deeper understanding of
 the data in order to improve on the model. Application of the
 state-space model might be a candidate to succeed in this regard, as
 it allows for production, area and yield to be imputed simultaneously.
+In addition, additive mixed model are under-investigation for country
+non-linearity departures.
 
 \section{Acknowledgement}
 This work is supervised by Adam Prakash with assistance from Nicolas
@@ -532,7 +684,7 @@ package \pkg{FAOSTAT}.
             the model}$\; $\cal{L}_{\text{old}} \leftarrow
           \cal{L}_{\text{new}}$\; } \Else{ break } } }
     
-    (3) Select model with the smallest AIC
+    %% (3) Select model with the smallest AIC
     
     \caption{EM-Algorithm for Imputation}
     \label{alg:imputation}
@@ -606,6 +758,11 @@ downloaded from \url{https://github.com/mkao006/sws_imputation}. This
 paper is generated on \today and is subject to changes and updates.
   
 \begin{thebibliography}{9}
+\bibitem{dougbates2010}
+  Douglas M. Bates
+  \emph{lme4: Mixed-effects modelling with R}
+  2010
+  
 \bibitem{impWorkingPaper2011}
   Data Collection, Workflows and Methodology (DCWM) team,
   \emph{Imputation and Validation Methodologies for the FAOSTAT Production Domain}.
@@ -631,13 +788,43 @@ paper is generated on \today and is subject to changes and updates.
   \emph{nlme: Linear and Nonlinear Mixed Effects Models.} 
   R package version 3.1-108.
   2013
-  
+
+\bibitem{lme4}
+  Douglas Bates, Martin Maechler, Ben Bolker and Steven Walker (2013).
+  \emph{lme4: Linear mixed-effects models using Eigen and S4.} 
+  R package version 1.0-4. http://CRAN.R-project.org/package=lme4
+ 
 \bibitem{rubin1976}
   Donald B. Rubin,
   \emph{Inference and Missing Data},
   Biometrika, Volume 63, Issue 3, 581-592,
   1976
+  
+\bibitem{unido2012}
+  Valentin Todorov, Matthias Templ
+  \emph{R in the Statistical Office: Part II}
+  2012
+  
+\bibitem{laird_ware1982}
+  Nam M. Laird, James H. Ware
+  \emph{Random-Effects Models for Longitudinal Data}
+  Biometrics, Volume 38, Number 4, pp.963-974
+  1982
+
+\bibitem{dempster_laird_rubin1977}
+  A. P. Dempster, Nam M. Laird, D. B. Rubin
+  \emph{Maximum Likelihood from Incomplete Data via the EM Algorithm}
+  Journal of Royal Statistical Society. Series B (Methodological), Volume 39, Number 1, pp1-38
+  1977
+  
+\bibitem{lai_huang_lee2012}
+  Randy C. S. Lai, Hsin-Cheng Huang, Thomase C. M. Lee
+  \emph{Fixed and random effects selection in nonparametric additive mixed models}
+  Electronic Journal of Statistics, Volume 6, pp810-842
+  2012
 \end{thebibliography}
   
-  
+
+
+
 \end{document}
