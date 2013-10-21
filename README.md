@@ -13,7 +13,7 @@ To install the imputation package, simply run the following command
 ```r
 library(devtools)
 install_github(repo = "sws_imputation", 
-	       username = "mkao006", subdir = "FAOProductionImputation")
+	       username = "mkao006", subdir = "swsImputation")
 ```
 
 
@@ -37,7 +37,7 @@ the *previous_methodology* folder.
 ### Proposed Methodology and Case Example
 
 There are three code scripts to perform the full imputation case study
-for the wheat data (*fullWheat.csv*)
+for the wheat data (*wheatSUA.csv*)
 
 1. **wheatDataManipulation.R** - This script reads and performs data
 manipulation of the SUA data into the desired format.
@@ -60,10 +60,10 @@ to avoid infinity or NaN.
 is, linear interpolation followed by last/first observation carrid
 forward/backward.
 
-* **lmeImpute.R** - This is the core function which performs the
+* **meanlme4.R** - This is the core function which performs the
 imputation based on linear mixed model with EM estimation of the
 average value.
 
-* **FAOProductionImputation.R** - This is a wrapper function of the
-*lmeImpute* function which imputes the area, production and yield for
+* **swsImputation.R** - This is a wrapper function of the
+*meanlme4* function which imputes the area, production and yield for
 a single commodity.
