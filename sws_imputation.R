@@ -32,7 +32,6 @@ sws_imputation = function(data, area, prod, yield, country,
   splitData = splitNACountry(value = yield, country = country,
       data = dataCopy)
   nonEmptyYield = splitData$nonEmptyData
-  print(str(splitData))
   
   ## Linear Mixed Model for yield
   yield.fit = lmerEMImpute(formula = yieldFormula,
