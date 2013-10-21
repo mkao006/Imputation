@@ -7,8 +7,8 @@ source("wheatDataManipulation.R")
 ## source("FAOProductionImpute.R")
 ## source("lmeImpute.R")
 source("naiveImpute.R")
-source("sws_imputation.R")
-source("lme4Impute.R")
+source("swsImputation.R")
+source("meanlme4.R")
 source("splitNACountry.R")
 library(lme4)
 
@@ -20,7 +20,7 @@ wheatPrep.dt = subset(wheatPrep.dt, Year >= 1980)
 ## imputed.lst = FAOProductionImpute(wheatPrep.dt, area = "valueArea",
 ##   prod = "valueProd", yield = "valueYield", country = "FAOST_CODE",
 ##   region = "UNSD_SUB_REG", year = "Year")
-imputed.lst = sws_imputation(data = wheatPrep.dt, area = "valueArea",
+imputed.lst = swsImputation(data = wheatPrep.dt, area = "valueArea",
   prod = "valueProd", yield = "valueYield", country = "FAOST_NAME",
   region = "UNSD_SUB_REG", year = "Year", tol = 10)
 
