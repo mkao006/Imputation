@@ -1,0 +1,31 @@
+Package: swsImputation
+Type: Package
+Title: Package to perform the imputation of area, production and yield for the
+    FAO production domain.
+Version: 0.1
+Date: 2013-06-30
+Authors@R: c(person("Micheal. C. J.", "Kao", role = c("aut", "cre"), email =
+    "michael.kao@fao.org"))
+Author: Michael C. J. Kao <michael.kao@fao.org>
+Maintainer: Michael C. J. Kao <michael.kao@fao.org>
+Description: This package provides all the function to perform imputation of
+    area, production and yield under for the FAO production domain using linear
+    mixed model.
+License: GPL (>= 2)
+Depends:
+    plyr (>= 1.7.1),
+    reshape2 (>= 1.2.1),
+    data.table (>= 1.8.2),
+    nlme (>= 3.1-108),
+    zoo (>= 1.7-9),
+    FAOSTAT (>= 1.4),
+    lme4 (>= 1.0-4)
+LazyData: yes
+ZipData: no
+Collate:
+    'computeYield.R'
+    'meanlme4.R'
+    'naiveImpute.R'
+    'splitNACountry.R'
+    'swsImputation-package.R'
+    'swsImputation.R'

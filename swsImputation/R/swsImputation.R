@@ -5,7 +5,7 @@
 ##' vignette to perform imputation for the three related time series
 ##' of FAO production domain.
 ##'
-##' @param Data The data.frame or data.table containing the data.
+##' @param data The data.frame or data.table containing the data.
 ##' @param area The column containing the area time series.
 ##' @param prod The column containing the production time series.
 ##' @param yield The column containing the yield time series.
@@ -21,7 +21,7 @@
 ##' @export
 
 
-sws_imputation = function(data, area, prod, yield, country,
+swsImputation = function(data, area, prod, yield, country,
   region, year, n.iter = 1000, tol = 1e-8){
 
   dataCopy = copy(data.table(data))
@@ -34,7 +34,7 @@ sws_imputation = function(data, area, prod, yield, country,
   nonEmptyYield = splitData$nonEmptyData
   
   ## Linear Mixed Model for yield
-  yield.fit = lmerEMImpute(formula = yieldFormula,
+  yield.fit = meanlme4(formula = yieldFormula,
       groupVariable = c(region, year), countryVar = country,
       data = nonEmptyYield, n.iter = n.iter, tol = tol)
 

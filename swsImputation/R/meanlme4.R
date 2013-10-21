@@ -1,4 +1,21 @@
-lmerEMImpute = function(formula, groupVariable, countryVar, data,
+##' This function performs imputation by linear mixed model
+##'
+##'
+##' @param formula See the formula of lme4
+##' @param groupVariable The grouped effect of the model, the mean are
+##' computed based on this formula
+##' @param countryVar The variable which defines the country, which act as the conditional variable in the random effect.
+##' @param data the data.frame or data.table containing the data
+##' @param n.iter The number of iteration for the EM-algorithm for
+##' estimating the grouped average effect.
+##' @param tol The tolerance, stopping criteria for the likelihood.
+##' @param EMverbose logical, whether the likelihood in the EM step should be returned.
+##'
+##' @seealso \code{\link{FAOProductionImpute}}
+##' @export
+
+
+meanlme4 = function(formula, groupVariable, countryVar, data,
     n.iter, tol, EMverbose = TRUE){
     
     ## Initialization
