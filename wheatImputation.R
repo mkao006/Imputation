@@ -4,24 +4,27 @@
 ########################################################################
 
 source("wheatDataManipulation.R")
-source("FAOProductionImpute.R")
-source("lmeImpute.R")
+## source("FAOProductionImpute.R")
+## source("lmeImpute.R")
 source("naiveImpute.R")
+source("sws_imputation.R")
+source("lme4Impute.R")
+source("splitNACountry.R")
+library(lme4)
 
 ## Take only data from 1980 for linearity
 wheatPrep.dt = subset(wheatPrep.dt, Year >= 1980)
 
 ## Imputation
 ## ---------------------------------------------------------------------
-imputed.lst = FAOProductionImpute(wheatPrep.dt, area = "valueArea",
-  prod = "valueProd", yield = "valueYield", country = "FAOST_CODE",
-  region = "UNSD_SUB_REG", year = "Year")
+## imputed.lst = FAOProductionImpute(wheatPrep.dt, area = "valueArea",
+##   prod = "valueProd", yield = "valueYield", country = "FAOST_CODE",
+##   region = "UNSD_SUB_REG", year = "Year")
+imputed.lst = sws_imputation(data = wheatPrep.dt, area = "valueArea",
+  prod = "valueProd", yield = "valueYield", country = "FAOST_NAME",
+  region = "UNSD_SUB_REG", year = "Year", tol = 10)
 
 imputed.dt = imputed.lst$imputed
-
-## TODO (Michael): Move the following in to the fullImputation
-##                 function, in addition should find a way to account
-##                 for non-existing country.
 
 ## Percentage of missing value imputed
 NROW(imputed.dt[is.na(valueProd) & !is.na(imputedProd), ])/
@@ -33,11 +36,6 @@ NROW(imputed.dt[is.na(valueArea) & !is.na(imputedArea), ])/
 
 ## Diagnosis and plots
 ## ---------------------------------------------------------------------
-
-## Check coefficients and standard deviation
-cbind(coef = round(fit$coefficients$fixed, 4),
-      sd = sqrt(diag(fit$varFix)))
-
 
 ## Check all individual imputation
 pdf(file = "checkWheatImputation.pdf", width = 10)
@@ -72,7 +70,7 @@ for(i in unique(imputed.dt$FAOST_CODE)){
   
   
   try({
-    ymax = max(tmp[, list(valueYield, imputedYield, groupAverage)],
+    ymax = max(tmp[, list(valueYield, imputedYield, groupedMean)],
       na.rm = TRUE) * 1.2
     with(tmp, plot(Year, valueYield, ylim = c(0, ymax), type = "b",
                    col = "black", xlab = "", ylab = "Yield",
@@ -83,7 +81,7 @@ for(i in unique(imputed.dt$FAOST_CODE)){
          points(Year, imputedYield, col = "blue", pch = 19))
   })
   try({
-    with(tmp, plot(Year, groupAverage, ylab = "Average Yield",
+    with(tmp, plot(Year, groupedMean, ylab = "Average Yield",
                    ylim = c(0, ymax), type = "b"))
   })
   
@@ -100,7 +98,7 @@ print(ggplot(data = imputed.dt,
       geom_point(aes(col = factor(FAOST_CODE)), size = 1) +  
       scale_color_manual(values = rep("gold",
                            length(unique(imputed.dt$FAOST_CODE)))) +
-      geom_line(aes(x = Year, y = groupAverage), col = "steelblue",
+      geom_line(aes(x = Year, y = groupedMean), col = "steelblue",
                 alpha = 0.5) +
       facet_wrap(~UNSD_SUB_REG, ncol = 4) +
       labs(x = NULL, y = NULL,
