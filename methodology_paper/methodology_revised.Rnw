@@ -502,15 +502,15 @@ the fitted value of the model and act as the imputation value where
 the original data is missing. Overall, we can see the fit is fine but
 there are several fit which shows sign of unsatisfactory. In
 particularly, Zimbabwe, United Arab Emirates, Oman and Kuwait. They
-all share the same characteristic of drastic change over a point in
-time or a certain period in which in-depth analysis is required for
+all share the same characteristic of drastic change at a point in time
+or over a certain period in which in-depth analysis is required for
 understanding.
 
-<<wheat-fit, fig.width=15, fig.height=10>>=
+<<wheat-fit, fig.width=15, fig.height=10, fig.cap='Fitted value against observed value for yield of wheat'>>=
 xyplot(valueYield + imputedYield ~ Year | FAOST_NAME,
        data = imputedWheat.dt,
        type = c("g", "l"), aspect = "fill", layout = c(15, 9),
-       auto.key = TRUE, ylab = "Original and imputed yield")
+       auto.key = TRUE, ylab = "Original and fitted yield")
 @ 
 
 
@@ -521,10 +521,11 @@ assess the validity and feasibility of the model for imputation.
 
 We first examine the linearity assumption with respect to time. The
 following two plots ilustrates the standardized residual against the
-fitted value, we can observe that both plot does display any peculiar
-pattern or information which we are able to utilize to enhance the
-model.
-<<linear-diagnostic-year-wheat, fig.width=15, fig.height=10>>=
+fitted value, we can observe that both plot does not display any
+peculiar pattern or information which we are able to utilize to
+enhance the model.
+
+<<linear-diagnostic-year-wheat, fig.width=15, fig.height=10, fig.cap='Standardized residual against fitted value for wheat with respect to year'>>=
 plot(imputedWheat.fit$model, residuals(., type = "pearson", level = 1) ~
      fitted(., level = 1)|as.character(Year), pch = 16, cex = 0.5)
 
@@ -532,7 +533,7 @@ plot(imputedWheat.fit$model, residuals(., type = "pearson", level = 1) ~
 @ 
 
 
-<<linear-diagnostic-year-chickenmeat, fig.width=15, fig.height=10>>=
+<<linear-diagnostic-year-chickenmeat, fig.width=15, fig.height=10, fig.cap='Standardized residual against fitted value for chicken meat with respect to year'>>=
 
 plot(imputedChickenMeat.fit$model, 
      residuals(., type = "pearson", level = 1) ~
@@ -543,17 +544,18 @@ plot(imputedChickenMeat.fit$model,
 Secondly, the same plot is generated for at the country level. In some
 countries like Zambia, it seems that there is a positive associate
 with the residual and the fitted value. After examination, we found
-that this is caused by an influencial point where the linear fit was
-pulled towards. However, accounting for such influencial points on a
-case-to-case bassis maybe difficult and inpractical.
+that this is caused by an influencial point in recent year where the
+linear fit was pulled towards. However, accounting for such
+influencial points on a case-to-case bassis maybe difficult and
+inpractical.
 
-<<linear-diagonostric-country-wheat, fig.width=15, fig.height=10>>=
+<<linear-diagonostric-country-wheat, fig.width=15, fig.height=10, fig.cap='Standardized residual against fitted value for wheat with respect to country'>>=
 plot(imputedWheat.fit$model, resid(., type = "response", level = 1) ~
      fitted(., level = 1)|FAOST_NAME, pch = 16, cex = 0.5)
 
 @ 
 
-<<linear-diagonostric-country-chickenmeat, fig.width=15, fig.height=10>>=
+<<linear-diagonostric-country-chickenmeat, fig.width=15, fig.height=10, fig.cap='Standardized residual against fitted value for chicken meat with respect to country'>>=
 plot(imputedChickenMeat.fit$model, 
      resid(., type = "response", level = 1) ~
      fitted(., level = 1)|FAOST_NAME, pch = 16, cex = 0.5)
@@ -562,14 +564,14 @@ plot(imputedChickenMeat.fit$model,
 
 Finally, the qqnorm plot is depicted and remarkbly that most of the
 residuals does not depart from the normality assumption.
-<<normal-diagnostic-wheat, fig.width=15, fig.height=10>>=
+<<normal-diagnostic-wheat, fig.width=15, fig.height=10, fig.cap='qqplot for each country for wheat'>>=
 qqnorm(imputedWheat.fit$model, ~ resid(., type = "p") | FAOST_NAME, 
        abline = c(0, 1), pch = 16, cex = 0.8)
 
 
 @ 
 
-<<normal-diagnostic-chickenmeat, fig.width=15, fig.height=10>>=
+<<normal-diagnostic-chickenmeat, fig.width=15, fig.height=10, fig.cap='qqplot for each country for chicken meat'>>=
 qqnorm(imputedChickenMeat.fit$model, 
        ~ resid(., type = "p") | FAOST_NAME, 
        abline = c(0, 1), pch = 16, cex = 0.8)
@@ -597,7 +599,11 @@ an out of sample error rate below 25\%. In practical modelling this is
 more than aceptable in particularly that the quality of the data
 contributes significantly to these error.
 
-\includegraphics[width = \maxwidth]{wheatSimulationResult}
+\begin{figure}[h!]
+  \centering
+  \includegraphics[width = \maxwidth]{wheatSimulationResult}
+  \caption{Bootstrapped imutation error rate for wheat}
+\end{figure}
 
 \section{Conclusion and Future improvements}
 The aim of the paper has been to overhaul the current imputation
