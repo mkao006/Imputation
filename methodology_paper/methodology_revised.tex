@@ -482,17 +482,20 @@ the fitted value of the model and act as the imputation value where
 the original data is missing. Overall, we can see the fit is fine but
 there are several fit which shows sign of unsatisfactory. In
 particularly, Zimbabwe, United Arab Emirates, Oman and Kuwait. They
-all share the same characteristic of drastic change over a point in
-time or a certain period in which in-depth analysis is required for
+all share the same characteristic of drastic change at a point in time
+or over a certain period in which in-depth analysis is required for
 understanding.
 
 \begin{knitrout}
-\definecolor{shadecolor}{rgb}{0.969, 0.969, 0.969}\color{fgcolor}
+\definecolor{shadecolor}{rgb}{0.969, 0.969, 0.969}\color{fgcolor}\begin{figure}[]
+
 
 {\centering \includegraphics[width=\maxwidth]{figure/wheat-fit} 
 
 }
 
+\caption[Fitted value against observed value for yield of wheat]{Fitted value against observed value for yield of wheat\label{fig:wheat-fit}}
+\end{figure}
 
 
 \end{knitrout}
@@ -506,16 +509,20 @@ assess the validity and feasibility of the model for imputation.
 
 We first examine the linearity assumption with respect to time. The
 following two plots ilustrates the standardized residual against the
-fitted value, we can observe that both plot does display any peculiar
-pattern or information which we are able to utilize to enhance the
-model.
+fitted value, we can observe that both plot does not display any
+peculiar pattern or information which we are able to utilize to
+enhance the model.
+
 \begin{knitrout}
-\definecolor{shadecolor}{rgb}{0.969, 0.969, 0.969}\color{fgcolor}
+\definecolor{shadecolor}{rgb}{0.969, 0.969, 0.969}\color{fgcolor}\begin{figure}[]
+
 
 {\centering \includegraphics[width=\maxwidth]{figure/linear-diagnostic-year-wheat} 
 
 }
 
+\caption[Standardized residual against fitted value for wheat with respect to year]{Standardized residual against fitted value for wheat with respect to year\label{fig:linear-diagnostic-year-wheat}}
+\end{figure}
 
 
 \end{knitrout}
@@ -523,12 +530,15 @@ model.
 
 
 \begin{knitrout}
-\definecolor{shadecolor}{rgb}{0.969, 0.969, 0.969}\color{fgcolor}
+\definecolor{shadecolor}{rgb}{0.969, 0.969, 0.969}\color{fgcolor}\begin{figure}[]
+
 
 {\centering \includegraphics[width=\maxwidth]{figure/linear-diagnostic-year-chickenmeat} 
 
 }
 
+\caption[Standardized residual against fitted value for chicken meat with respect to year]{Standardized residual against fitted value for chicken meat with respect to year\label{fig:linear-diagnostic-year-chickenmeat}}
+\end{figure}
 
 
 \end{knitrout}
@@ -537,29 +547,36 @@ model.
 Secondly, the same plot is generated for at the country level. In some
 countries like Zambia, it seems that there is a positive associate
 with the residual and the fitted value. After examination, we found
-that this is caused by an influencial point where the linear fit was
-pulled towards. However, accounting for such influencial points on a
-case-to-case bassis maybe difficult and inpractical.
+that this is caused by an influencial point in recent year where the
+linear fit was pulled towards. However, accounting for such
+influencial points on a case-to-case bassis maybe difficult and
+inpractical.
 
 \begin{knitrout}
-\definecolor{shadecolor}{rgb}{0.969, 0.969, 0.969}\color{fgcolor}
+\definecolor{shadecolor}{rgb}{0.969, 0.969, 0.969}\color{fgcolor}\begin{figure}[]
+
 
 {\centering \includegraphics[width=\maxwidth]{figure/linear-diagonostric-country-wheat} 
 
 }
 
+\caption[Standardized residual against fitted value for wheat with respect to country]{Standardized residual against fitted value for wheat with respect to country\label{fig:linear-diagonostric-country-wheat}}
+\end{figure}
 
 
 \end{knitrout}
 
 
 \begin{knitrout}
-\definecolor{shadecolor}{rgb}{0.969, 0.969, 0.969}\color{fgcolor}
+\definecolor{shadecolor}{rgb}{0.969, 0.969, 0.969}\color{fgcolor}\begin{figure}[]
+
 
 {\centering \includegraphics[width=\maxwidth]{figure/linear-diagonostric-country-chickenmeat} 
 
 }
 
+\caption[Standardized residual against fitted value for chicken meat with respect to country]{Standardized residual against fitted value for chicken meat with respect to country\label{fig:linear-diagonostric-country-chickenmeat}}
+\end{figure}
 
 
 \end{knitrout}
@@ -568,24 +585,30 @@ case-to-case bassis maybe difficult and inpractical.
 Finally, the qqnorm plot is depicted and remarkbly that most of the
 residuals does not depart from the normality assumption.
 \begin{knitrout}
-\definecolor{shadecolor}{rgb}{0.969, 0.969, 0.969}\color{fgcolor}
+\definecolor{shadecolor}{rgb}{0.969, 0.969, 0.969}\color{fgcolor}\begin{figure}[]
+
 
 {\centering \includegraphics[width=\maxwidth]{figure/normal-diagnostic-wheat} 
 
 }
 
+\caption[qqplot for each country for wheat]{qqplot for each country for wheat\label{fig:normal-diagnostic-wheat}}
+\end{figure}
 
 
 \end{knitrout}
 
 
 \begin{knitrout}
-\definecolor{shadecolor}{rgb}{0.969, 0.969, 0.969}\color{fgcolor}
+\definecolor{shadecolor}{rgb}{0.969, 0.969, 0.969}\color{fgcolor}\begin{figure}[]
+
 
 {\centering \includegraphics[width=\maxwidth]{figure/normal-diagnostic-chickenmeat} 
 
 }
 
+\caption[qqplot for each country for chicken meat]{qqplot for each country for chicken meat\label{fig:normal-diagnostic-chickenmeat}}
+\end{figure}
 
 
 \end{knitrout}
@@ -612,7 +635,11 @@ an out of sample error rate below 25\%. In practical modelling this is
 more than aceptable in particularly that the quality of the data
 contributes significantly to these error.
 
-\includegraphics[width = \maxwidth]{wheatSimulationResult}
+\begin{figure}[h!]
+  \centering
+  \includegraphics[width = \maxwidth]{wheatSimulationResult}
+  \caption{Bootstrapped imutation error rate for wheat}
+\end{figure}
 
 \section{Conclusion and Future improvements}
 The aim of the paper has been to overhaul the current imputation
