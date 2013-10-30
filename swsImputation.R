@@ -22,7 +22,7 @@
 
 
 swsImputation = function(data, area, prod, yield, country,
-  region, year, n.iter = 1000, tol = 1e-8){
+  region, year, n.iter = 1000, tol = 1e-8, EMverbose = FALSE){
 
   dataCopy = copy(data.table(data))
 
@@ -35,23 +35,30 @@ swsImputation = function(data, area, prod, yield, country,
   
   ## Linear Mixed Model for yield
   yield.fit = meanlme4(formula = yieldFormula,
-      groupVariable = c(region, year), countryVar = country,
-      data = nonEmptyYield, n.iter = n.iter, tol = tol)
+      groupVar = c(region, year), countryVar = country,
+      data = nonEmptyYield, n.iter = n.iter, tol = tol,
+      EMverbose = EMverbose)
 
   ## Impute yield
   imputedYield.dt = data.table(nonEmptyYield,
       groupedMean = yield.fit$groupedMean)
-  imputedYield.dt[, imputedYield :=
+  imputedYield.dt[, fittedYield :=
            predict(yield.fit$model, newdata = imputedYield.dt)]
+  imputedYield.dt[, imputedYield := fittedYield]
+  imputedYield.dt[!is.na(eval(parse(text = yield))),
+                  eval(parse(text = paste0("imputedYield := ", yield)))]
 
   if(NROW(splitData$emptyData) >= 1){
       final.dt = rbind(imputedYield.dt,
           data.table(splitData$emptyData, groupedMean = as.numeric(NA),
+                     fittedYield = as.numeric(NA),
                      imputedYield = as.numeric(NA)))
   } else {
       final.dt = imputedYield.dt
   }
-  
+
+  final.dt[, eval(parse(text =
+                        paste0("res := ", yield, " - fittedYield")))]
   ## Impute area and produciton if available
   final.dt[, eval(parse(text = paste0("imputedArea := ", area)))]
   final.dt[, eval(parse(text = paste0("imputedProd := ", prod)))]
@@ -65,7 +72,7 @@ swsImputation = function(data, area, prod, yield, country,
                   imputedProd := imputedArea * imputedYield]
   
   ## Impute area with naive imputation
-  final.dt[, imputedArea := naiveImp(imputedArea),
+  final.dt[, imputedArea := naiveImputation(imputedArea),
                   by = country]
 
   ## Impute production where area and yield are available
