@@ -2,7 +2,7 @@
 ##'
 ##'
 ##' @param formula See the formula of lme4
-##' @param groupVariable The grouped effect of the model, the mean are
+##' @param groupVar The grouped effect of the model, the mean are
 ##' computed based on this formula
 ##' @param countryVar The variable which defines the country, which act as the conditional variable in the random effect.
 ##' @param data the data.frame or data.table containing the data
@@ -15,8 +15,9 @@
 ##' @export
 
 
-meanlme4 = function(formula, groupVariable, countryVar, data,
+meanlme4 = function(formula, groupVar, countryVar, data,
     n.iter, tol, EMverbose = TRUE){
+    require(lme4)
     
     ## Initialization
     dataCopy = copy(data.table(data))
@@ -29,7 +30,7 @@ meanlme4 = function(formula, groupVariable, countryVar, data,
     
     ## Compute the grouped mean
     dataCopy[, eval(parse(text = paste0("groupedMean := mean(",
-                              y, "na.rm = TRUE)"))), by = groupVariable]
+                              y, "na.rm = TRUE)"))), by = groupVar]
     
     ## Update the formula to include the group mean
     mean.formula = update(formula, paste0(". ~ . + (groupedMean|",
@@ -56,7 +57,7 @@ meanlme4 = function(formula, groupVariable, countryVar, data,
         if(i == n.iter)
             print("maximum iteration reached, model may have not converged")
         
-        dataCopy[, groupedMean := mean(imputedValue), by = groupVariable]
+        dataCopy[, groupedMean := mean(imputedValue), by = groupVar]
         
         EMMean.fit = try(
             do.call("lmer",
