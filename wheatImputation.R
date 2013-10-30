@@ -4,8 +4,6 @@
 ########################################################################
 
 source("wheatDataManipulation.R")
-## source("FAOProductionImpute.R")
-## source("lmeImpute.R")
 source("naiveImpute.R")
 source("swsImputation.R")
 source("meanlme4.R")
@@ -13,18 +11,17 @@ source("splitNACountry.R")
 library(lme4)
 
 ## Take only data from 1980 for linearity
-wheatPrep.dt = subset(wheatPrep.dt, Year >= 1980)
+wheatPrep.dt = wheatPrep.dt[Year >= 1993, ]
+
 
 ## Imputation
 ## ---------------------------------------------------------------------
-## imputed.lst = FAOProductionImpute(wheatPrep.dt, area = "valueArea",
-##   prod = "valueProd", yield = "valueYield", country = "FAOST_CODE",
-##   region = "UNSD_SUB_REG", year = "Year")
 imputed.lst = swsImputation(data = wheatPrep.dt, area = "valueArea",
   prod = "valueProd", yield = "valueYield", country = "FAOST_NAME",
-  region = "UNSD_SUB_REG", year = "Year", tol = 10)
+  region = "UNSD_SUB_REG", year = "Year", tol = 1e-3)
 
 imputed.dt = imputed.lst$imputed
+
 
 ## Percentage of missing value imputed
 NROW(imputed.dt[is.na(valueProd) & !is.na(imputedProd), ])/
@@ -36,6 +33,46 @@ NROW(imputed.dt[is.na(valueArea) & !is.na(imputedArea), ])/
 
 ## Diagnosis and plots
 ## ---------------------------------------------------------------------
+dotplot(ranef(imputed.lst$model$model, condVar = TRUE,
+              whichel = "FAOST_NAME"))
+
+qqmath(ranef(imputed.lst$model$model, condVar=TRUE,
+             whichel = "FAOST_NAME"))
+
+## Checking the fitted value with the observed value
+xyplot(valueYield ~ fittedYield|FAOST_NAME, data = imputed.dt,
+       panel = function(x, y) {
+         panel.xyplot(x, y)
+         panel.abline(a = 0, b = 1)
+       },
+       aspect = "fill", type = c("g", "p"),
+       xlab = "fitted value", ylab = "observed value")
+
+## Examine the marginal distribution of imputed yield
+histogram(~ imputedYield | as.character(Year) + is.na(valueYield),
+          data = imputed.dt, aspect = "fill", breaks = 10)
+
+
+xyplot(valueYield + fittedYield ~ Year | FAOST_NAME,
+       data = imputed.dt, fill = "aspect", layout = c(15, 9),
+       type = c("g", "l"), auto.key = TRUE)
+
+xyplot(res ~ fittedYield|FAOST_NAME,
+       data = imputed.dt, layout = c(15, 9),
+       type = c("g", "p"), auto.key = TRUE,
+       panel = function(x, y){
+           panel.xyplot(x, y)
+           panel.abline(h = 0)
+           },
+       xlab = "fitted value", ylab = "residuals")
+
+qqmath(~ res | FAOST_NAME, data = imputed.dt,
+       prepanel = prepanel.qqmathline,
+       panel = function(x, ...) {
+           panel.qqmathline(x, ...)
+           panel.qqmath(x, ...)
+       })
+
 
 ## Check all individual imputation
 pdf(file = "checkWheatImputation.pdf", width = 10)
@@ -76,7 +113,7 @@ for(i in unique(imputed.dt$FAOST_CODE)){
                    col = "black", xlab = "", ylab = "Yield",
                     cex = 2))
     with(tmp[!is.na(valueYield), ],
-         points(Year, imputedYield, col = "red", pch = 19))
+         points(Year, fittedYield, col = "red", pch = 19))
     with(tmp[is.na(valueYield), ],
          points(Year, imputedYield, col = "blue", pch = 19))
   })
@@ -106,25 +143,6 @@ print(ggplot(data = imputed.dt,
       theme(legend.position = "none"))
 graphics.off()
 system("evince wheatYieldSubregion.pdf&")
-
-
-
-
-
-## Plot fit vs residuals and qqplot
-plot(imputed.lst$model,
-     residuals(., type = "pearson", level = 1) ~
-     fitted(., level = 1)|as.character(Year),
-     pch = 16, cex = 0.5)
-
-plot(imputed.lst$model, resid(., type = "response", level = 1) ~
-     fitted(., level = 1)|FAOST_NAME, pch = 16, cex = 0.5)
-
-qqnorm(imputed.lst$model, ~ resid(., type = "p") | FAOST_NAME,
-       abline = c(0, 1), pch = 16, cex = 0.8)
-
-acf(imputed.lst$model$residuals[, 1])
-acf(imputed.lst$model$residuals[, 2])
 
 
 ## Illustration of the impuation process.
