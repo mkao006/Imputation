@@ -4,15 +4,20 @@
 ########################################################################
 
 source("wheatDataManipulation.R")
-library(FAOProductionImputation)
+source("naiveImpute.R")
+source("swsImputation.R")
+source("meanlme4.R")
+source("splitNACountry.R")
+library(lme4)
+
+wheatPrep.dt = wheatPrep.dt[Year >= 2005, ]
 
 ## Simulation
 ## ---------------------------------------------------------------------
 
 n.sim = 2000
 sim.df = data.frame(propSim = runif(n.sim, 0.05, 1 - 1e-05),
-    propReal = rep(NA, n.sim), MAPE = rep(NA, n.sim),
-    method = rep(NA, n.sim))
+    propReal = rep(NA, n.sim), MAPE = rep(NA, n.sim))
 
 ## pdf(file = "checkImputation.pdf")
 for(i in 1:n.sim){
@@ -30,12 +35,12 @@ for(i in 1:n.sim){
   tmp.dt[, simProd := valueProd]
   tmp.dt[simMissProd, "simProd"] = NA 
   tmp.dt[, simYield := computeYield(simProd, simArea)]
-  sim.df[i, "propReal"] = tmp.dt[, sum(is.na(simYield))/length(simYield)]  
-  impSim.dt = try(FAOProductionImpute(Data = tmp.dt, area = "simArea",
+  sim.df[i, "propReal"] = tmp.dt[, sum(is.na(simYield))/length(simYield)]
+  impSim.dt = try(swsImputation(data = tmp.dt, area = "simArea",
     prod = "simProd", yield = "simYield", country = "FAOST_CODE",
-    region = "UNSD_SUB_REG", year = "Year")$imputed)
+    region = "UNSD_SUB_REG", year = "Year", tol = 1e-2)$imputed)
   if(!inherits(impSim.dt, "try-error")){
-    sim.df[i, "method"] = unique(impSim.dt[, yieldMethodology])
+  ##   sim.df[i, "method"] = unique(impSim.dt[, yieldMethodology])
     ## Check the MAPE of the imputation
     sim.df[i, "MAPE"] = 
       impSim.dt[1:nrow(impSim.dt) %in% simMissProd & ovalueProd != 0 &
@@ -43,18 +48,16 @@ for(i in 1:n.sim){
                 sum(abs((ovalueProd - imputedProd)/(ovalueProd)))/
                 length(imputedProd)]
   } else {
-    sim.df[i, c("MAPE", "method")] = NA
+    sim.df[i, "MAPE"] = NA
   }
 }
-
+g
 summary(sim.df)
 subSim.df = sim.df[sim.df$MAPE <= 1, ]
 
-with(subSim.df[subSim.df$method == "lmeMeanImp", ],
+with(subSim.df,
      plot(propReal, MAPE, xlim = c(0, 1), ylim = c(range(subSim.df$MAPE,
                                             na.rm = TRUE))))
-with(subSim.df[subSim.df$method != "lmeMeanImp", ],
-     points(propReal, MAPE, col = "red"))
 
 pdf(file = "wheatSimulationResult.pdf", width = 10)
 print(ggplot(subSim.df, aes(x = propReal, y = MAPE)) +
@@ -78,20 +81,20 @@ system("evince wheatSimulationResult.pdf&")
 
 
 pdf(file = "checkWheatSim.pdf", width = 10)
-for(i in unique(imputed.dt$FAOST_CODE)){
+for(i in unique(impSim.dt$FAOST_CODE)){
   tmp = impSim.dt[FAOST_CODE == i, ]
 
   myCountry = FAOcountryProfile[which(FAOcountryProfile$FAOST_CODE ==
     i), "FAO_TABLE_NAME"]
   myItem = unique(FAOmetaTable$itemTable[FAOmetaTable$itemTable$itemCode ==
-    unique(imputed.dt$itemCode), "itemName"])
+    unique(impSim.dt$itemCode), "itemName"])
   par(mfrow = c(3, 1), mar = c(2.1, 4.1, 3.1, 2.1))
   try({
     ymax = max(tmp[, list(valueProd, imputedProd)], na.rm = TRUE) * 1.2
     with(tmp, plot(Year, valueProd, ylim = c(0, ymax), type = "b",
                    col = "black", xlab = "", ylab = "Production",
                    main = paste0(myCountry, " (", i, ") - ",
-                     myItem, " (", unique(imputed.dt$itemCode), ")"),
+                     myItem, " (", unique(impSim.dt$itemCode), ")"),
                    cex = 2))
     with(tmp[is.na(simProd), ],
          points(Year, imputedProd, col = "blue", pch = 19))
