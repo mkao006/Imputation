@@ -4,7 +4,7 @@
 ########################################################################
 
 source("wheatDataManipulation.R")
-source("naiveImpute.R")
+source("naiveImputation.R")
 source("swsImputation.R")
 source("meanlme4.R")
 source("splitNACountry.R")
@@ -17,8 +17,9 @@ wheatPrep.dt = wheatPrep.dt[Year >= 1993, ]
 ## Imputation
 ## ---------------------------------------------------------------------
 imputed.lst = swsImputation(data = wheatPrep.dt, area = "valueArea",
-  prod = "valueProd", yield = "valueYield", country = "FAOST_NAME",
-  region = "UNSD_SUB_REG", year = "Year", tol = 1e-3)
+    prod = "valueProd", yield = "valueYield", country = "FAOST_NAME",
+    region = "UNSD_SUB_REG", year = "Year", tol = 1e-3,
+    includeMean = TRUE)
 
 imputed.dt = imputed.lst$imputed
 
