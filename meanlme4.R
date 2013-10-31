@@ -10,6 +10,7 @@
 ##' estimating the grouped average effect.
 ##' @param tol The tolerance, stopping criteria for the likelihood.
 ##' @param EMverbose logical, whether the likelihood in the EM step should be returned.
+##' @param includeMean logical, whether the grouped mean should be used.
 ##'
 ##' @seealso \code{\link{FAOProductionImpute}}
 ##' @export
