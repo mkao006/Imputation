@@ -16,6 +16,7 @@
 ##' @param year The column containing the time information.
 ##' @param n.iter The number of iteration for lmeIputation.
 ##' @param tol Tolerance, the stopping rule for the Likelihood.
+##' @param includeMean logical, whether the grouped mean should be used.
 ##'
 ##' @seealso \code{\link{lmeImpute}}
 ##' @export
