@@ -22,7 +22,8 @@
 
 
 swsImputation = function(data, area, prod, yield, country,
-  region, year, n.iter = 1000, tol = 1e-8, EMverbose = FALSE){
+  region, year, n.iter = 1000, tol = 1e-8, EMverbose = FALSE,
+    includeMean = TRUE){
 
   dataCopy = copy(data.table(data))
 
@@ -37,9 +38,11 @@ swsImputation = function(data, area, prod, yield, country,
   yield.fit = meanlme4(formula = yieldFormula,
       groupVar = c(region, year), countryVar = country,
       data = nonEmptyYield, n.iter = n.iter, tol = tol,
-      EMverbose = EMverbose)
-
+      EMverbose = EMverbose, includeMean = includeMean)
+  
   ## Impute yield
+  if(!includeMean)
+      yield.fit$groupedMean = NA
   imputedYield.dt = data.table(nonEmptyYield,
       groupedMean = yield.fit$groupedMean)
   imputedYield.dt[, fittedYield :=
