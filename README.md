@@ -56,7 +56,7 @@ These are the functions that performs or assists the imutation process.
 * **computeYield.R** - This function is used to compute the yield and
 to avoid infinity or NaN.
 
-* **naiveImpute.R** - This function performs the naive imputation, that
+* **naiveImputation.R** - This function performs the naive imputation, that
 is, linear interpolation followed by last/first observation carrid
 forward/backward.
 
