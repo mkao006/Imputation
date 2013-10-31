@@ -16,7 +16,7 @@
 
 
 meanlme4 = function(formula, groupVar, countryVar, data,
-    n.iter, tol, EMverbose = TRUE){
+    n.iter, tol, EMverbose = TRUE, includeMean = TRUE){
     require(lme4)
     
     ## Initialization
@@ -33,13 +33,18 @@ meanlme4 = function(formula, groupVar, countryVar, data,
                               y, "na.rm = TRUE)"))), by = groupVar]
     
     ## Update the formula to include the group mean
-    mean.formula = update(formula, paste0(". ~ . + (groupedMean|",
-        countryVar, ")"))
+    if(includeMean){
+        formula = update(formula, paste0(". ~ . + (groupedMean|",
+            countryVar, ")"))
+    } else {
+        formula = update(formula, paste0(". ~ . + (1|",
+            countryVar, ")"))
+    }
     
     ## Fit the model
     init.fit = try(
         do.call("lmer",
-                list(formula = mean.formula, data = dataCopy)
+                list(formula = formula, data = dataCopy)
                 ),
         silent = TRUE
         )
@@ -52,16 +57,16 @@ meanlme4 = function(formula, groupVar, countryVar, data,
              predict(init.fit, dataCopy[missInd == TRUE, ])]    
     
     ## Start EM mean imputation
-    EM.formula = update(mean.formula, imputedValue ~ .)
+    formula = update(formula, imputedValue ~ .)
     for(i in 1:n.iter){
         if(i == n.iter)
             print("maximum iteration reached, model may have not converged")
-        
-        dataCopy[, groupedMean := mean(imputedValue), by = groupVar]
+        if(includeMean)
+            dataCopy[, groupedMean := mean(imputedValue), by = groupVar]
         
         EMMean.fit = try(
             do.call("lmer",
-                    list(formula = EM.formula,
+                    list(formula = formula,
                          data = dataCopy, REML = FALSE)
                     ),
             silent = TRUE
@@ -84,6 +89,10 @@ meanlme4 = function(formula, groupVar, countryVar, data,
     }
     
     ## Return the model
-    list(model = update(EMMean.fit, REML = TRUE),
-         groupedMean = dataCopy[, groupedMean], ll = ll)
+    if(includeMean){
+        list(model = update(EMMean.fit, REML = TRUE),
+             groupedMean = dataCopy[, groupedMean], ll = ll)
+    } else {
+        list(model = update(EMMean.fit, REML = TRUE), ll = ll)
+    }
 }
