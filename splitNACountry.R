@@ -8,9 +8,9 @@
 ##' @export
 
 splitNACountry = function(valueVar, countryVar, data){
-    evalText = paste0("missProp := sum(is.na(", value, "))/length(",
-        value, ")")
-    data[, eval(parse(text = evalText)), by = country]
+    evalText = paste0("missProp := sum(is.na(", valueVar, "))/length(",
+        valueVar, ")")
+    data[, eval(parse(text = evalText)), by = countryVar]
     list(emptyData = data[missProp == 1, ],
          nonEmptyData = data[missProp != 1, ])
 }
