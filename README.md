@@ -4,34 +4,14 @@ This is the **github** repository for the development of the FAOSTAT
 production imputation methodology.
 
 
-### Installation
-To install the imputation package, simply run the following command
+### Installation - (Currently out-of-date, refer to **Core functions**)
+To install the imputation package, simply run the following command. 
 
 ```r
 library(devtools)
 install_github(repo = "sws_imputation", 
 	       username = "mkao006", subdir = "swsImputation")
 ```
-
-
-### Documentation
-
-The documentation of the current methodology can be found in the
-*methodology_paper* folder. The pdf can be regenerated with the
-following command. (*LaTeX* is required)
-
-```r
-library(knitr)
-knit("methodology_revised.Rnw")
-system("pdflatex \\nonstopmode\\input methodology_revised.tex")
-```
-
-### Previous Methodology
-
-All relevant material of the previous methodology can be allocated in
-the `previous_methodology` folder.
-
-### Proposed Methodology and Case study
 
 
 ### Core functions
@@ -65,3 +45,23 @@ harvested, and yield against the official and semi-official figures.
 
 `impBootPred.R` - The function performs bootstrap to estimate the
 prediction error.
+
+### Documentation
+
+The documentation of the current methodology can be found in the
+*methodology_paper* folder. The pdf can be regenerated with the
+following command. (*LaTeX* is required)
+
+```r
+library(knitr)
+knit("methodology_revised.Rnw")
+system("pdflatex \\nonstopmode\\input methodology_revised.tex")
+```
+
+### Previous Methodology
+
+All relevant material of the previous methodology can be allocated in
+the `previous_methodology` folder.
+
+### Proposed Methodology and Case study
+
