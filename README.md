@@ -1,10 +1,7 @@
-Imputation for the FAOSTAT production domain
-=======
+# Imputation for the FAOSTAT production domain
 
 This is the **github** repository for the development of the FAOSTAT
 production imputation methodology.
-
-==============================================================================
 
 
 ### Installation
@@ -32,38 +29,39 @@ system("pdflatex \\nonstopmode\\input methodology_revised.tex")
 ### Previous Methodology
 
 All relevant material of the previous methodology can be allocated in
-the *previous_methodology* folder.
+the `previous_methodology` folder.
 
-### Proposed Methodology and Case Example
-
-There are three code scripts to perform the full imputation case study
-for the wheat data (*wheatSUA.csv*)
-
-1. **wheatDataManipulation.R** - This script reads and performs data
-manipulation of the SUA data into the desired format.
-
-2. **wheatImputation.R** - This script follows the previous script
-and performs the imputation and examination.
-
-3. **wheatSimulation.R** - This script also follows the data
-manipulation code and runs the out-of-sample simulation.
+### Proposed Methodology and Case study
 
 
-### Supplementary script
+### Core functions
 
-These are the functions that performs or assists the imutation process.
+The core functions to carry out the whole imputation process, from
+imputation, diagnosis and simulation can be found in the `code`
+folder.
 
-* **computeYield.R** - This function is used to compute the yield and
+`computeYield.R` - This function is used to compute the yield and
 to avoid infinity or NaN.
 
-* **naiveImputation.R** - This function performs the naive imputation, that
+`naiveImputation.R` - This function performs the naive imputation, that
 is, linear interpolation followed by last/first observation carrid
 forward/backward.
 
-* **meanlme4.R** - This is the core function which performs the
+`meanlme4.R` - This is the core function which performs the
 imputation based on linear mixed model with EM estimation of the
 average value.
 
-* **swsImputation.R** - This is a wrapper function of the
+`predict.meanlme4.R` - The prediction function for the imputation
+model from meanlme4 function.
+
+`swsImputation.R` - This is a wrapper function of the
 *meanlme4* function which imputes the area, production and yield for
 a single commodity.
+
+`impDiag.R` - A function to plot several diagnostic plots.
+
+`impFit.R` - A function to plot the imputed production, area
+harvested, and yield against the official and semi-official figures.
+
+`impBootPred.R` - The function performs bootstrap to estimate the
+prediction error.
