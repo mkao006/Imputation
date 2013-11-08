@@ -16,15 +16,15 @@
 ##' @param year The column containing the time information.
 ##' @param n.iter The number of iteration for lmeIputation.
 ##' @param tol Tolerance, the stopping rule for the Likelihood.
-##' @param includeMean logical, whether the grouped mean should be used.
+##' @param meanType The type of aggregated model used
 ##'
 ##' @seealso \code{\link{lmeImpute}}
 ##' @export
 
 
 swsImputation = function(data, area, prod, yield, country,
-  region, year, n.iter = 1000, tol = 1e-8, EMverbose = FALSE,
-    includeMean = TRUE){
+    region, year, n.iter = 1000, tol = 1e-8, EMverbose = FALSE,
+    meanType = c("meanlme4", "shocklme4")){
 
   dataCopy = copy(data.table(data))
 
@@ -36,27 +36,59 @@ swsImputation = function(data, area, prod, yield, country,
   nonEmptyYield = splitData$nonEmptyData
   
   ## Linear Mixed Model for yield
-  yield.fit = meanlme4(formula = yieldFormula,
-      groupVar = c(region, year), countryVar = country,
-      data = nonEmptyYield, n.iter = n.iter, tol = tol,
-      EMverbose = EMverbose, includeMean = includeMean)
-  
+  switch(meanType,
+         "meanlme4" = {
+             yield.fit = meanlme4(formula = yieldFormula,
+                 groupVar = c(region, year), countryVar = country,
+                 data = nonEmptyYield, n.iter = n.iter, tol = tol,
+                 EMverbose = EMverbose, includeMean = TRUE)
+         },
+         "shocklme4" = {
+             yield.fit = shocklme4(formula = yieldFormula,
+                 groupVar = c(region, year), countryVar = country,
+                 data = nonEmptyYield, n.iter = n.iter, tol = tol,
+                 EMverbose = EMverbose, includeChange = TRUE)
+         })
   ## Impute yield
-  if(!includeMean)
-      yield.fit$groupedMean = NA
-  imputedYield.dt = data.table(nonEmptyYield,
-      groupedMean = yield.fit$groupedMean)
-  imputedYield.dt[, fittedYield :=
-           predict(yield.fit$model, newdata = imputedYield.dt)]
+  ## if(!includeMean)
+  ##     yield.fit$groupedMean = NA
+
+  switch(meanType,
+         "meanlme4" = {
+             imputedYield.dt = data.table(nonEmptyYield,
+                 groupedMean = yield.fit$groupedMean)
+             imputedYield.dt[, fittedYield :=
+                             predict.meanlme4(yield.fit,
+                                              newdata = imputedYield.dt)]
+         },
+         "shocklme4" = {
+             imputedYield.dt = data.table(nonEmptyYield,
+                 groupedChange = yield.fit$groupedChange)          
+             imputedYield.dt[, fittedYield :=
+                             predict.shocklme4(yield.fit,
+                                              newdata = imputedYield.dt)]
+         })
+  
   imputedYield.dt[, imputedYield := fittedYield]
   imputedYield.dt[!is.na(eval(parse(text = yield))),
                   eval(parse(text = paste0("imputedYield := ", yield)))]
 
   if(NROW(splitData$emptyData) >= 1){
-      final.dt = rbind(imputedYield.dt,
-          data.table(splitData$emptyData, groupedMean = as.numeric(NA),
-                     fittedYield = as.numeric(NA),
-                     imputedYield = as.numeric(NA)))
+      switch(meanType,
+             "meanlme4" = {
+                 final.dt = rbind(imputedYield.dt,
+                     data.table(splitData$emptyData,
+                                groupedMean = as.numeric(NA),
+                                fittedYield = as.numeric(NA),
+                                imputedYield = as.numeric(NA)))
+             },
+             "shocklme4" = {
+                 final.dt = rbind(imputedYield.dt,
+                     data.table(splitData$emptyData,
+                                groupedChange = as.numeric(NA),
+                                fittedYield = as.numeric(NA),
+                                imputedYield = as.numeric(NA)))
+             })
   } else {
       final.dt = imputedYield.dt
   }
