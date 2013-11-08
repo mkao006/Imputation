@@ -13,13 +13,16 @@
 ##' @param EMverbose logical, whether the likelihood in the EM step
 ##' should be returned.
 ##' @param includeMean logical, whether the grouped mean should be used.
+##' @param allow.new.levels logical, whether observation from new
+##' levels can be predicted.
 ##'
 ##' @seealso \code{\link{FAOProductionImpute}}
 ##' @export
 
 
 meanlme4 = function(formula, groupVar, countryVar, data,
-    n.iter, tol, EMverbose = TRUE, includeMean = TRUE){
+    n.iter, tol, EMverbose = TRUE, includeMean = TRUE,
+    allow.new.levels = FALSE){
     require(lme4)
     
     ## Initialization
@@ -33,7 +36,7 @@ meanlme4 = function(formula, groupVar, countryVar, data,
 
     dataCopy[, eval(parse(text =
                           paste0("imputedValue := naiveImputation(",
-                          y, ")")))]
+                          y, ")"))), by = countryVar]
     
     ## Update the formula to include the group mean
     if(includeMean){
@@ -55,8 +58,6 @@ meanlme4 = function(formula, groupVar, countryVar, data,
             print("maximum iteration reached, model may have not converged")
         if(includeMean)
             dataCopy[, groupedMean := mean(imputedValue), by = groupVar]
-            ## dataCopy[, groupedMean := weighted.mean(imputedValue,
-            ##                            1/imputedValue), by = groupVar]
         
         EMMean.fit = try(
             do.call("lmer",
@@ -73,8 +74,9 @@ meanlme4 = function(formula, groupVar, countryVar, data,
             ll[i + 1] = logLik(EMMean.fit)
             if(ll[i + 1] - ll[i] > tol){
                 dataCopy[missInd == TRUE,
-                         imputedValue := predict(EMMean.fit,
-                                          dataCopy[missInd == TRUE, ])]
+                         imputedValue :=
+                         predict(EMMean.fit, dataCopy[missInd == TRUE, ],
+                                 allow.new.levels = allow.new.levels)]
             } else {
                 break
             }
