@@ -33,7 +33,7 @@ to avoid infinity or NaN.
 is, linear interpolation followed by last/first observation carrid
 forward/backward.
 
-`shockme4.R` - This is the core function which performs the imputation
+`shocklme4.R` - This is the core function which performs the imputation
 based on linear mixed model with EM estimation of the grouped average
 change.
 
