@@ -927,7 +927,7 @@ package \pkg{FAOSTAT}.
 
 
 
-\section*{Annex 3: Diagnostic graph of fit}
+\section*{Annex 3: Diagnostic graph of case studies}
 
 \begin{knitrout}
 \definecolor{shadecolor}{rgb}{0.969, 0.969, 0.969}\color{fgcolor}\begin{figure}[!ht]
@@ -1045,19 +1045,19 @@ package \pkg{FAOSTAT}.
   %% (2) Estimate model with grouped average effect\;
   \Begin{
       \For{i=1 \emph{\KwTo} n.iter}{
-        E-step: Compute the expected group average yield\;
+        E-step: Compute the expected value of the missing values\;
         \Indp\Indp\Indp 
         $\mathbf{\hat{Y}^M} \leftarrow f(\mathbf{Y^O}, \boldsymbol{\hat{\beta}}^{(i)})$
         \Indm\Indm\Indm 
         
         M-step: Estimate the Linear Mix Model in \ref{eq:lmeImpute}\;
         \If{$\cal{L}_{\text{new}} - \cal{L}_{\text{old}} \ge
-          \cal{E}$}{ $\boldsymbol{\hat{\beta}}^{(i + 1)} \leftarrow
+          \cal{E}$}{$\boldsymbol{\hat{\beta}}^{(i + 1)} \leftarrow
           \boldsymbol{\hat{\beta}}$\; } \Else{ break } } }
     
     %% (3) Select model with the smallest AIC
     
-    \caption{EM-Algorithm for Imputation}
+    \caption{EM-Algorithm for Imputation - function \emph{shocklme4}}
     \label{alg:imputation}
 \end{algorithm}
   
@@ -1114,76 +1114,77 @@ package \pkg{FAOSTAT}.
         \ForAll{imputed area $\hat{A}_{i, t}$}{ \If{$\hat{Y}_{i, t}
             \ne \emptyset$}{ $\hat{P}_{i, t} \leftarrow \hat{A}_{i, t}
             \times \hat{Y}_{i, t}$\; } } } }
-  \caption{Imputation Procedure}
+  \caption{Imputation Procedure - function \emph{swsImputation}}
 \end{algorithm}
 
   
   
-\begin{thebibliography}{9}
+\begin{thebibliography}{11}
 \bibitem{dougbates2010}
-  Douglas M. Bates
-  \emph{lme4: Mixed-effects modelling with R}
-  2010
+  Douglas M. Bates,
+  \emph{lme4: Mixed-effects modelling with R},
+  2010.
   
 \bibitem{impWorkingPaper2011}
   Data Collection, Workflows and Methodology (DCWM) team,
-  \emph{Imputation and Validation Methodologies for the FAOSTAT Production Domain}.
+  \emph{Imputation and Validation Methodologies for the FAOSTAT Production Domain},
   Economics and Social Statistics Division,
   2011.
   
 \bibitem{lairdWare1982}
   Nan M. Laird, James H. Ware,
-  \emph{Random-Effects Models for Longitudinal Data}.
+  \emph{Random-Effects Models for Longitudinal Data},
   Biometrics Volume 38, 963-974,
   1982.
   
 \bibitem{rCore}
   R Core Team,
-  \emph{A language and environment for statistical computing.}
-  R Foundation for Statistical Computing, Vienna, Austria.
+  \emph{A language and environment for statistical computing.},
+  R Foundation for Statistical Computing, Vienna, Austria,
   ISBN 3-900051-07-0, URL http://www.R-project.org/,
   2013.
   
 \bibitem{nlme}
   Jose Pinheiro, Douglas Bates, Saikat DebRoy, Deepayan Sarkar and the
   R Development Core Team,
-  \emph{nlme: Linear and Nonlinear Mixed Effects Models.} 
-  R package version 3.1-108.
-  2013
+  \emph{nlme: Linear and Nonlinear Mixed Effects Models.} ,
+  R package version 3.1-108,
+  2013.
 
 \bibitem{lme4}
-  Douglas Bates, Martin Maechler, Ben Bolker and Steven Walker (2013).
+  Douglas Bates, Martin Maechler, Ben Bolker and Steven Walker,
   \emph{lme4: Linear mixed-effects models using Eigen and S4.} 
-  R package version 1.0-4. http://CRAN.R-project.org/package=lme4
+  R package version 1.0-4. http://CRAN.R-project.org/package=lme4,
+  2013.
  
 \bibitem{rubin1976}
   Donald B. Rubin,
   \emph{Inference and Missing Data},
   Biometrika, Volume 63, Issue 3, 581-592,
-  1976
+  1976.
   
 \bibitem{unido2012}
-  Valentin Todorov, Matthias Templ
-  \emph{R in the Statistical Office: Part II}
-  2012
+  Valentin Todorov, Matthias Templ,
+  \emph{R in the Statistical Office: Part II},
+  2012.
   
 \bibitem{laird_ware1982}
-  Nam M. Laird, James H. Ware
-  \emph{Random-Effects Models for Longitudinal Data}
-  Biometrics, Volume 38, Number 4, pp.963-974
-  1982
+  Nam M. Laird, James H. Ware,
+  \emph{Random-Effects Models for Longitudinal Data},
+  Biometrics, Volume 38, Number 4, pp.963-974,
+  1982.
 
 \bibitem{dempster_laird_rubin1977}
-  A. P. Dempster, Nam M. Laird, D. B. Rubin
-  \emph{Maximum Likelihood from Incomplete Data via the EM Algorithm}
-  Journal of Royal Statistical Society. Series B (Methodological), Volume 39, Number 1, pp1-38
-  1977
+  A. P. Dempster, Nam M. Laird, D. B. Rubin,
+  \emph{Maximum Likelihood from Incomplete Data via the EM Algorithm},
+  Journal of Royal Statistical Society. Series B (Methodological), Volume 39, Number 1, pp1-38,
+  1977.
   
 \bibitem{lai_huang_lee2012}
-  Randy C. S. Lai, Hsin-Cheng Huang, Thomase C. M. Lee
-  \emph{Fixed and random effects selection in nonparametric additive mixed models}
-  Electronic Journal of Statistics, Volume 6, pp810-842
-  2012
+  Randy C. S. Lai, Hsin-Cheng Huang, Thomase C. M. Lee,
+  \emph{Fixed and random effects selection in nonparametric additive mixed models},
+  Electronic Journal of Statistics, Volume 6, pp810-842,
+  2012.
 \end{thebibliography}
   
 

@@ -28,7 +28,6 @@ shocklme4 = function(formula, groupVar, countryVar, data,
     
     ## Initialization
     dataCopy = copy(data.table(data))
-    ## ll = vector(mode = "numeric", length = 1 + n.iter)
     ll = rep(NA, length = 1 + n.iter)
     ll[1] = -Inf
     
@@ -39,7 +38,7 @@ shocklme4 = function(formula, groupVar, countryVar, data,
                           paste0("imputedValue := naiveImputation(",
                           y, ")"))), by = countryVar]
     
-    ## Update the formula to include the group mean
+    ## Update the formula to include the group change
     if(includeChange){
         formula = update(formula,
             paste0(". ~ . + (1 + Year + groupedChange|",
@@ -49,11 +48,11 @@ shocklme4 = function(formula, groupVar, countryVar, data,
             countryVar, ")"))
     }
 
-    ## ## Impute the missing value
+    ## Find the location of the missing values
     dataCopy[, eval(parse(text =
                           paste0("missInd := is.na(", y, ")"))), ]
     
-    ## Start EM mean imputation
+    ## Start EM imputation
     formula = update(formula, imputedValue ~ .)
     for(i in 1:n.iter){
         if(i == n.iter)
@@ -83,9 +82,6 @@ shocklme4 = function(formula, groupVar, countryVar, data,
                          imputedValue :=
                          predict(EMMean.fit, dataCopy[missInd == TRUE, ],
                                  allow.new.levels = allow.new.levels)]
-                ## print(xyplot(yieldNum + imputedValue ~ Year|areaName,
-                ##              data = dataCopy, auto.key = TRUE,
-                ##              type = c("g", "l")))
                 
             } else {
                 break
@@ -95,7 +91,7 @@ shocklme4 = function(formula, groupVar, countryVar, data,
         }   
     }
     
-    ## Return the model
+    ## Return the model object
     if(includeChange){
         list(model = update(EMMean.fit, REML = TRUE),
              groupedChange = dataCopy[, groupedChange], ll = ll)

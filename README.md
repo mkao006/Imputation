@@ -4,13 +4,19 @@ This is the **github** repository for the development of the FAOSTAT
 production imputation methodology.
 
 
-### Installation - (Currently out-of-date, refer to **Core functions**)
+### Installation
 To install the imputation package, simply run the following command. 
 
 ```r
 library(devtools)
 install_github(repo = "sws_imputation", 
 	       username = "mkao006", subdir = "swsImputation")
+```
+
+The methodology paper can be accessed via the vignette.
+
+```r
+vignette("swsImputation")
 ```
 
 
@@ -27,15 +33,15 @@ to avoid infinity or NaN.
 is, linear interpolation followed by last/first observation carrid
 forward/backward.
 
-`meanlme4.R` - This is the core function which performs the
-imputation based on linear mixed model with EM estimation of the
-average value.
+`shockme4.R` - This is the core function which performs the imputation
+based on linear mixed model with EM estimation of the grouped average
+change.
 
-`predict.meanlme4.R` - The prediction function for the imputation
-model from meanlme4 function.
+`predict.shocklme4.R` - The prediction function for the imputation
+model from shocklme4 function.
 
 `swsImputation.R` - This is a wrapper function of the
-*meanlme4* function which imputes the area, production and yield for
+*shocklme4* function which imputes the area, production and yield for
 a single commodity.
 
 `impDiag.R` - A function to plot several diagnostic plots.
@@ -55,7 +61,7 @@ following command. (*LaTeX* is required)
 ```r
 library(knitr)
 knit("methodology_revised.Rnw")
-system("pdflatex \\nonstopmode\\input methodology_revised.tex")
+system("pdflatex \\nonstopmode\\input methodology_revised_shock.tex")
 ```
 
 ### Previous Methodology
