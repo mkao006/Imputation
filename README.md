@@ -17,7 +17,7 @@ install_github(repo = "sws_imputation",
 ### Core functions
 
 The core functions to carry out the whole imputation process, from
-imputation, diagnosis and simulation can be found in the `code`
+imputation, diagnosis and simulation can be found in the `code/`
 folder.
 
 `computeYield.R` - This function is used to compute the yield and
@@ -63,5 +63,5 @@ system("pdflatex \\nonstopmode\\input methodology_revised.tex")
 All relevant material of the previous methodology can be allocated in
 the `previous_methodology` folder.
 
-### Proposed Methodology and Case study
+### Case study
 

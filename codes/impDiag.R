@@ -41,6 +41,14 @@ impDiag = function(object, savePlots = FALSE, yieldObsVar, countryVar,
                  aspect = "fill", type = c("g", "p"),
                  xlab = "Fitted value", ylab = "Observed value")
           )
+
+    ## Checking the fitted value with the observed value
+    tmp = as.formula(paste0(yieldObsVar, " + fittedYield ~ Year|",
+        countryVar))
+    print(xyplot(tmp, data = object$imputed,
+                 aspect = "fill", type = c("g", "l"), auto.key = TRUE,
+                 ylab = "Fitted value VS Observed", xlab = "Year")
+          )
     
     ## Check the residuals with the observed value
     tmp = as.formula(paste0("res ~ fittedYield|", countryVar))
@@ -52,6 +60,7 @@ impDiag = function(object, savePlots = FALSE, yieldObsVar, countryVar,
                  },
                  xlab = "Fitted value", ylab = "Residuals")
           )
+    
 
     ## Examine normality of residuals
     tmp = as.formula(paste0("~ res|", countryVar))

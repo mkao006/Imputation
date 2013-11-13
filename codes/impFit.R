@@ -29,7 +29,7 @@ impFit = function(object, productionObsVar, areaObsVar, yieldObsVar, countryVar,
            myItem =
                with(FAOmetaTable, unique(itemTable[itemTable$itemCode ==
                                                    myItemCode, "itemName"]))
-           par(mfrow = c(4, 1), mar = c(2.1, 4.1, 3.1, 2.1))
+           par(mfrow = c(3, 1), mar = c(2.1, 4.1, 3.1, 2.1))
            try({
                ymax = max(x[, c(productionObsVar, "imputedProd"), with = FALSE],
                    na.rm = TRUE) * 1.2
@@ -56,7 +56,7 @@ impFit = function(object, productionObsVar, areaObsVar, yieldObsVar, countryVar,
            
            
            try({
-               ymax = max(x[, c(yieldObsVar, "imputedYield", "groupedMean"),
+               ymax = max(x[, c(yieldObsVar, "imputedYield"),
                    with = FALSE], na.rm = TRUE) * 1.2
                with(x, plot(Year, eval(parse(text = yieldObsVar)),
                             ylim = c(0, ymax), type = "b",
@@ -67,10 +67,10 @@ impFit = function(object, productionObsVar, areaObsVar, yieldObsVar, countryVar,
                with(x[is.na(eval(parse(text = yieldObsVar))), ],
                     points(Year, imputedYield, col = "blue", pch = 19))
            }, silent = TRUE)
-           try({
-               with(x, plot(Year, groupedMean, ylab = "Average Yield",
-                            ylim = c(0, ymax), type = "b"))
-           }, silent = TRUE)
+           ## try({
+           ##     with(x, plot(Year, groupedChange, ylab = "Average Yield",
+           ##                  ylim = c(0, ymax), type = "b"))
+           ## }, silent = TRUE)
            
        }
        )

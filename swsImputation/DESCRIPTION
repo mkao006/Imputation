@@ -24,8 +24,11 @@ LazyData: yes
 ZipData: no
 Collate:
     'computeYield.R'
+    'impDiag.R'
+    'impFit.R'
     'meanlme4.R'
-    'naiveImpute.R'
-    'splitNACountry.R'
-    'swsImputation-package.R'
+    'naiveImputation.R'
+    'predict.meanlme4.R'
+    'predict.shocklme4.R'
+    'shocklme4.R'
     'swsImputation.R'

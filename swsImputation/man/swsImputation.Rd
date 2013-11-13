@@ -4,7 +4,8 @@
 simultaneously.}
 \usage{
   swsImputation(data, area, prod, yield, country, region,
-    year, n.iter = 1000, tol = 1e-08)
+    year, n.iter = 1000, tol = 1e-08, EMverbose = FALSE,
+    meanType = c("meanlme4", "shocklme4"))
 }
 \arguments{
   \item{data}{The data.frame or data.table containing the
@@ -30,6 +31,8 @@ simultaneously.}
 
   \item{tol}{Tolerance, the stopping rule for the
   Likelihood.}
+
+  \item{meanType}{The type of aggregated model used}
 }
 \description{
   This function is the implementation which is illustrated
