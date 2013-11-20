@@ -61,6 +61,7 @@
 \usepackage{draftwatermark}
 \usepackage{float}
 \usepackage{placeins}
+\usepackage{mathrsfs}
 %% \usepackage{mathbbm}
 \DeclareMathOperator{\sgn}{sgn}
 \DeclareMathOperator*{\argmax}{\arg\!\max}
@@ -148,8 +149,8 @@ expressed as:
 
 \begin{equation}
   \label{eq:identity}
-  \text{P}_t = \text{A}_t \times \text{Y}_t \quad\quad P_t \ge 0, A_t
-  \ge 0, Y_t > 0
+  \text{P}_t = \text{A}_t \times \text{Y}_t \quad\quad P_t \ge 0,\, A_t
+  \ge 0,\, Y_t > 0
 \end{equation}
 
 
@@ -165,6 +166,38 @@ be represented under a different context.
 The primary objective of imputation is to incorporate all
 available and reliable information in order to provide best estimates of
 food supply in FBS.
+
+Presented in table \ref{tab:swsflag} is a description of the existing
+flags in the current Statistical Working System (SWS). In this
+exercise, non-official/semi-official data which are marked as either
+\textbf{F}, \textbf{E} and \textbf{T} are the target values to be
+imputed.
+
+\begin{table}[h!]
+  \label{tab:swsflag}
+  \caption{Description of the flags in the Statistical Working System}
+  \begin{center}
+    \begin{tabular}{|c||p{12cm}|}
+      \hline
+      Flags & Description\\
+      \hline
+      & Official data reported on FAO Questionnaires from countries\\
+      / & Official data reported on FAO Questionnaires from countries\\
+      * & Commodity International Organizations\\
+      X & Commodity International Organizations\\
+      P & Estimated data using trading partners database\\
+      F & FAO estimate\\
+      C & Calculated data\\
+      B & Data obtained as balance\\
+      T & Extrapolated/interpolated\\
+      M & Not reported by country\\
+      E & Expert sources from FAO (including other divisions)\\
+      \hline
+    \end{tabular}
+  \end{center}  
+\end{table}
+
+\FloatBarrier
 
 \section{Background and Review of the Current Methodology}
 
@@ -288,7 +321,7 @@ hold at the macro-aggregated level.
 
 }
 
-\caption[Production time series by country]{Production time series by country\label{fig:production-time}}
+\caption[Logged production of wheat from 1961 to 2011 by country]{Logged production of wheat from 1961 to 2011 by country\label{fig:production-time}}
 \end{figure}
 
 
@@ -303,7 +336,7 @@ hold at the macro-aggregated level.
 
 }
 
-\caption[Area time series by country]{Area time series by country\label{fig:area-time}}
+\caption[Logged area harvested of wheat from 1961 to 2011 by country]{Logged area harvested of wheat from 1961 to 2011 by country\label{fig:area-time}}
 \end{figure}
 
 
@@ -318,7 +351,7 @@ hold at the macro-aggregated level.
 
 }
 
-\caption[Yield time series by country]{Yield time series by country\label{fig:yield-time}}
+\caption[Logged yield series of wheat from 1961 to 2011 by country]{Logged yield series of wheat from 1961 to 2011 by country\label{fig:yield-time}}
 \end{figure}
 
 
@@ -350,9 +383,11 @@ are more common in countries which lack statistical capacity. In
 addition, commodity with low national priority for countries are often
 missing.
 
-The following two graph illustrates this phenomenon. We assume that
-the data is of Missing at Random (MAR) and that the distribution of
-missingness depends solely on the value of the production.
+The following two graph illustrates this phenomenon, where countries
+are classified by their average value and the redder the cell the
+higher the production. We assume that the data is of Missing at Random
+(MAR) and that the distribution of missingness depends solely on the
+size of the production.
 
 \begin{knitrout}
 \definecolor{shadecolor}{rgb}{0.969, 0.969, 0.969}\color{fgcolor}\begin{figure}[!ht]
@@ -391,7 +426,7 @@ During the development of the methodology, we have encountered several
 cases which required us to review and redefine our initial
 methodology. These are not exceptions, rather they are prevalent in
 the production domain and the analyst should bear in mind of these
-properties.
+characteristics.
 
 
 \subsubsection{Sparse Data}
@@ -399,9 +434,13 @@ Although missing values are expected given that the goal is to impute
 missing values, but one might be shocked at the sparsity of the
 data. Shown in figure \ref{fig:wheatBotswana} and \ref{fig:riceBhutan}
 are just two out of several hundreds of cases where only a handful of
-points are observed over the past fifty years. In particular, rice is
-the staple of Bhutan where accurate estimation of the missing value is
-critical.
+points are observed over the past fifty years. 
+
+
+In particular, rice is the staple of Bhutan where accurate imputation
+of the missing value is critical in the estimation of the total
+food/energy supply and ultimately the undernourishment level of the
+country.
 
 \begin{figure}[!ht]
   \centering
@@ -552,26 +591,33 @@ impute with the closest observed value.
 
 \subsection{Imputation for Yield}
 The proposed model for imputing the yield is a linear mixed model, the
-usage of this model enables all information available both
+utilization of this model enables all information available both
 historical and cross-sectional to be incorporated. In addition,
 proposed indicators such as the vegetation index, $\text{CO}_2$
 concentration and other drivers can be tested and incorporated if
 proven to improve predictive power.
 
-Following Laird etal, the general form of the model can be expressed
-as:
+Following the notation of Bates, the general form of the model can be
+expressed as:
 
 \begin{align}
-  \mathbf{y_i} &= \mathbf{X_i}\boldsymbol{\beta} +
-  \mathbf{Z_i}\mathbf{b_i} + \epsilon_i \nonumber\\
-  \mathbf{b_i} &\sim \mathbf{N_q}(\mathbf{0}, \boldsymbol{\Psi})\nonumber\\
-  \epsilon_i &\sim \mathbf{N_{ni}}(\mathbf{0},
-  \boldsymbol{\sigma^2}\boldsymbol{\Lambda_i})
+  (\mathscr{Y}|\mathscr{B} = \mathbf{b}) &\sim
+  \mathscr{N}(\mathbf{X}\boldsymbol{\beta} + \mathbf{Z}\mathbf{b},
+  \boldsymbol{\sigma^2}\mathbf{I})\nonumber \\
+  \mathscr{B} &\sim\mathscr{N}(\mathbf{0}, \boldsymbol{\Sigma_\theta})
 \end{align}
 
-Where the fixed component $\mathbf{X_i}\boldsymbol{\beta}$ models the
+%% \begin{align}
+%%   \mathbf{y_i} &= \mathbf{X_i}\boldsymbol{\beta} +
+%%   \mathbf{Z_i}\mathbf{b_i} + \epsilon_i \nonumber\\
+%%   \mathbf{b_i} &\sim \mathbf{N_q}(\mathbf{0}, \boldsymbol{\Psi})\nonumber\\
+%%   \epsilon_i &\sim \mathbf{N_{ni}}(\mathbf{0},
+%%   \boldsymbol{\sigma^2}\boldsymbol{\Lambda_i})
+%% \end{align}
+
+Where the fixed component $\mathbf{X}\mathscr{\beta}$ models the
 effect of exogenous variables, while the random component of
-$\mathbf{Z_i}\mathbf{b_i}$ captures the country specific variation
+$\mathbf{Z}\mathbf{b}$ captures the country specific variation
 around the regional level.  More specifically, the proposed model for
 FAOSTAT production has the following expression:
 
@@ -585,8 +631,9 @@ FAOSTAT production has the following expression:
 Where $Y$ denotes yield with $\Delta{Y}$ being the grouped change in
 yield, $i$ for country, $j$ represents the designated regional
 grouping and $t$ denotes time. The fixed effect is left for external
-drivers such as precipitation, the grouped change in yield is computed
-as:
+drivers such as precipitation and temperature.
+
+The grouped change in yield is computed as:
 
 \begin{equation}
   \label{eq:DeltaYield}
@@ -607,26 +654,26 @@ cross-sectional information are utilized, imputed values display
 stable characteristics while reflecting changes in climatic
 conditions.
 
-Although it is possible to predict for data countries which we don't
-observe a single point, however simulation has shown that the
-prediction error are generally large and thus we suggest that this
-setting is not used.
+%% Although it is possible to predict for countries which we don't
+%% observe a single point, however simulation has shown that the
+%% prediction error are generally large and thus we suggest that this
+%% setting is not used.
 
 \subsection{EM-algorithm}
 Since its introduction by Dempster, Laird and Rubin, the EM-algorithm
 has been used extensively in statistics for computing the maximum
-likelihood estimate from incomplete data.
+likelihood estimate from incomplete data.This section will give a
+brief account of the methodology, readers are to refer to the
+reference list for further details.
 
-This section will give a brief account of the methodology, readers are
-to refer to the reference list for further details.
-
-In breiveity, the algorithm consists of two steps, the expectation and
-the maximization step hence it's name.
+In breiveity, the algorithm consists of two repeated iterative steps,
+the expectation and the maximization step hence it's name.
 
 We first use the naive imputation to populate the data in order to
-compute the estimate for both $\beta^{(0)}$ and $\Delta Y_{j, t}$ for
-initialization. and let $\cal{L}(\boldsymbol{\beta}|\mathbf{Y})$ be
-the likelihood function of equation \ref{eq:lmeImpute}.
+compute the estimate for both $\boldsymbol{\beta}^{(0)}$ and
+$\Delta\mathbf{Y}$ for initialization. and let
+$\cal{L}(\boldsymbol{\beta}|\mathbf{Y})$ be the likelihood function of
+equation \ref{eq:lmeImpute}.
 
 \subsubsection{Expectation-Step}
 In this step, we compute the expected value of the missing values
@@ -641,7 +688,8 @@ estimate the new set of parameter though the maximization of the
 likelihood.
 \begin{equation}
   \boldsymbol{\hat{\beta}} = \underset{\boldsymbol{\beta}}
-             {\mathrm{argmax}} ~\cal{L}(\boldsymbol{\beta}|\mathbf{Y}^O,
+             {\mathrm{argmax}}
+             ~\cal{L}(\boldsymbol{\beta}|\mathbf{Y}^O,
              \mathbf{\hat{Y}}^M)
 \end{equation}
 
@@ -656,10 +704,34 @@ were chosen to demonstrate the flexibility and robustness of the
 method.
 
 \subsection{Wheat}
-We begin the case study with a the simple case, wheat production
-around the world. Data for wheat are relatively complete and factors
-that determines the the production, area harvested and yield are well
-understood.
+We begin the case study with the simple case, wheat production around
+the world from 1994 to 2011. Data for wheat are relatively complete
+and factors that determines the the production, area harvested and
+yield are well understood. From table we can see that only 15\% of the
+production require imputation.
+
+% latex table generated in R 3.0.2 by xtable 1.7-1 package
+% Wed Nov 20 14:45:22 2013
+\begin{table}[ht]
+\centering
+\begin{tabular}{|l|c|c|c|c|}
+  \hline
+ & Production Count & Production Percentage(\%) & Area Count & Area Percentage (\%) \\ 
+  \hline
+  & 1917 & 80\% & 1833 & 77\% \\ 
+  * & 84 & 4\% & 57 & 2\% \\ 
+  E & 126 & 5\% & 168 & 7\% \\ 
+  F & 111 & 5\% & 176 & 7\% \\ 
+  M & 38 & 2\% & 56 & 2\% \\ 
+  P & 9 & 0\% & 11 & 0\% \\ 
+  T & 109 & 5\% & 93 & 4\% \\ 
+  Missing & 0 & 0\% & 0 & 0\% \\ 
+  Total & 2394 & 100\% & 2394 & 100\% \\ 
+   \hline
+\end{tabular}
+\end{table}
+
+
 
 
 
@@ -670,13 +742,12 @@ offices and the fitted value of the imputation model. The fit appears
 to be satistsfactory, and well capture the country specific trend and
 seasonal shocks where applicable. 
 
-Nevertheless, there are two cases Zambia and United Arab Emirates where
-the fit does not appear to be satisfactory. In the case of UAE, we
-believe this is a data collection error since there are no reasonable
-justification for the yield of wheat to increase over a 5 year span by
-a significant amount then drop back to down to previous level. On the
-other hand, further information are required to understand why the
-yield in Zambia fell and maintain the lower rate of yield. 
+Nevertheless, there are two cases Zambia and United Arab Emirates
+(UAE) where the fit does not appear to be satisfactory. In the case of
+UAE, this is a problem for extremely small producers where the
+variance of the ratio (yield) can be extremely volatile. On the other
+hand, further information are required to understand why the yield in
+Zambia increased for a single year in 2008.
 
 The imputation exercise not only serve to assist teams to produce
 sound estimates of the missing value, but at the same time it helps us
@@ -702,7 +773,7 @@ process accordingly.
 In figure \ref{fig:wheat-obs-fitted-production-time}, the imputed
 production in blue is superimposed on the observed production depicted
 in pink. The two lines coincide when the production is observed, the
-important part is to observe whether the imputed value in blue shows
+important part is to examine whether the imputed value in blue shows
 peculiar trend or divergence from the observed data. This does not
 appear to be the case, all the imputed value appears to be
 reasonable. The same plot for area is shown in figure
@@ -746,12 +817,40 @@ and production associated with the previous imputation methodology.
 
 \FloatBarrier
 \subsection{Grape}
-
-
-
 In the second example, we take a slightly harder commodity to
 illustrate some of the power of linear mixed model and the the
-robustness of the current methodology.
+robustness of the current methodology. From the same flag table, we
+can see that around 22\% of production requires imputations and we
+have a smaller number of producer.
+
+
+% latex table generated in R 3.0.2 by xtable 1.7-1 package
+% Wed Nov 20 14:45:59 2013
+\begin{table}[ht]
+\centering
+\begin{tabular}{|l|c|c|c|c|}
+  \hline
+ & Production Count & Production Percentage(\%) & Area Count & Area Percentage (\%) \\ 
+  \hline
+  & 1287 & 71\% & 1219 & 67\% \\ 
+  * & 52 & 3\% & 55 & 3\% \\ 
+  E & 135 & 7\% & 146 & 8\% \\ 
+  F & 171 & 9\% & 206 & 11\% \\ 
+  M & 59 & 3\% & 58 & 3\% \\ 
+  T & 114 & 6\% & 116 & 6\% \\ 
+  Missing & 0 & 0\% & 18 & 1\% \\ 
+  Total & 1818 & 100\% & 1818 & 100\% \\ 
+   \hline
+\end{tabular}
+\end{table}
+
+
+
+
+
+
+
+
 
 Figure \ref{fig:grape-obs-fitted-yield-time} depict the same fitted
 yield super-imposed on observed yield like in the last case study. In
@@ -821,23 +920,118 @@ appears to be feasible and does not shown any signs of model failure.
 \end{knitrout}
 
 
+
+\FloatBarrier
+\subsection{Pepper}
+The final case study can be considered as one of the hardest and often
+problematic yet important commodity, pepper. In this case, we would
+need to impute 67\% provided that only one-third of the data are
+present. From a statistical point of view, such a task should not be
+performed since the result is highly unreliable. Nevertheless, we will
+try and examine the result and performance of the imputation.
+
+
+% latex table generated in R 3.0.2 by xtable 1.7-1 package
+% Wed Nov 20 14:46:29 2013
+\begin{table}[ht]
+\centering
+\begin{tabular}{|l|c|c|c|c|}
+  \hline
+ & Production Count & Production Percentage(\%) & Area Count & Area Percentage (\%) \\ 
+  \hline
+  & 211 & 27\% & 198 & 26\% \\ 
+  * & 27 & 3\% & 4 & 1\% \\ 
+  E & 263 & 34\% & 228 & 29\% \\ 
+  F & 221 & 29\% & 237 & 31\% \\ 
+  M & 33 & 4\% & 60 & 8\% \\ 
+  T & 19 & 2\% & 11 & 1\% \\ 
+  Missing & 0 & 0\% & 36 & 5\% \\ 
+  Total & 774 & 100\% & 774 & 100\% \\ 
+   \hline
+\end{tabular}
+\end{table}
+
+
+
+
+
+
+Looking at figure \ref{fig:pepper-obs-fitted-yield-time}, we can
+clearly see that the observed yield of Costa Rica in pink is
+displaying extremely erratic behaviour. Further analysis is required
+to understand the source of this volatility in order for us to improve
+the methodology. Nonetheless, most of other series observed are smooth
+and fitted well by the linear line.
+
+\begin{knitrout}
+\definecolor{shadecolor}{rgb}{0.969, 0.969, 0.969}\color{fgcolor}\begin{figure}[!ht]
+
+
+{\centering \includegraphics[width=\maxwidth]{figure/pepper-obs-fitted-yield-time} 
+
+}
+
+\caption[Observed yied versus fitted yield]{Observed yied versus fitted yield\label{fig:pepper-obs-fitted-yield-time}}
+\end{figure}
+
+
+\end{knitrout}
+
+
+\begin{knitrout}
+\definecolor{shadecolor}{rgb}{0.969, 0.969, 0.969}\color{fgcolor}\begin{figure}[!ht]
+
+
+{\centering \includegraphics[width=\maxwidth]{figure/pepper-obs-fitted-production-time} 
+
+}
+
+\caption[Observed production versus imputed production]{Observed production versus imputed production\label{fig:pepper-obs-fitted-production-time}}
+\end{figure}
+
+
+\end{knitrout}
+
+
+\begin{knitrout}
+\definecolor{shadecolor}{rgb}{0.969, 0.969, 0.969}\color{fgcolor}\begin{figure}[!ht]
+
+
+{\centering \includegraphics[width=\maxwidth]{figure/pepper-obs-fitted-area-time} 
+
+}
+
+\caption[Observed area versus imputed area]{Observed area versus imputed area\label{fig:pepper-obs-fitted-area-time}}
+\end{figure}
+
+
+\end{knitrout}
+
+
 \FloatBarrier
 \section{Simulation Results}
-In this section we conduct bootstrap simulation to estimate the
-prediction error.
 
-For each bootstrap, we take a sample of the data and impute the
-missing value. These missing value are then benchmarked with the
-actual observed official and semi-official data. We used the Mean
-Absolute Percentage Error (MAPE) to for assessing the accuracy of the
-imputed value; and we compute the coverage rate defined as the
-proportion of missing value imputed to examine the applicability of
-the method.
+In order to understand the capability and performance of the
+imputation, we conduct bootstrap simulation to estimate the prediction
+error.
+
+For each bootstrap, we take a sample containing only official and
+semi-official data and impute the values which are issing. The
+imputation is then benchmarked with the actual observed official and
+semi-official data. We use the Mean Absolute Percentage Error (MAPE)
+for assessing the accuracy of the imputed values; and we compute the
+coverage rate defined as the proportion of missing value imputed to
+examine the applicability of the method.
+
+\begin{equation}
+  \text{MAPE} = \frac{1}{N} \sum |y_i - \hat{y}_i|\\
+\end{equation}
+
 
 Each simulation draws a sample of varying missing proportion, this is
 to investigate the prediction error over different degree of
 missingess and at the same time to detect the breaking point of the
-methodology.
+method.
 
 Since there are already missing value in the data, the benchmark is
 can only be computed on the available official and semi-official data
@@ -855,16 +1049,18 @@ around 5\%.
 On the other hand, the coverage rate and the accuracy is much lower
 for pepper. The main reason for this is due to the fact that much of
 the robustness and accuracy comes from the regional and global
-information set. The number of countries producing wheat and grape is
-much larger than pepper and we have less information to utilize and
-thus the observed result.
+information set. The number of countries producing wheat
+(133)
+and grape (101) is much larger than pepper
+(37)
+and we have less information to utilize and thus the observed result.
 
 %% Provide a table of the error arte and the number of producer
 %% countries
 
 \begin{figure}[ht!]
   \centering
-  \includegraphics{finalSim}
+  \includegraphics[width=\linewidth]{finalSim}
 \end{figure}
 
 
@@ -932,7 +1128,7 @@ package \pkg{FAOSTAT}.
 
 
 \section*{Annex 3: Diagnostic graph of case studies}
-
+\subsection*{Wheat}
 \begin{knitrout}
 \definecolor{shadecolor}{rgb}{0.969, 0.969, 0.969}\color{fgcolor}\begin{figure}[!ht]
 
@@ -979,7 +1175,7 @@ package \pkg{FAOSTAT}.
 \end{knitrout}
 
 
-
+\subsection*{Grape}
 \begin{knitrout}
 \definecolor{shadecolor}{rgb}{0.969, 0.969, 0.969}\color{fgcolor}\begin{figure}[!ht]
 
