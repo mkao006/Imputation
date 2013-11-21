@@ -748,6 +748,8 @@ are required to understand the observed bahaviour of Zambia nad United
 Arab Emirates. Furthermore, we see no cases of divergence between area
 and production associated with the previous imputation methodology.
 
+Further diagnostic plots can be found in the appendix, they shows no
+signs of extreme departure from assumptions.
 
 \FloatBarrier
 \subsection{Grape}
@@ -975,6 +977,23 @@ and we have less information to utilize and thus the observed result.
   \centering
   \includegraphics[width=\linewidth]{finalSim}
 \end{figure}
+
+The main take away message for the simulation result is that the
+greater the number of producing countries the more information we can
+utilize; resulting in higher coverage rate and better prediction
+error. 
+
+It also demonstrates extreme robustness and the prediction error
+increase at a close to linear rate and only breaks down at a level
+over 90\% missing values.
+
+The imputation coverage is highly dependent on the number of producing
+countries and at the same time whether a single yield is observed for
+a particular country. From the coverage results, we can see the vast
+majority of the missing values can be imputed provided we have more
+than 20\% data for wheat and grape, while very small number of
+reliable imputation can be achieved with pepper.
+
 
 
 %% \begin{figure}[ht!]
