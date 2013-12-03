@@ -12,8 +12,8 @@
 ##' @export
 
 
-impFit = function(object, productionObsVar, areaObsVar, yieldObsVar, countryVar, itemCode,
-    file){
+impFit = function(object, productionObsVar, areaObsVar, yieldObsVar,
+    countryVar, itemCode, file){
     ## Check all individual imputation
     imputed.dt = object$imputed
     if(missing(file))

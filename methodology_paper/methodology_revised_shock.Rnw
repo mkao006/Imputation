@@ -122,12 +122,12 @@ shortcomings of the current work and a new methodology is proposed in
 order to resolve these issues and to increase the accuracy of
 imputation.
 
-The relationship between the variables in the production domain can be
-expressed as:
+The relationship between the variables in the production domain by
+definition can be expressed as follow,
 
 \begin{equation}
   \label{eq:identity}
-  \text{P}_t = \text{A}_t \times \text{Y}_t \quad\quad P_t \ge 0,\, A_t
+  \text{P}_t := \text{A}_t \times \text{Y}_t \quad\quad P_t \ge 0,\, A_t
   \ge 0,\, Y_t > 0
 \end{equation}
 
@@ -323,25 +323,37 @@ year-to-year but exihibiting a rather monotonic trend.
 These figures suggests the behaviour of the yield time series is much
 more predictable since we know the year-to-year fluctuation is driven
 by climate condition and yield increases monotonically as technology
-improves. In contrast, breaks and non-linearity are much more
-difficult to model, and we also lack the information on the
-increasing/decreasing trend or discontinuity of production. This is
-the main motivation why we decided to model and impute the yield
-followed by the balancing of area harvested and production.
+improves. In contrast, breaks and non-linearity potentially relating
+to price are much more difficult to model and forecast, and we also
+lack the information on the increasing/decreasing trend or
+discontinuity of production. Furthermore, a small error is much more
+tolerable when imputing yield as area and production are less
+restricted; on the other hand, a small error in the imputation of area
+and production may result in an infeasible yield.
+
+This is the main motivation why we decided to model and impute the
+yield followed by the balancing of area harvested and production.
 
 \FloatBarrier
 \subsection{Missing Data Mechanisms}
 
 Experience from domain experts in the past suggests that missing value
-are more common in countries which lack statistical capacity. In
-addition, commodity with low national priority for countries are often
-missing.
+are more common in countries which lack statistical
+capacity. Nevertheless, the statistical capacity has been improving in
+the past and we have been able to collect more data over the more
+recent years. In addition, commodity with low national priority for
+countries are often missing.
 
 The following two graph illustrates this phenomenon, where countries
 are classified by their average value and the redder the cell the
-higher the production. We assume that the data is of Missing at Random
-(MAR) and that the distribution of missingness depends solely on the
-size of the production.
+higher the production. We assume that the data is of \textbf{Missing
+at Random (MAR)} and that the distribution of missingness depends
+solely on the size of the production and time which are both observed.
+
+
+\begin{equation}
+    \Pr(Y^M|Y) = \Pr(Y^M|Y^O)
+\end{queation}
 
 <<wheat-production-sparsity, fig.width=12, fig.height=9, fig.cap='Missing pattern of wheat by value of production', fig.pos='!ht'>>=
 wheatSparsity.df = data.frame(splitNACountry(valueVar = "productionNum", 
@@ -377,10 +389,12 @@ characteristics.
 
 \subsubsection{Sparse Data}
 Although missing values are expected given that the goal is to impute
-missing values, but one might be shocked at the sparsity of the
+missing values, but one may be shocked at the sparsity of the
 data. Shown in figure \ref{fig:wheatBotswana} and \ref{fig:riceBhutan}
 are just two out of several hundreds of cases where only a handful of
-points are observed over the past fifty years. 
+points are observed over the past fifty years. Later in the case
+study, we also shown that for the commodity pepper a mere 20\% of the
+total data is observed.
 
 
 In particular, rice is the staple of Bhutan where accurate imputation
@@ -423,8 +437,8 @@ and recorded. Here we observe suspicious trends or shocks of area
 harvested which results in unreasonable yield.
 
 Take the sugar cane production in Madagascar for example, the yield
-suddenly shot up from a level around 30 to 50 while the area harvested
-dropped in 1992. We have no explanation of this other than poor data
+suddenly shot up from 30 to 50 while the area harvested dropped in
+1992. We have no explanation of this other than poor data
 reporting. Similar phenomenon has been observed for garlic in Albania
 and bananas in Greece where the yield increased by as much as
 eight-fold from 2 to 16 in a single year.
@@ -473,14 +487,18 @@ the Iraq war.
 These observations prompt us to use a robust method to safeguard
 ourself from non-sensical imputation.
 
+Furthermore, these observation are being reported back to the data
+collection team to further improve the overall quality of the data.
+
 \FloatBarrier
 \section{Proposed Methodology}
 In order to capture the correlation of yield between countries as a
-result of climate conditions and avoid imputation of infeasible yield,
-we propose to impute the yield and area in contrast to production and
-area in the currently implemented methodology. The added advantage of
-this approach, with well designed validation, almost guarantees that
-the series will not diverge.
+result of varying climate conditions and avoid imputation of
+infeasible yield, we propose to impute the yield, followed by area and
+production in contrast to production and area in the currently
+implemented methodology. The added advantage of this approach, with
+well designed validation, almost guarantees that the series will not
+diverge.
 
 
 \subsection{Imputation for Harvested area}
@@ -651,10 +669,11 @@ method.
 
 \subsection{Wheat}
 We begin the case study with the simple case, wheat production around
-the world from 1994 to 2011. Data for wheat are relatively complete
-and factors that determines the the production, area harvested and
-yield are well understood. From table we can see that only 15\% of the
-production require imputation.
+the world from 1994 to 2011. Wheat is widely traded globally and
+comercialised and data for wheat are relatively complete. Factors that
+determines the production, area harvested and yield are well
+understood. From table we can see that only 15\% of the production
+require imputation.
 
 <<wheat-data-description, results='asis'>>=
 wheatFlagTable = 
@@ -709,7 +728,8 @@ Zambia increased for a single year in 2008.
 The imputation exercise not only serve to assist teams to produce
 sound estimates of the missing value, but at the same time it helps us
 to re-examine the quality of the data and improve the data collection
-process accordingly.
+process accordingly. This is in the authors view, the most important
+element and the only solution to the missing data problem.
 
 
 <<wheat-obs-fitted-yield-time, fig.width=15, fig.height=10, fig.cap='Observed yied versus fitted yield. Here the pink line represents official or semi-official data while the blue line represents the fit to the data. Empty boxes implies that no yield was observed and imputed for that country.', fig.pos='!ht'>>=
@@ -803,18 +823,18 @@ grapeImputed.lst = swsImputation(grape.dt[Year %in% c(1994:2011), ],
 Figure \ref{fig:grape-obs-fitted-yield-time} depict the same fitted
 yield super-imposed on observed yield like in the last case study. In
 general, again the observed fit is reasonable with no major
-departure. The major feature to notice is the fitted value of Vietnam
+departure. The major feature to notice is the fitted values of Vietnam
 and India, it illustrates the robustness of the linear mixed model
 oppose to the simple linear regression. 
 
 In the case of Vietnam, a much steeper trend would have been fitted if
 we were to use simple linear regression and negative yield would have
 been the result for earlier years. Nevertheless, given that the
-country may not depart drastically from the regional trend, the fit of
+country may not depart drastically from the global trend, the fit of
 the linear mixed model is much more resonable and feasible.
 
 The same characteristics is illustrated for India, where a significant
-drop is observed in 2010 but the fitted value are only minorly
+drop is observed in 2010 but the fitted values are only marginally
 affected by that single point which also suspect to be a recording
 error.
 
@@ -978,12 +998,11 @@ and we have less information to utilize and thus the observed result.
   \includegraphics[width=\linewidth]{finalSim}
 \end{figure}
 
-The main take away message for the simulation result is that the
-greater the number of producing countries the more information we can
-utilize; resulting in higher coverage rate and better prediction
-error. 
+The main message from the simulation result is that the greater
+the number of producing countries the more information we can utilize;
+resulting in higher coverage rate and better prediction error.
 
-It also demonstrates extreme robustness and the prediction error
+It also demonstrates extreme robustness as the prediction error
 increase at a close to linear rate and only breaks down at a level
 over 90\% missing values.
 
@@ -1099,6 +1118,7 @@ qqmath(~res|areaName, data = wheatImputed.lst$imputed,
 
 @ 
 
+\FloatBarrier
 \subsection*{Grape}
 <<grape-obs-fitted, fig.width=15, fig.height=10, fig.cap='Observed versus fitted value', fig.pos='!ht'>>=
 xyplot(fittedYield ~ yieldNum|areaName,
