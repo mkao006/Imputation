@@ -1,0 +1,737 @@
+\documentclass[nojss]{jss}
+\usepackage{url}
+\usepackage[sc]{mathpazo}
+\usepackage{geometry}
+\geometry{verbose,tmargin=2.5cm,bmargin=2.5cm,lmargin=2.5cm,rmargin=2.5cm}
+\setcounter{secnumdepth}{2}
+\setcounter{tocdepth}{2}
+\usepackage{breakurl}
+\usepackage{hyperref}
+\usepackage[ruled, vlined]{algorithm2e}
+\usepackage{mathtools}
+\usepackage{draftwatermark}
+
+
+
+
+<<setup, include=FALSE, cache=FALSE>>=
+opts_chunk$set(fig.path='figure/', fig.align='center', fig.show='hold',
+               warning=FALSE, message=FALSE, tidy=FALSE, results='hide',
+               eval=TRUE, echo=FALSE, cache=FALSE)
+options(replace.assign=TRUE,width=80)
+@ 
+
+<<load-libraries>>=
+library(FAOSTAT)
+library(gridExtra)
+@ 
+
+
+\title{\bf Document de travail : Methodologie d'imputation et de
+  validation pour le domaine de production de FAOSTAT}
+
+\author{Michael C. J. Kao\\ Food and Agriculture Organization \\ of
+  the United Nations}
+
+\Plainauthor{Michael. C. J. Kao} 
+
+\Plaintitle{Document de travail : m\'{e}thodologie d'imputation et de
+  validation pour le domaine de production de FAOSTAT}
+
+\Shorttitle{M\'{e}thode d'imputation et de validation}
+
+\Abstract{ 
+  
+  Ce Papier pr\'{e}sente une nouvelle m\'{e}thode d'imputation
+  destin\'{e}e au domaine de la production dans FAOSTAT.  Cette
+  m\'{e}thode r\'{e}sout un nombre important de probl\`{e}mes
+  soulev\'{e}s par l'approche actuelle, sa structure flexible permet
+  d'incorporer de nouvelles informations et d'am\'{e}liorer ses
+  performances.
+
+  Nous examinons en premier lieu les facteurs d\'{e}terminant des
+  changements de production par produits, puis donnons un bref
+  aper\c{c}u de la m\'{e}thode actuelle et de ses limites. La nouvelle
+  m\'{e}thodologie est ensuite d\'{e}crite, accompagn\'{e}e d'une
+  d\'{e}composition du mod\`{e}le et de son explication.
+
+}
+
+\Keywords{Imputation, Mod\`{e}le lin\'{e}aire mixte
+  g\'{e}n\'{e}ralis\'{e}, Production Agricole, EM}
+
+\Plainkeywords{Imputation, Linear Mixed Model, Agricultural
+  Production, EM}
+
+
+\Address{
+  Michael. C. J. Kao\\
+  Economics and Social Statistics Division (ESS)\\
+  Economic and Social Development Department (ES)\\
+  Food and Agriculture Organization of the United Nations (FAO\\
+  Viale delle Terme di Caracalla 00153 Rome, Italy\\
+  E-mail: \email{michael.kao@fao.org}\\
+  URL: \url{https://github.com/mkao006/Imputation}
+}
+
+%% \maketitle
+%% \tableofcontents
+
+
+\begin{document}
+
+%% \section*{Disclaimer}
+%% This Working Paper should not be reported as representing the views of
+%% the FAO. The views expressed in this Working Paper are those of the
+%% author and do not necessarily represent those of the FAO or FAO
+%% policy. Working Papers describe research in progress by the author and
+%% are published to elicit comments and to further discussion.
+
+%% \tableofcontents
+
+\section*{Avertissement}
+Ce document de travail ne repr\'{e}sente pas les vues de la FAO. les
+points de vue exprim\'{e}es dans ce document de travail sont celles de
+l'auteur et ne refl\'{e}tent pas nécessairement celles de la politique
+de la FAO. Les Documents de travail d\'{e}crivent les recherches en
+cours par l'auteur et visent \`{a} susciter commentaires et
+discussions.
+
+
+\section{Introduction}
+Les probl\`{e}mes de donn\'{e}es manquantes sont courants dans le
+domaine de la production agricole. Ils peuvent \^{e}tre dus a une
+absence de r\'{e}ponse de la part des entit\'{e}s pourvoyant les
+donn\'{e}es ou une incapacit\'{e} de celles-ci \`{a} obtenir les
+informations.  Il est cependant de premi\`{e}re importance, pour
+produire la balance alimentaire de pouvoir compter sur un domaine de
+production coh\'{e}rent et le plus complet possible. Une imputation
+pr\'{e}cise et fiable est donc un pr\'{e}-requis essentiel.
+
+Ce papier cherche \`{a} cerner et d\'{e}passer un certain nombre de
+limites de la m\'{e}thodologie actuelle et \`{a} am\'{e}liorer la
+pr\'{e}cision de l'imputation en d\'{e}veloppant une nouvelle
+m\'{e}thodologie.
+
+
+La relation entre les variables du domaine de production peut \^{e}tre
+exprim\'{e}e ainsi :
+\begin{equation}
+  \label{eq:identity}
+  \text{P}_t = \text{A}_t \times \text{Y}_t
+\end{equation}
+
+
+O\`{u} $P$, $A$ et $Y$ repr\'{e}sentent respectivement la production, la
+surface cultiv\'{e}e et le rendement, index\'{e}s par le temps $t$. Le
+rendement est inobservable et peut seulement \^{e}tre calcul\'{e} quand la
+production et la surface sont disponibles. Pour certains produits la
+surface cultivable peut ne pas exister ou avoir une signification
+diff\'{e}rente.
+
+L'objectif de l'imputation est, en incorporant l'ensemble des
+informations fiables utilisables, de fournir les meilleurs estimations
+de la quantite d'aliments disponible pour permettre le calcul de la
+balance alimentaire.
+
+
+\section{Contexte et revue de la m\'{e}thodologie actuelle}
+Deux cat\'{e}gories de m\'{e}thodologies ont \'{e}t\'{e} propos\'{e}es
+par le pass\'{e} pour \'{e}valuer les donn\'{e}es manquantes dans le
+domaine de production. Les m\'{e}thodologies appartenant \`{a} la
+premi\`{e}re cat\'{e}gorie utilisent les s\'{e}ries historiques et
+appliquent des m\'{e}thodes d'interpolation et de r\'{e}gression sur
+une tendance.  Celles appartenant \`{a} la seconde cat\'{e}gorie
+basent l'imputation sur les taux de croissance des produits et/ou sur
+des agr\'{e}gations par r\'{e}gion. L'imputation est men\'{e}e de
+mani\`{e}re ind\'{e}pendante \`{a} la fois sur la surface cultiv\'{e}e
+et sur la production, tandis que les rendements sont calcul\'{e}s de
+mani\`{e}re implicite.
+
+
+Chacune de ces approches n'utilisent cependant qu'une dimension de
+l'information. De nombreuses am\'{e}liorations peuvent \^{e}tre obtenues
+en combinant les diff\'{e}rentes sources d'information et les
+m\'{e}thodes cit\'{e}es plus haut.
+
+De plus, ces m\'{e}thodes ne permettent pas d'incorporer d'autres
+informations, comme les indices de v\'{e}g\'{e}tation, de
+pr\'{e}cipitations, ou de temp\'{e}rature qui peuvent apporter une
+information pr\'{e}cieuse et aider a am\'{e}liorer la pr\'{e}cision de
+l'imputation.
+
+
+Les r\'{e}sultats obtenus par les essais pr\'{e}c\'{e}dents indiquent
+que l'interpolation lin\'{e}aire est une m\'{e}thode stable et
+pr\'{e}cise. Elle ne permet cependant pas d'utiliser des donn\'{e}es
+transversales, ni d'extrapoler lorsque les points de connexion ne sont
+pas disponibles.
+
+En cons\'{e}quent, la m\'{e}thode d'agr\'{e}gation a \'{e}t\'{e}
+pr\'{e}f\'{e}r\'{e}e car elle permet d'atteindre un taux de couverture
+\'{e}lev\'{e} pour l'imputation, et semble extr\^{e}mement
+performante.
+
+
+Dans un premier temps, cette m\'{e}thode permet de calculer la
+croissance agr\'{e}g\'{e}e de la production et de la surface par
+produit et par r\'{e}gion.  Le taux de croissance est ensuite
+appliqu\'{e} a la derni\`{e}re valeur observ\'{e}e dans la s\'{e}rie
+concern\'{e}e. La formule est la suivante:
+
+\begin{equation}
+  \label{eq:aggregateGrowth}
+  r_{s, t} = \sum_{c \in \mathbb{S}} X_{c, t}/\sum_{c \in \mathbb{S}} X_{c, t-1}
+\end{equation}
+
+O\`{u} $\mathbb{S}$ r\'{e}f\`{e}re \`{a} l'ensemble des produits et
+pays appartenant aux groupes de produits et de la classification
+r\'{e}gionale concern\'{e}e, apr\`{e}s exclusion des donn\'{e}es
+devant \^{e}tre imput\'{e}es.
+
+
+Par exemple, pour calculer la \textit{croissance agr\'{e}g\'{e}e de la
+  production c\'{e}r\'{e}ali\`{e}re} pour un pays dans le but
+d'imputer la production de bl\'{e}, on additionne toute la production
+des produits appartenant au groupe de c\'{e}r\'{e}ales d'un m\^{e}me pays
+en excluant le bl\'{e}.
+
+Pour imputer la production de bl\'{e} \`{a} l'aide d'un (\textit{
+  indice r\'{e}gional de croissance agr\'{e}g\'{e}e }), les
+donn\'{e}es de production du bl\'{e} sont agr\'{e}g\'{e}es \`{a}
+l'int\'{e}rieur du profile r\'{e}gional, \`{a} l'exception du pays
+concern\'{e}. \\
+
+
+l'Imputation s\'{e}ffective donc de la mani\`{e}re suivante
+\begin{equation}
+  \hat{X}_{c, t} = X_{c, t-1} \times r_{s, t}
+\end{equation}
+  
+Il y a un certain nombre de limites \`{a} cette m\'{e}thodologie. Sa
+faiblesse principale vient du fait que la production et la surface
+sont estim\'{e}es de mani\`{e}re ind\'{e}pendante. Des cas de
+divergence entre la production et la surface ont \'{e}t\'{e}
+observ\'{e}s, r\'{e}sultant en incoh\'{e}rences entre les tendances,
+ou en rendements bien trop \'{e}lev\'{e}s.
+
+
+Ce probl\`{e}me prend sa source dans le calcul du taux de croissance
+agr\'{e}g\'{e}.
+
+Du fait des donn\'{e}es manquantes, le panier calcul\'{e} peut ne pas
+\^{e}tre comparable au cours du temps, induisant ainsi des erreurs
+dans le calcul de la croissance de la production. De plus, les paniers
+permettant de calculer les changements de production ou de surface
+cultiv\'{e}es peuvent \^{e}tre consid\'{e}rablement
+diff\'{e}rents. Finalement, la m\'{e}thodologie ne donne aucun
+aper\c{c}u des facteurs sous-jacents d\'{e}terminant la production,
+qui sont pourtant n\'{e}cessaires \`{a} une meilleure
+compr\'{e}hension des ph\'{e}nom\`{e}nes en jeux et donc \`{a}
+l'interpr\'{e}tation.
+
+
+\section{Premi\`{e}re analyse de donn\'{e}es}
+
+<<load-data, cache=TRUE>>=
+source("../dataManipulation.R")
+tmp.dt = official.dt[, list(FAOST_CODE, UNSD_MACRO_REG, UNSD_SUB_REG, itemCode,
+  Year, valueProd, valueArea, valueYield)]
+plot.df = melt(tmp.dt, id.var = c("FAOST_CODE", "UNSD_MACRO_REG", "UNSD_SUB_REG",
+                         "itemCode", "Year"))
+plot.df$variable = factor(gsub("value", "", plot.df$variable), 
+  levels = c("Prod", "Area", "Yield"))
+
+@ 
+
+Avant qu'aucune mod\'{e}lisation ou analyse statistique ne soit faite,
+un aper\c{c}u des donn\'{e}es est essentiel. Cette section est
+d\'{e}di\'{e}e a l'exploration des donn\'{e}es afin de comprendre la
+nature des s\'{e}ries et leurs d\'{e}terminants. En premier lieu, nous
+explorerons la relation d\'{e}crite par l'\'{e}quation
+\ref{eq:identity}. Pour simplifier, nous avons appliqu\'{e} aux
+donn\'{e}es un logarithme, afin de transformer lin\'{e}ariser la
+relation.
+
+\begin{equation}
+  \label{eq:logIdentity}
+  \log(P_t) = \log(A_t) + \log(Y_t)
+\end{equation}
+
+
+<<Decomposition-wheat>>=
+dwheat = ggplot(data = plot.df[plot.df$itemCode == 15, ], 
+       aes(x = Year, y = log(value))) + 
+  geom_line(aes(col = factor(FAOST_CODE))) +
+  facet_wrap(~variable, nrow = 3) + 
+  scale_color_manual(values =  rep(rgb(0, 0, 0, alpha = 0.25),
+                       length(plot.df[plot.df$itemCode == 15, "FAOST_CODE"]))) + 
+  theme(legend.position = "none") + 
+  labs(x = NULL, y = NULL, title = "Wheat (15)")
+@ 
+
+
+<<Decomposition-potato>>=
+dpotato = ggplot(data = plot.df[plot.df$itemCode == 125, ], 
+       aes(x = Year, y = log(value))) + 
+  geom_line(aes(col = factor(FAOST_CODE))) +
+  facet_wrap(~variable, nrow = 3) +   
+  scale_color_manual(values =  rep(rgb(0, 0, 0, alpha = 0.25),
+                       length(plot.df[plot.df$itemCode == 15, "FAOST_CODE"]))) +   
+  theme(legend.position = "none") + 
+  labs(x = NULL, y = NULL, title = "Cassava (125)")
+@ 
+
+<<Decomposition-cherry>>=
+dcherry = ggplot(data = plot.df[plot.df$itemCode == 531, ], 
+       aes(x = Year, y = log(value))) + 
+  geom_line(aes(col = factor(FAOST_CODE))) +
+  facet_wrap(~variable, nrow = 3) + 
+  scale_color_manual(values =  rep(rgb(0, 0, 0, alpha = 0.25),
+                       length(plot.df[plot.df$itemCode == 15, "FAOST_CODE"]))) +   
+  theme(legend.position = "none") + 
+  labs(x = NULL, y = NULL, title = "Cherries (531)")
+@ 
+
+
+
+<<Decomposition-freshvegenes>>=
+dFreshVegeNes = ggplot(data = plot.df[plot.df$itemCode == 463, ], 
+       aes(x = Year, y = log(value))) + 
+  geom_line(aes(col = factor(FAOST_CODE))) +
+  facet_wrap(~variable, nrow = 3) + 
+  scale_color_manual(values =  rep(rgb(0, 0, 0, alpha = 0.25),
+                       length(plot.df[plot.df$itemCode == 15, "FAOST_CODE"]))) +   
+  theme(legend.position = "none") + 
+  labs(x = NULL, y = NULL, title = "Vegetable Fresh NES (463)")
+
+@ 
+
+
+
+<<plot-decomposition, fig.width=9, fig.height=12, out.width='\\linewidth', out.height='16cm'>>=
+grid.arrange(dwheat, dpotato, dcherry, dFreshVegeNes)
+@ 
+
+
+Sur les graphiques ci-dessus, les log de la production, surface et des
+r\'{e}coltes d'un produit sp\'{e}cifique sont trac\'{e} par panel pour
+permettre la comparaison. Chaque ligne repr\'{e}sente un pays et la
+production est la somme de la surface et du rendement. Le premier
+aspect notable observ\'{e} ici est que le niveau de production est
+principalement d\'{e}termin\'{e} par le niveau de surface
+cultiv\'{e}e. Les chocs sur la production sont par ailleurs li\'{e}s a
+des changements affectant la surface plus que les rendements. La
+surface cultiv\'{e}e est habituellement consid\'{e}r\'{e}e comme
+stable et pr\'{e}visible dans le temps, bien que vuln\'{e}rable \`{a}
+des climatiques.
+
+
+Le second aspect notable est que l'intervalle de variation du taux de
+rendement est petit en comparaison de celui de la surface. Ceci est en
+accord avec l'intuition qu'il existe des contraintes physique au
+rendement potentiel d'une r\'{e}colte sur une surface donn\'{e}e. Ces
+r\'{e}sultats ne varient pas selon les produits consid\'{e}r\'{e}s.
+
+
+Nous allons maintenant explorer plus en d\'{e}tail l'\'{e}volution du
+rendement et de la surface. Les graphiques ci-dessous repr\'{e}sentent
+la surface et le rendement pour le m\^{e}me ensemble de produit, mais
+cette fois sans transformation des donn\'{e}es.
+
+<<wheat-area-yield>>=
+wheatAreaYield = ggplot(data = plot.df[plot.df$itemCode == 15 & 
+                         plot.df$variable != "Prod", ], 
+       aes(x = Year, y = value)) + 
+  geom_line(aes(col = factor(FAOST_CODE))) +
+  facet_wrap(~variable, nrow = 2, scales = "free_y") + 
+  scale_color_manual(values =  rep(rgb(0, 0, 0, alpha = 0.25),
+                       length(plot.df[plot.df$itemCode == 15 & 
+                                      plot.df$variable != "Prod", 
+                                      "FAOST_CODE"]))) + 
+  theme(legend.position = "none") + 
+  labs(x = NULL, y = NULL, title = "Wheat (15)")
+@ 
+
+<<potato-area-yield>>=
+potatoAreaYield = ggplot(data = plot.df[plot.df$itemCode == 125 & 
+                           plot.df$variable != "Prod", ], 
+       aes(x = Year, y = value)) + 
+  geom_line(aes(col = factor(FAOST_CODE))) +
+  facet_wrap(~variable, nrow = 2, scales = "free_y") + 
+  scale_color_manual(values =  rep(rgb(0, 0, 0, alpha = 0.25),
+                       length(plot.df[plot.df$itemCode == 125 & 
+                                      plot.df$variable != "Prod", 
+                                      "FAOST_CODE"]))) + 
+  theme(legend.position = "none") + 
+  labs(x = NULL, y = NULL, title = "Cassava (125)")
+@ 
+
+<<cherry-area-yield>>=
+cherryAreaYield = ggplot(data = plot.df[plot.df$itemCode == 531 & 
+                           plot.df$variable != "Prod", ], 
+       aes(x = Year, y = value)) + 
+  geom_line(aes(col = factor(FAOST_CODE))) +
+  facet_wrap(~variable, nrow = 2, scales = "free_y") + 
+  scale_color_manual(values =  rep(rgb(0, 0, 0, alpha = 0.25),
+                       length(plot.df[plot.df$itemCode == 531 & 
+                                      plot.df$variable != "Prod", 
+                                      "FAOST_CODE"]))) + 
+  theme(legend.position = "none") + 
+  labs(x = NULL, y = NULL, title = "Cherry (531)")
+@ 
+
+
+<<freshVegeNes-area-yield>>=
+freshVegeNesAreaYield = ggplot(data = plot.df[plot.df$itemCode == 463 & 
+                           plot.df$variable != "Prod", ], 
+       aes(x = Year, y = value)) + 
+  geom_line(aes(col = factor(FAOST_CODE))) +
+  facet_wrap(~variable, nrow = 2, scales = "free_y") + 
+  scale_color_manual(values =  rep(rgb(0, 0, 0, alpha = 0.25),
+                       length(plot.df[plot.df$itemCode == 531 & 
+                                      plot.df$variable != "Prod", 
+                                      "FAOST_CODE"]))) + 
+  theme(legend.position = "none") + 
+  labs(x = NULL, y = NULL, title = "Fresh Vegetable NES (463)")
+@ 
+
+
+<<plot-area-yield, fig.width=9, fig.height=12, out.width='\\linewidth', out.height='18cm'>>=
+grid.arrange(wheatAreaYield, potatoAreaYield, cherryAreaYield, 
+             freshVegeNesAreaYield)
+@ 
+
+Nous pouvons en premier lieu observer que les s\'{e}ries de la surface
+cultiv\'{e}e sont en g\'{e}n\'{e}ral plus stables et lisses que celles
+qui repr\'{e}sentent le rendement. Le rendement fluctue d'une
+ann\'{e}e sur l'autre tout en pr\'{e}sentant une certaine
+corr\'{e}lation, qui est plus durablement observ\'{e} dans la
+s\'{e}rie du bl\'{e}. Ceci peut \^{e}tre expliqu\'{e} par des facteurs
+sous-jacents, comme des facteurs climatiques, qui impacteraient les
+rendements de diff\'{e}rents pays simultan\'{e}ment. Cependant cette
+caract\'{e}ristique n'est pas observ\'{e}e dans la cat\'{e}gorie NES
+(non sp\'{e}cifi\'{e}es ailleurs), ce qui suppose que l'impact de tels
+facteurs est fort au sein d'un type de production mais faible entre
+diff\'{e}rentes productions.
+
+
+Les donn\'{e}es sugg\`{e}rent que la tendance et le niveau de la
+production sont tr\`{e}s largement d\'{e}termin\'{e}s par la surface
+cultiv\'{e}e, mais la variation d'une ann\'{e}e \`{a} l'autre est en
+revanche d\'{e}termin\'{e}e par le rendement, qui peut \^{e}tre
+associ\'{e} aux changements climatiques. L'analyse exploratoire des
+donn\'{e}es nous \'{e}claire sur la nature de la s\'{e}rie
+temporelle. Elle soutient l'utilisation d'un mod\`{e}le de
+d\'{e}composition de la variance qui attribuerait les fluctuations
+\`{a} la surface et aux rendements.
+
+<<sparsity-area-wheat, fig.width=9, fig.height=12, out.width='\\linewidth', out.height='20cm', eval=FALSE>>=
+
+sparsityHeatMap(data = data.frame(tmp.dt[itemCode == 15, ]), 
+                country = "FAOST_CODE",  year = "Year", var = "valueProd", 
+                ncol = 3)
+
+@ 
+
+
+\section{M\'{e}thodologie propos\'{e}e}
+
+Afin d'\'{e}viter des probl\`{e}mes d'identification, et de tenir
+compte de la corr\'{e}lation des rendements entre diff\'{e}rents pays,
+nous proposons d'imputer les rendements et la surface, et non la
+production et la surface. Le second avantage de cette approche et
+qu'associ\'{e}e a un system de validation, elle garantie que les
+s\'{e}ries ne divergent pas comme elles le font dans l'approche
+actuelle.
+
+\subsection{Imputation pour le rendement}
+Le mod\`{e}le propos\'{e} pour estimer le rendement est un mod\`{e}le
+lin\'{e}aire mixte. L'usage de ce mod\`{e}le permet d'incorporer \`{a}
+la fois l'information transversale et l'information
+historique. D'autres indicateurs, comme l'indice de
+v\'{e}g\'{e}tation, la concentration en $CO_2$ peuvent aussi \^{e}tre
+l'indice test\'{e}s et incorpor\'{e}s s\'{}ils am\'{e}liorent la
+pr\'{e}vision.
+
+La forme g\'{e}n\'{e}rale du mod\`{e}le peut \^{e}tre
+sp\'{e}cifi\'{e}e de la mani\`{e}re suivante :
+\begin{align}
+  \mathbf{y_i} &= \mathbf{X_i}\boldsymbol{\beta} +
+  \mathbf{Z_i}\mathbf{b_i} + \epsilon_i \nonumber\\
+  \mathbf{b_i} &\sim \mathbf{N_q}(\mathbf{0}, \boldsymbol{\Psi})\nonumber\\
+  \epsilon_i &\sim \mathbf{N_{ni}}(\mathbf{0},
+  \boldsymbol{\sigma^2}\boldsymbol{\Lambda_i})
+\end{align}
+
+O\`{u} la composante fixe $\mathbf{X_i}\boldsymbol{\beta}$ d\'{e}signe
+le niveau r\'{e}gional et la tendance , tandis que la composante
+al\'{e}atoire $\mathbf{Z_i}\mathbf{b_i}$ capture la variation
+sp\'{e}cifique du pays autour du niveau r\'{e}gional. Plus
+sp\'{e}cifiquement, le mod\`{e}le propos\'{e} pour la production dans
+FAOSTAT est le suivant :
+\begin{align}
+  \label{eq:lmeImpute}
+  \text{Y}_{i,t} &= \overbrace{\beta_{0j} + \beta_{1j}t}^{\text{Fixed
+      effect}} + \overbrace{b_{0,i} + b_{1,i}t +
+    b_{2,i}\bar{Y}_{j,t}}^{\text{Random effect}} + \epsilon_{i,t}
+\end{align}
+
+O\`{u} $Y$ d\'{e}signe le rendement, $\bar{Y}$ d\'{e}signe le rendement
+moyen du groupe, $i$ indique le pays, $j$ le groupe r\'{e}gional, et
+$t$ le temps. La moyenne du groupe est calcul\'{e}e de la mani\`{e}re
+suivante :
+\begin{equation}
+  \label{eq:averageYield}
+  \bar{Y}_{j, t} = \frac{1}{N_i}\sum_{i \in j} \hat{Y}_{i,t}
+\end{equation}
+
+Cependant, comme le rendement moyen du groupe est seulement
+partiellement observ\'{e} compte tenu des donn\'{e}es manquantes, le
+rendement moyen est estim\'{e} gr\^{a}ce a l'algorithme EM (maximisation
+de l'esp\'{e}rance).
+
+L'estimation du rendement est bas\'{e}e sur le niveau sp\'{e}cifique
+du pays et sur la tendance historique r\'{e}gionale, tout en tenant
+compte de la corr\'{e}lation entre les pays et des variations
+r\'{e}gionales.
+
+Contrairement \'{a} la m\'{e}thodologie pr\'{e}c\'{e}demment
+utilis\'{e}e, o\'{u} la variation \'{e}tait appliqu\'{e}e
+enti\`{e}rement, la m\'{e}thodologie propos\'{e}e mesure le degr\'{e}
+de la relation entre la s\'{e}rie individuelle et les variations
+r\'{e}gionales pour estimer l'effet al\'{e}atoire du pays. Comme \`{a}
+la fois les donn\'{e}es historiques et transversales sont
+utilis\'{e}es, les donn\'{e}es estim\'{e}es pr\'{e}sentent des
+caract\'{e}ristiques stables tout en refl\'{e}tant les changements
+climatiques.
+
+
+Afin de mieux comprendre la m\'{e}thodologie, nous pr\'{e}sentons
+ci-dessous le niveau r\'{e}gional (ligne noire), et le rendement moyen
+des pays du groupe (ligne bleue fonc\'{e}e) sur le m\^{e}me
+graphique. Le mod\`{e}le attribue \`{a} chaque s\'{e}rie une tendance
+et un niveau r\'{e}gional (repr\'{e}sent\'{e} par la ligne noire), et
+mod\'{e}lise la corr\'{e}lation avec la s\'{e}rie du rendement moyen
+r\'{e}gional repr\'{e}sent\'{e}e par ligne bleue fonc\'{e}e.
+
+
+<<wheat-yield, fig.height=10, out.height='18cm'>>=
+gmean.df = with(plot.df[plot.df$itemCode == 15 & 
+              plot.df$ variable == "Yield", ], 
+              aggregate(value, list(UNSD_SUB_REG, Year), mean, na.rm = TRUE))
+colnames(gmean.df) = c("UNSD_SUB_REG", "Year", "value")
+tmp.df = plot.df[plot.df$itemCode == 15 & plot.df$variable == "Yield", ]
+ggplot(data = tmp.df,
+       aes(x = Year, y = value)) +
+  geom_line(aes(col = factor(FAOST_CODE))) + 
+  scale_color_manual(values = rep("lightblue", 
+                       length(unique(tmp.df$FAOST_CODE)))) + 
+  geom_line(data = gmean.df, col = "steelblue", lwd = 2) + 
+  geom_smooth(method = "lm", col = "black", alpha = 0.7, se = FALSE,
+              lwd = 0.5) + 
+  facet_wrap(~UNSD_SUB_REG, ncol = 2, scale = "free_y") +
+  theme(legend.position = "none") +
+  labs(x = NULL, y = NULL, 
+       title = "Yield of wheat (15) by sub-region")  
+
+@
+
+
+
+\subsection{Estimation pour la surface cultiv\'{e}e }
+
+Apr\`{e}s avoir estim\'{e} le rendement, calcul\'{e} la surface
+cultiv\'{e}e et la production quand cela \'{e}tait possible, nous
+estimons la surface \`{a} l'aide d'une interpolation lin\'{e}aire et
+r\'{e}pliquons la derni\`{e}re observation quand la production et la
+surface ne sont pas disponibles.
+
+D'apr\`{e}s de pr\'{e}c\'{e}dentes recherches et nos \'{e}tudes
+actuelles, l'interpolation semble appropri\'{e}e car la surface
+cultiv\'{e}e est caract\'{e}ris\'{e}e par des s\'{e}ries extr\^{e}mement
+stables autour de leur tendance.
+
+
+En d\'{e}pit de cette stabilit\'{e}, les chocs sont parfois
+observ\'{e}s dans les s\'{e}ries de la surface cultiv\'{e}e.
+Cependant, sans une compr\'{e}hension plus grande de la nature et de
+la source de ces chocs, appliquer aveuglement le mod\`{e}le
+n'am\'{e}liorerait pas la performance de l'estimation. Nous avons
+choisi \`{a} ce stade de r\'{e}pliquer les derni\`{e}res donn\'{e}es
+disponibles lorsque l'interpolation lin\'{e}aire n'est pas
+applicable. L'avantage principal de cette approche est que si la
+production cesse, les chiffres de la production et la surface
+s'\'{e}tablissant a z\'{e}ro l'ann\'{e}e pr\'{e}c\'{e}dente, nous
+n'imputerons pas une donn\'{e}e positive.
+
+
+\begin{equation}
+  \label{eq:linearInterpolation}
+  \hat{A}_t = A_{t_a} + (t - a) \times \frac{A_{t_b} - A_{t_a}}{t_b - t_a}
+\end{equation}
+
+Nous continuons n\'{e}anmoins \`{a} explorer les donn\'{e}es et \`{a}
+\'{e}tudier des m\'{e}thodes plus efficaces qui pourraient \^{e}tre
+appliqu\'{e}es \`{a} l'estimation des donn\'{e}es manquantes pour la
+surface.
+
+Pour les donn\'{e}es manquantes que nous ne pouvons imputer \`{a}
+l'aide de l'interpolation lin\'{e}aire, nous rempla\c{c}ons par la
+derni\`{e}re valeur disponible.
+
+\begin{equation}
+  \label{eq:locf}
+  \hat{A}_t = A_{t_{nn}}
+\end{equation}
+
+
+\section{Conclusion et am\'{e}liorations futures}
+
+Le but de ce papier est de r\'{e}viser la m\'{e}thodologie actuelle et
+de produire une m\'{e}thodologie plus pertinente et plus performante.
+
+
+Le mod\`{e}le propos\'{e} permet de r\'{e}soudre des probl\`{e}mes
+pos\'{e}s par les s\'{e}ries de de production et de surface
+divergentes ou les biais dans le calcul croissance r\'{e}sultant des
+donn\'{e}es manquantes. De plus, la proposition offre la
+possibilit\'{e} d'incorporer l'information ad\'{e}quate tout en
+maintenant un cadre souple permettant de tenir compte des informations
+suppl\'{e}mentaires.
+
+Les \'{e}quipes techniques continuent de collaborer afin
+d'am\'{e}liorer le mod\`{e}le et de mieux comprendre les
+donn\'{e}es. Un mod\`{e}le espace-\'{e}tat pourrait \^{e}tre un bon
+candidat \`{a} cette m\'{e}thodologie car il permettrait \`{a} la
+production, l'espace et le rendement d'\^{e}tre imput\'{e}s
+simultan\'{e}ment.
+
+
+\section*{Remerciements}
+Ce travail a \'{e}t\'{e} supervise\'{e} par Adam Prakash, avec l'aide
+du Nicolas Sakoff, Onno Hoffmeister and Hansdeep Khaira essentielle
+pour le d\'{e}veloppment de la m\'{e}thodologie. L' auteur voutrait
+aussi remercier les membres de l'\'{e}quipe qui ont particip\'{e} aux
+discussions. Nous remercions \'{e}galement C\'{e}cile Fanton et Franck
+Cachia pour la traduction en fran\c{c}ais.
+
+
+\newpage
+\section*{Annexe 1: Classification G\'{e}ographie}
+
+La classification g\'{e}ographique suit la classification UNSD M49
+\url{http://unstats.un.org/unsd/methods/m49/m49regin.htm}. La
+d\'{e}finition est aussi disponible dans le \code{FAOregionProfile} du
+package R \pkg{FAOSTAT}.
+
+
+\section*{Annexe 2: Code}
+
+
+Code et les donn\'{e}es sont disponibles dans le fichier github
+\url{https://github.com/mkao006/Imputation}.
+
+\begin{algorithm}
+  \SetAlgoLined
+  \BlankLine
+  Initialization\;
+  \Indp\Indp\Indp 
+  $\hat{Y}_{i, t} \leftarrow f(Y_{i, t})$\;
+  $\cal{L}_{\text{old}} = -\infty$\;
+  $\cal{E}$ = 1e-6\;
+  n.iter = 1000\;
+  \Indm\Indm\Indm 
+  
+  \Begin{
+      \For{i=1 \emph{\KwTo} n.iter}{
+        E-step: Compute the expected group average yield\;
+        \Indp\Indp\Indp 
+        $\bar{Y}_{j, t} \leftarrow 1/N \sum_{i \in j} \hat{Y}_{i}$\;
+        \Indm\Indm\Indm 
+        
+        M-step: Fit the Linear Mix Model in \ref{eq:lmeImpute}\;
+        \If{$\cal{L}_{\text{new}} - \cal{L}_{\text{old}} \ge
+          \cal{E}$}{ $\hat{Y}_{i, t} \leftarrow \hat{\beta}_{0j} +
+          \hat{\beta}_{1j}t + \hat{b}_{0i} + \hat{b}_{1i}t +
+          \hat{b}_{2j}\bar{Y}_{j,t}$\; $\cal{L}_{\text{old}}
+          \leftarrow \cal{L}_{\text{new}}$\; } \Else{ break } } }
+    \caption{EM-Algorithm for Imputation}
+    \label{alg:imputation}
+\end{algorithm}
+  
+      
+
+\begin{algorithm}[H]
+  \SetAlgoLined
+  \KwData{Production (element code = 51) and Harvested area (element
+    code = 31) data}
+
+  \KwResult{Imputation}
+  
+  \BlankLine
+  Missing values are denoted $\emptyset$\;
+
+  \BlankLine
+  Initialization\;
+  \Begin{
+      \If{$A_t = 0 \land P_t \ne 0$}{
+        $A_t \leftarrow \emptyset$\;
+      }
+      \If{$P_t = 0 \land A_t \ne 0$}{
+        $P_t \leftarrow \emptyset$\;
+      }
+  }  
+    
+  \BlankLine  
+  Start imputation\;
+  \Begin{
+      \ForAll{commodities}{
+        
+        (1) Compute the implied yield\;
+        \Indp\Indp\Indp 
+        $Y_{i,t} \leftarrow P_{i,t}/A_{i,t}$\;
+        \Indm\Indm\Indm
+                
+        (2) Impute the missing yield with the imputation algorithm
+        \ref{alg:imputation}\; \Indp\Indp\Indp
+        
+        %% $\hat{Y}_{i,t} \leftarrow \hat{\beta}_{0j} + \hat{\beta}_{1j}t
+        %% + \hat{\beta}_{2j}\bar{Y}_{j,t} + \hat{b}_{0i} +
+        %% \hat{b}_{1i}t$\;
+        
+        \Indm\Indm\Indm        
+        
+        \ForAll{imputed yield $\hat{Y}_{i, t}$}{
+          \If{$A_t = \emptyset \land P_t \ne \emptyset$}{
+            $\hat{A}_{i, t} \leftarrow P_{i, t}/\hat{Y}_{i, t}$\;
+          }
+          \If{$P_t = \emptyset \land A_t \ne \emptyset$}{
+            $\hat{P}_{i, t} \leftarrow A_{i, t} \times \hat{Y}_{i, t}$\;
+          }
+        }
+        
+        (4) Impute area ($A_{i, t}$) with equation
+        \ref{eq:linearInterpolation} then \ref{eq:locf}\;
+        
+        \ForAll{imputed area $\hat{A}_{i, t}$}{
+          \If{$\hat{Y}_{i, t} \ne \emptyset$}{
+            $\hat{P}_{i, t} \leftarrow \hat{A}_{i, t} \times \hat{Y}_{i, t}$\;
+          }
+        }
+      }
+  }
+  \caption{Imputation Process}
+\end{algorithm}
+
+%% \begin{thebibliography}{9}
+%% \bibitem{impWorkingPaper2011}
+%%   Data Collection, Workflows and Methodology (DCWM) team,
+%%   \emph{Imputation and Validation Methodologies for the FAOSTAT
+%%     Production Domain}.
+%%   Economics and Social Statistics Division,
+%%   2011  
+%% \end{thebibliography}
+  
+  
+\end{document}
