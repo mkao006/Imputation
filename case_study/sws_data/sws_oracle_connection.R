@@ -16,7 +16,7 @@ years = paste("num_", 1961:2011, collapse = ", ", sep = "")
 elements = "31, 51"
 items = "15"
 
-test = 
+test =
     dbGetQuery(conn,
                paste0("SELECT area, item, ele, ",
                      years,
@@ -31,11 +31,12 @@ test =
 
 getSWSProduction = function(itemCode, elementCode, year, connection){
     years = paste("num_", year, collapse = ", ", sep = "")
+    symbs = paste("symb_", year, collapse = ", ", sep = "")
     elements = paste(elementCode, collapse = ", ")
     items = paste(itemCode, collapse = ", ")
     dbGetQuery(connection,
                paste0("SELECT area, item, ele, ",
-                      years,
+                      years,", ", symbs,
                       " From tsv_ics_work_yr WHERE ele in (",
                       elements,
                       ") AND item in (",
@@ -47,29 +48,53 @@ test = getSWSProduction(itemCode = 15, elementCode = c(31, 51),
     year = 1961:2011, connection = conn)
 
 
-## Tests
-## library(FAOSTAT)
-## source("../../toLowerCamel.R")
-## allItemTable = FAOmetaTable$itemTable
-## for(i in 1:NROW(allItemTable)){
-##     print(allItemTable[i, ])
-##     tmp = try(getSWSProduction(itemCode =
-##         as.numeric(allItemTable[i, "itemCode"]), elementCode = c(31, 51),
-##         year = 1961:2011, connection = conn))
-##     if(!inherits(tmp, "try-error")){
-##         meltTmp = melt(tmp, id.vars = c("AREA", "ITEM", "ELE"))
-##         meltTmp$variable = as.numeric(gsub("NUM_", "", meltTmp$variable))
-##         colnames(meltTmp) = c("areaCode", "itemCode", "elementCode",
-##                     "Year", toLowerCamel(allItemTable[i, "itemName"]))
-##         write.csv(meltTmp,
-##                   file = paste0("./sua_download/",
-##                       toLowerCamel(allItemTable[i, "itemName"]),
-##                       "SUA.csv"),
-##                   row.names = FALSE, na = "")
-##     } else {
-##         print("this query failed")
-##     }
-## }
+## Save all production in the crop domain
+library(FAOSTAT)
+source("../../support_functions/toLowerCamel.R")
+allItemTable =
+    unique(FAOmetaTable$itemTable[FAOmetaTable$itemTable$domainCode == "QC",
+                                  c("itemCode", "itemName")])
+for(i in 1:NROW(allItemTable)){
+    print(allItemTable[i, ])
+    tmp = try(
+        getSWSProduction(itemCode = as.numeric(allItemTable[i, "itemCode"]),
+                         elementCode = c(31, 51),
+                         year = 1961:2011,
+                         connection = conn)
+        )
+    if(!inherits(tmp, "try-error") & NROW(tmp) > 0){
+        meltTmp = melt(tmp, id.vars = c("AREA", "ITEM", "ELE"))
+        splits = strsplit(x = as.character(meltTmp$variable), split = "\\_")
+        meltTmp$TYPE = sapply(splits, FUN = function(x) x[1])
+        meltTmp$YEAR = sapply(splits, FUN = function(x) as.numeric(x[2]))
+        meltTmp$variable = NULL
+        castTmp = dcast(meltTmp, AREA + YEAR + ITEM ~ ELE + TYPE,
+            value.var = "value")
+        colnames(castTmp)[1:3] = c("areaCode", "year", "itemCode")
+        colnames(castTmp) = gsub("51", "production", colnames(castTmp))
+        colnames(castTmp) = gsub("31", "areaHarvested", colnames(castTmp))
+        colnames(castTmp) = gsub("_NUM", "Value", colnames(castTmp))
+        colnames(castTmp) = gsub("_SYMB", "Symb", colnames(castTmp))
+        try({
+            castTmp$areaHarvestedValue =
+                as.numeric(castTmp$areaHarvestedValue)
+            })
+        try({
+            castTmp$productionValue =
+                as.numeric(castTmp$productionValue)
+        })
+        write.csv(castTmp,
+                  file = paste0("../../sua_data/",
+                      toLowerCamel(allItemTable[i, "itemName"]),
+                      "SUA.csv"),
+                  row.names = FALSE, na = "")
+    } else {
+        print("this query failed")
+    }
+}
+
+
+
 
 
 
