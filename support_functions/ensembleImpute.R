@@ -20,7 +20,7 @@ ensembleImpute = function(x, plot = FALSE){
     n.miss = length(missIndex)
     n.obs = T - n.miss
     if(n.miss > 0){
-        if(n.obs >= 2){
+        if(n.obs >= 5){
             ## Start fitting
             meanFit = rep(mean(x, na.rm = TRUE), T)
             meanFitError = 1/sum(abs(x - meanFit), na.rm = TRUE)
@@ -30,10 +30,10 @@ ensembleImpute = function(x, plot = FALSE){
             lmFit[lmFit < 0] = 0
             lmFitError = 1/sum(abs(x - lmFit), na.rm = TRUE)
 
-            lm2Fit = predict(lm(formula = x ~ poly(time, 2)),
-                newdata = data.frame(time = time))
-            lm2Fit[lm2Fit < 0] = 0
-            lm2FitError = 1/sum(abs(x - lm2Fit), na.rm = TRUE)
+            ## lm2Fit = predict(lm(formula = x ~ poly(time, 2)),
+            ##     newdata = data.frame(time = time))
+            ## lm2Fit[lm2Fit < 0] = 0
+            ## lm2FitError = 1/sum(abs(x - lm2Fit), na.rm = TRUE)
 
             xmax = max(x, na.rm = TRUE)
             x.scaled = x/xmax
@@ -49,16 +49,25 @@ ensembleImpute = function(x, plot = FALSE){
                      na.rm = TRUE)
 
             ## Construct the ensemble
+            ## weights =
+            ##     c(mean = meanFitError, lm = lmFitError, lm2 = lm2FitError,
+            ##       logistic = logisticFitError, naive = naiveFitError)/
+            ##         sum(c(meanFitError, lmFitError, lm2FitError,
+            ##               logisticFitError, naiveFitError), na.rm = TRUE)
             weights =
-                c(mean = meanFitError, lm = lmFitError, lm2 = lm2FitError,
+                c(mean = meanFitError, lm = lmFitError,
                   logistic = logisticFitError, naive = naiveFitError)/
-                    sum(c(meanFitError, lmFitError, lm2FitError,
+                    sum(c(meanFitError, lmFitError,
                           logisticFitError, naiveFitError), na.rm = TRUE)
             weights[is.na(weights)] = 0
             print(weights)
+            ## finalFit = (meanFit * weights["mean"] +
+            ##             lmFit * weights["lm"] +
+            ##             lm2Fit * weights["lm2"] +
+            ##             logisticFit * weights["logistic"] +
+            ##             naiveFit * weights["naive"])
             finalFit = (meanFit * weights["mean"] +
                         lmFit * weights["lm"] +
-                        lm2Fit * weights["lm2"] +
                         logisticFit * weights["logistic"] +
                         naiveFit * weights["naive"])
 
@@ -67,7 +76,7 @@ ensembleImpute = function(x, plot = FALSE){
                      ylim = c(0, max(c(x, lmFit, logisticFit), na.rm = TRUE)))
                 lines(meanFit, col = "red")
                 lines(lmFit, col = "orange")
-                lines(lm2Fit, col = "brown")
+                ## lines(lm2Fit, col = "brown")
                 lines(logisticFit, col = "green")
                 lines(naiveFit, col = "blue")
                 lines(finalFit, col = "steelblue", lwd = 3)
@@ -80,7 +89,7 @@ ensembleImpute = function(x, plot = FALSE){
             }
             x[missIndex] = finalFit[missIndex]
         } else {
-            x = rep(na.omit(x), T)
+            x = naiveImputation(x)
         }
     }
     x
