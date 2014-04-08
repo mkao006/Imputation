@@ -20,7 +20,7 @@ ensembleImpute = function(x, plot = FALSE){
     n.miss = length(missIndex)
     n.obs = T - n.miss
     if(n.miss > 0){
-        if(n.obs >= 5){
+        if(n.obs >= 5 & var(x, na.rm = TRUE) != 0){
             ## Start fitting
             meanFit = rep(mean(x, na.rm = TRUE), T)
             meanFitError = 1/sum(abs(x - meanFit), na.rm = TRUE)
