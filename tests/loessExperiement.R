@@ -64,7 +64,12 @@ for(i in dataFile){
     ## Create variable for imputation
     wheatRaw.dt[productionSymb != "M" & productionValue != 0,
                 productionFit := productionValue]
+    wheatRaw.dt[productionSymb %in% c("", " ", "*") & productionValue == 0,
+                productionFit := productionValue]
     wheatRaw.dt[areaHarvestedSymb != "M" & areaHarvestedValue != 0,
+                areaHarvestedFit := areaHarvestedValue]
+    wheatRaw.dt[areaHarvestedSymb %in% c("", " ", "*") &
+                areaHarvestedValue == 0,
                 areaHarvestedFit := areaHarvestedValue]
     wheatRaw.dt[, yieldFit := computeYield(productionFit, areaHarvestedFit)]
     yieldMissIndex = which(is.na(wheatRaw.dt$yieldFit))
@@ -123,6 +128,7 @@ for(i in dataFile){
 
     ## NOTE(Michael): Do not attempt any imputation if we have nothing
     ##                in the past 20 years.
+    wheatRaw.dt[, yieldImputed2 := as.numeric(NA)]
     for(j in unique(wheatRaw.dt$areaName)){
         try(wheatRaw.dt[areaName == j,
                     yieldImputed2 :=
@@ -130,6 +136,8 @@ for(i in dataFile){
                                    year + bs(log(productionImputed)),
                                    weights = yieldWeight)))]
             )
+        if(all(is.na(wheatRaw.dt[areaName == j, yieldImputed2])))
+            wheatRaw.dt[areaName == j, yieldImputed2 := yieldImputed]
         try(wheatRaw.dt[, residualArea := productionImputed/yieldImputed2])
         try(wheatRaw.dt[areaName == j,
                         areaHarvestedImputed2 :=
@@ -137,36 +145,38 @@ for(i in dataFile){
                                        year + bs(log(productionImputed)),
                                        weights = areaHarvestedWeight)))]
             )
+        if(all(is.na(wheatRaw.dt[areaName == j, areaHarvestedImputed2])))
+            wheatRaw.dt[areaName == j, areaHarvestedImputed2 := residualArea]
     }
 
 
 
 
     ## Compute the final imputation
-    wheatRaw.dt[yieldWeight == 1, yieldImputed2 := yieldValue]
+    wheatRaw.dt[yieldWeight == 1 & productionValue != 0 &
+                areaHarvestedImputed2 != 0, yieldImputed2 := yieldValue]
     wheatRaw.dt[areaHarvestedWeight == 1,
                 areaHarvestedImputed2 := areaHarvestedValue]
     wheatRaw.dt[productionWeight == 1 & areaHarvestedWeight != 1,
-                areaHarvestedImputed2 := residualValue]
+                areaHarvestedImputed2 := residualArea]
     wheatRaw.dt[, productionImputed2 := areaHarvestedImputed2 * yieldImputed2]
 
     ## Plot the results
     productionPlot =
-        xyplot(productionImputed2 + productionImputed + productionValue ~
+        xyplot(productionImputed2 + productionValue ~
                year|areaName, data = wheatRaw.dt, type = c("g", "l"),
                auto.key = TRUE, scales = list(y = "free"),
                main = gsub("SUA\\.csv", "", i))
     print(productionPlot)
 
-    areaHarvestedPlot = xyplot(areaHarvestedImputed2 + areaHarvestedImputed +
-        areaHarvestedValue + residualArea ~
+    areaHarvestedPlot = xyplot(areaHarvestedImputed2 + areaHarvestedValue ~
         year|areaName, data = wheatRaw.dt, type = c("g", "l"),
         auto.key = TRUE, scales = list(y = "free"),
         main = gsub("SUA\\.csv", "", i))
     print(areaHarvestedPlot)
 
     yieldPlot =
-        xyplot(yieldImputed2 + yieldImputed + yieldValue ~ year|areaName,
+        xyplot(yieldImputed2 + yieldValue ~ year|areaName,
                data = wheatRaw.dt, type = c("g", "l"), auto.key = TRUE,
                main = gsub("SUA\\.csv", "", i))
     print(yieldPlot)
