@@ -1,0 +1,178 @@
+\documentclass{beamer}
+\usepackage{amsfonts, amsmath, graphicx, verbatim, graphicx, hyperref,
+  color}
+\definecolor{UNBlue}{RGB}{91, 146, 229}
+\setbeamercolor{structure}{fg=UNBlue}
+\newcommand\Fontvi{\fontsize{6.5}{7.2}\selectfont}
+\usetheme{Warsaw}
+
+\title{Imputation and Adjustment of Production Domain}
+\author{\it Michael C. J. Kao}
+\institute{Food and Agriculture Organization \\ of the United Nations}
+\date{}
+
+\AtBeginSection[]
+{
+  \begin{frame}<beamer>
+    \frametitle{Outline for section \thesection}
+    \tableofcontents[currentsection]
+  \end{frame}
+}
+
+\begin{document}
+
+\frame{
+  \titlepage
+  \centering
+  \includegraphics[scale = 0.2]{fao_logo.png}
+}
+
+\frame{
+  \frametitle{Outline}
+  \tableofcontents
+}
+
+
+\section{Extrapolation}
+\frame{
+  \frametitle{Introduction}
+}
+\subsection{Yield}
+\frame{
+  \frametitle{}
+  % Start by looking at the country level
+}
+
+\frametitle{
+  \frametitle{}
+  % Plot the production by sub-region
+}
+
+\frame{
+  \frametitle{}
+  % illustrate a global fit where it can not adequately capture the
+  % pattern.
+}
+
+\frame{
+  \frametitle{}
+  % illustrate a country-by-country fit and show how it can fail when
+  % the number of points are small and the slope can be very volatile.
+}
+
+\frametitle{
+  \frametitle{}
+  % Illustrate how the linear mixed model solve the problem shown in
+  % the previous two slide.
+}
+
+\frame{
+  \frametitle{}
+  % Talk a little about linear mixed model and why it works
+}
+
+\subsection{Production}
+
+\frame{
+  \frametitle{}
+  % Illustrate the problem that country are very different and that
+  % there are no regional information which we can take advantage of.
+}
+
+\frametitle{
+  \frametitle{}
+  % Plot the production by sub-region
+}
+
+
+%% Give several plots showing the different behaviour of the time
+%% series.
+
+
+
+\frame{
+  \frametitle{What is the solution?}
+  % Talk about how all time series behave differently, and also at the
+  % same time that we may have very small number of observed points
+  % for any complex modelling.
+}
+
+\frame{
+  \frametitle{Ensemble Learning}
+  % A simple description of what it is
+}
+
+\frame{
+  \frametitle{Ensemble Learning}
+  % Why it solves our problem.
+}
+
+\frame{
+  \frametitle{Implementation}
+  % A description of the ensemble method implemented
+  %
+  % (1) Base learner: Simple parametric functions.
+  % (2) Combiner: non-trainable algebraic combiner.
+}
+
+
+
+\section{Balancing the Imputation}
+
+\frame{
+  \frametitle{}
+  % Explain why we need this step to maintain the multivariate
+  % relationship.
+
+  % Also at the same time we make post correction based on the
+  % relationship.
+}
+
+\frame{
+  \frametitle{}
+  % Illustrate that log(P) = log(A) + log(Y) and that we can use this
+  % relationship to estimate local contribution of yield or area
+  % harvested to production.
+}
+
+
+\frame{
+  \frametitle{}
+  % Decomposition of the production time series, illustrate a plot of
+  % the spline basis.
+}
+
+\frame{
+  \frametitle{}
+  % Explain the significance of the weighting and how we plan to
+  % estimate the weights from historical data.
+}
+
+\frame{
+  \frametitle{}
+  % Illustrate the result of the imputation and post-adjustments
+}
+
+\frame{
+  \frametitle{Conclusion}
+}
+
+
+\frame{
+  \frametitle{Further Improvements}
+  % (1) Improve the weighting through mining historical accuracy of
+  % different symbols.
+  % (2) Change the decomposition from spline to wavelet decomposition.
+
+}
+
+
+
+\begin{frame}[allowframebreaks]
+  \frametitle{Reference}
+  \begin{thebibliography}{10}
+  \end{thebibliography}
+\end{frame}
+  
+
+\end{document}
