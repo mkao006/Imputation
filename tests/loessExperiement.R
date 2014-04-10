@@ -8,11 +8,13 @@ source("../support_functions/computeYield.R")
 dataPath = "../sua_data"
 dataFile = dir(dataPath)
 
-
 ## NOTE (Michael): Need to check how we are going to handle
-##                 non-imputed value with SWS.
+##                 unimputed value with SWS.
+##
+## NOTE (Michael): Try to implement wavelet decomposition oppose to
+##                 spline decomposition.
 
-
+start.time = Sys.time()
 ## Read the data
 pdf(file = "test.pdf", width = 30, height = 20)
 for(i in dataFile){
@@ -50,6 +52,16 @@ for(i in dataFile){
         countryNameTable.dt, by = "areaCode")
     wheatRaw.dt[, yieldValue :=
                 computeYield(productionValue, areaHarvestedValue)]
+
+    ## Remove country which contains no information
+    hasInfo = function(data, productionSymb, productionValue){
+        ifelse(all(data[, productionSymb, with = FALSE] == "M") |
+               sum(data[, productionValue, with = FALSE], na.rm = TRUE) == 0,
+               FALSE, TRUE)
+    }
+    wheatRaw.dt[,info := hasInfo(.SD, "productionSymb", "productionValue"),
+                by = "areaName"]
+    wheatRaw.dt = wheatRaw.dt[info == TRUE, ]
 
     ## Make corrections
     ##
@@ -103,7 +115,8 @@ for(i in dataFile){
 
     ## Impute yield
     yieldModel = try(lmer(log(yieldImputed) ~
-        (year|unsdSubReg) + (1|areaCode), data = wheatRaw.dt))
+        (year|unsdSubReg) + (1|areaCode),
+        data = wheatRaw.dt))
     if(!inherits(yieldModel, "try-error")){
         wheatRaw.dt[yieldMissIndex,
                     yieldImputed := exp(predict(yieldModel,
@@ -128,25 +141,47 @@ for(i in dataFile){
 
     ## NOTE(Michael): Do not attempt any imputation if we have nothing
     ##                in the past 20 years.
+
+    ## NOTE(Michael): Spline fails when a certain range of the data is
+    ##                constant
     wheatRaw.dt[, yieldImputed2 := as.numeric(NA)]
+    wheatRaw.dt[, areaHarvestedImputed2 := as.numeric(NA)]
     for(j in unique(wheatRaw.dt$areaName)){
-        try(wheatRaw.dt[areaName == j,
-                    yieldImputed2 :=
-                    exp(predict(lm(log(yieldImputed) ~
-                                   year + bs(log(productionImputed)),
-                                   weights = yieldWeight)))]
-            )
-        if(all(is.na(wheatRaw.dt[areaName == j, yieldImputed2])))
+        yield.bsFit = try(exp(predict(lm(log(yieldImputed) ~
+            bs(log(productionImputed), df = 5),
+            weights = yieldWeight, data = wheatRaw.dt[areaName == j, ]))))
+        if(inherits(yield.bsFit, "try-error") | length(yield.bsFit) !=
+           length(wheatRaw.dt[areaName == j, yieldImputed])){
             wheatRaw.dt[areaName == j, yieldImputed2 := yieldImputed]
+        } else {
+            wheatRaw.dt[areaName == j, yieldImputed2 := yield.bsFit]
+        }
         try(wheatRaw.dt[, residualArea := productionImputed/yieldImputed2])
-        try(wheatRaw.dt[areaName == j,
-                        areaHarvestedImputed2 :=
-                        exp(predict(lm(log(residualArea) ~
-                                       year + bs(log(productionImputed)),
-                                       weights = areaHarvestedWeight)))]
-            )
-        if(all(is.na(wheatRaw.dt[areaName == j, areaHarvestedImputed2])))
-            wheatRaw.dt[areaName == j, areaHarvestedImputed2 := residualArea]
+        wheatRaw.dt[productionWeight != 1,
+                    residualArea := areaHarvestedImputed]
+
+        areaHarvested.bsFit = try(exp(predict(lm(log(residualArea) ~
+            bs(log(productionImputed), df = 5),
+            weights = areaHarvestedWeight,
+            data = wheatRaw.dt[areaName == j, ]))))
+        if(inherits(areaHarvested.bsFit, "try-error") |
+           length(areaHarvested.bsFit) !=
+           length(wheatRaw.dt[areaName == j, areaHarvestedImputed])){
+            wheatRaw.dt[areaName == j,
+                        areaHarvestedImputed2 := areaHarvestedImputed]
+        } else {
+            wheatRaw.dt[areaName == j,
+                        areaHarvestedImputed2 := areaHarvested.bsFit]
+        }
+
+        ## try(wheatRaw.dt[areaName == j,
+        ##                 areaHarvestedImputed2 :=
+        ##                 exp(predict(lm(log(residualArea) ~
+        ##                                bs(log(productionImputed), df = 5),
+        ##                                weights = areaHarvestedWeight)))]
+        ##     )
+        ## if(all(is.na(wheatRaw.dt[areaName == j, areaHarvestedImputed2])))
+        ##     wheatRaw.dt[areaName == j, areaHarvestedImputed2 := residualArea]
     }
 
 
@@ -162,6 +197,13 @@ for(i in dataFile){
     wheatRaw.dt[, productionImputed2 := areaHarvestedImputed2 * yieldImputed2]
 
     ## Plot the results
+    ## productionPlot =
+    ##     xyplot(productionImputed2 + productionValue ~
+    ##            year|areaName, data = wheatRaw.dt, type = c("g", "l"),
+    ##            auto.key = TRUE,
+    ##            main = gsub("SUA\\.csv", "", i))
+    ## print(productionPlot)
+
     productionPlot =
         xyplot(productionImputed2 + productionValue ~
                year|areaName, data = wheatRaw.dt, type = c("g", "l"),
@@ -183,6 +225,8 @@ for(i in dataFile){
 
 }
 dev.off()
+Sys.time() - start.time
+
 
 
 
@@ -209,7 +253,9 @@ wt = wavDWT(test)
 
 
 ensembleImpute(test, plot = TRUE)
-
+T = 1:length(test)
+lines(predict(loess(test ~ T, control = loess.control(surface = "direct")),
+              data.frame(T)), col = "gold", lwd = 2)
 
 test = wheatRaw.dt[areaName == "Australia", productionValue]
 test[test == 0] = NA
@@ -227,6 +273,7 @@ test[, newYield :=
      exp(predict(loess(log(yieldImputed) ~ year + log(productionImputed),
                    data = test[productionImputed != 0, ]),
              newdata = test))]
+
 
 
 
