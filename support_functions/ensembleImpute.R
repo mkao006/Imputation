@@ -35,6 +35,21 @@ ensembleImpute = function(x, plot = FALSE){
             ## lm2Fit[lm2Fit < 0] = 0
             ## lm2FitError = 1/sum(abs(x - lm2Fit), na.rm = TRUE)
 
+            loessFit = try(predict(loess(formula = x ~ time,
+                control = loess.control(surface = "direct"), span = 0.75,
+                degree = 1), newdata = data.frame(time)))
+            ## print(sum(abs(x - loessFit), na.rm = TRUE))
+            ## print(x)
+            if(!inherits(loessFit, "try-error") &
+               sum(abs(x - loessFit), na.rm = TRUE) > 0.1 &
+               n.obs/T >= 0.5){
+                loessFit[loessFit < 0] = 0
+                loessFitError = 1/sum(abs(x - loessFit), na.rm = TRUE)
+            } else {
+                loessFit = rep(0, T)
+                loessFitError = 0
+            }
+
             xmax = max(x, na.rm = TRUE)
             x.scaled = x/xmax
             logisticFit = predict(glm(formula = x.scaled ~ time,
@@ -55,33 +70,35 @@ ensembleImpute = function(x, plot = FALSE){
             ##         sum(c(meanFitError, lmFitError, lm2FitError,
             ##               logisticFitError, naiveFitError), na.rm = TRUE)
             weights =
-                c(mean = meanFitError, lm = lmFitError,
-                  logistic = logisticFitError, naive = naiveFitError)/
-                    sum(c(meanFitError, lmFitError,
-                          logisticFitError, naiveFitError), na.rm = TRUE)
+                c(mean = meanFitError, lm = lmFitError, loess = loessFitError,
+                  logistic = logisticFitError, naive = naiveFitError)^2/
+                    sum(c(meanFitError, lmFitError, loess = loessFitError,
+                          logisticFitError, naiveFitError)^2, na.rm = TRUE)
             weights[is.na(weights)] = 0
             print(weights)
-            ## finalFit = (meanFit * weights["mean"] +
-            ##             lmFit * weights["lm"] +
-            ##             lm2Fit * weights["lm2"] +
-            ##             logisticFit * weights["logistic"] +
-            ##             naiveFit * weights["naive"])
             finalFit = (meanFit * weights["mean"] +
                         lmFit * weights["lm"] +
+                        loessFit * weights["loess"] +
                         logisticFit * weights["logistic"] +
                         naiveFit * weights["naive"])
+            ## finalFit = (meanFit * weights["mean"] +
+            ##             lmFit * weights["lm"] +
+            ##             logisticFit * weights["logistic"] +
+            ##             naiveFit * weights["naive"])
 
             if(plot){
                 plot(x ~ time,
-                     ylim = c(0, max(c(x, lmFit, logisticFit), na.rm = TRUE)))
+                     ylim = c(0, max(c(x, lmFit, logisticFit, loessFit),
+                         na.rm = TRUE)))
                 lines(meanFit, col = "red")
                 lines(lmFit, col = "orange")
                 ## lines(lm2Fit, col = "brown")
+                lines(loessFit, col = "brown")
                 lines(logisticFit, col = "green")
                 lines(naiveFit, col = "blue")
                 lines(finalFit, col = "steelblue", lwd = 3)
-                legend("topleft", legend = c("mean", "linear", "logistic",
-                                      "naive", "final"),
+                legend("topleft", legend = c("mean", "linear",
+                                      "logistic", "naive", "final"),
                        col = c("red", "orange", "green", "blue",
                            "steelblue"), lwd = c(rep(1, 4), 3), bty = "n",
                        lty = 1)
