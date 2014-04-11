@@ -87,6 +87,15 @@ for(i in dataFile){
     yieldMissIndex = which(is.na(wheatRaw.dt$yieldFit))
 
     ## First stage of imputation
+    wheatRaw.dt[, productionAreaHarvestedRatio :=
+                mean(computeYield(productionFit, areaHarvestedFit),
+                     na.rm = TRUE), by = "areaName"]
+    wheatRaw.dt[is.na(areaHarvestedFit) & !is.na(productionFit),
+                areaHarvestedFit :=
+                productionFit/productionAreaHarvestedRatio]
+    wheatRaw.dt[!is.na(areaHarvestedFit) & is.na(productionFit),
+                productionFit :=
+                areaHarvestedFit * productionAreaHarvestedRatio]
     wheatRaw.dt[, productionImputed :=
                 as.numeric(ensembleImpute(productionFit)),
                 by = "areaName"]
@@ -98,13 +107,13 @@ for(i in dataFile){
                                         areaHarvestedImputed))]
 
     ## Create the weights for spline regression
-    wheatRaw.dt[productionSymb %in% c(" ", "*", ""),
+    wheatRaw.dt[productionSymb %in% c(" ", "*", "", "\\"),
                 productionWeight := as.numeric(1)]
     wheatRaw.dt[productionSymb == "M",
                 productionWeight := as.numeric(0.25)]
     wheatRaw.dt[!(productionSymb %in% c(" ", "*", "", "M")),
                 productionWeight := as.numeric(0.5)]
-    wheatRaw.dt[areaHarvestedSymb %in% c(" ", "*", ""),
+    wheatRaw.dt[areaHarvestedSymb %in% c(" ", "*", "", "\\"),
                 areaHarvestedWeight := as.numeric(1)]
     wheatRaw.dt[areaHarvestedSymb == "M",
                 areaHarvestedWeight := as.numeric(0.25)]
@@ -144,11 +153,12 @@ for(i in dataFile){
 
     ## NOTE(Michael): Spline fails when a certain range of the data is
     ##                constant
+
     wheatRaw.dt[, yieldImputed2 := as.numeric(NA)]
     wheatRaw.dt[, areaHarvestedImputed2 := as.numeric(NA)]
     for(j in unique(wheatRaw.dt$areaName)){
         yield.bsFit = try(exp(predict(lm(log(yieldImputed) ~
-            bs(log(productionImputed), df = 5),
+            bs(log(productionImputed), df = 3),
             weights = yieldWeight, data = wheatRaw.dt[areaName == j, ]))))
         if(inherits(yield.bsFit, "try-error") | length(yield.bsFit) !=
            length(wheatRaw.dt[areaName == j, yieldImputed])){
@@ -161,7 +171,7 @@ for(i in dataFile){
                     residualArea := areaHarvestedImputed]
 
         areaHarvested.bsFit = try(exp(predict(lm(log(residualArea) ~
-            bs(log(productionImputed), df = 5),
+            bs(log(productionImputed), df = 3),
             weights = areaHarvestedWeight,
             data = wheatRaw.dt[areaName == j, ]))))
         if(inherits(areaHarvested.bsFit, "try-error") |
@@ -211,17 +221,17 @@ for(i in dataFile){
                main = gsub("SUA\\.csv", "", i))
     print(productionPlot)
 
-    areaHarvestedPlot = xyplot(areaHarvestedImputed2 + areaHarvestedValue ~
-        year|areaName, data = wheatRaw.dt, type = c("g", "l"),
-        auto.key = TRUE, scales = list(y = "free"),
-        main = gsub("SUA\\.csv", "", i))
-    print(areaHarvestedPlot)
+    ## areaHarvestedPlot = xyplot(areaHarvestedImputed2 + areaHarvestedValue ~
+    ##     year|areaName, data = wheatRaw.dt, type = c("g", "l"),
+    ##     auto.key = TRUE, scales = list(y = "free"),
+    ##     main = gsub("SUA\\.csv", "", i))
+    ## print(areaHarvestedPlot)
 
-    yieldPlot =
-        xyplot(yieldImputed2 + yieldValue ~ year|areaName,
-               data = wheatRaw.dt, type = c("g", "l"), auto.key = TRUE,
-               main = gsub("SUA\\.csv", "", i))
-    print(yieldPlot)
+    ## yieldPlot =
+    ##     xyplot(yieldImputed2 + yieldValue ~ year|areaName,
+    ##            data = wheatRaw.dt, type = c("g", "l"), auto.key = TRUE,
+    ##            main = gsub("SUA\\.csv", "", i))
+    ## print(yieldPlot)
 
 }
 dev.off()
