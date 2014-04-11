@@ -6,7 +6,7 @@
 \newcommand\Fontvi{\fontsize{6.5}{7.2}\selectfont}
 \usetheme{Warsaw}
 
-\title{Imputation and Adjustment of Production Domain}
+\title{Imputation and Adjustment of the Production Domain}
 \author{\it Michael C. J. Kao}
 \institute{Food and Agriculture Organization \\ of the United Nations}
 \date{}
@@ -33,10 +33,54 @@
 }
 
 
-\section{Extrapolation}
+\section{Introduction}
 \frame{
   \frametitle{Introduction}
+
+  The agricultural production domain is integral to the compilation of
+  Food Balance Sheets. In particular to estimate consistent food
+  supplies, imputation is required to ensure that data are non-sparse.
+
+  Owing to the potential impact of imputation when often data are
+  missing, accuracy and reliability of food estimates cannot be
+  compromised.
+
 }
+
+\frame{
+  \frametitle{Relationships}
+
+  The relationship of production and its components can be expressed
+  as:
+  
+  \begin{equation}
+    \label{eq:pae}
+    P_t := A_t \times Y_t \, \, \, \,\,\,\, P_t \ge 0, A_t \ge 0, Y_t > 0
+  \end{equation}
+  
+  Where $P_t$ , $A_t$ and $Y_t$ denotes production, area harvested
+  and yield, respectively, at time t.
+
+
+  When production and area harvested are both missing, the yield is
+  missing and needs to be imputed.
+  
+}
+
+\frame{
+  \frametitle{Outline}
+
+  In this seminar, we will illustrate the proposing methodology for
+  imputation of the production domain starting from yield, then
+  production and area harvested. 
+
+  Finally a balancing step to ensure the equation are satisfied and
+  statistically valid.
+
+}
+  
+
+\section{Imputation}
 \subsection{Yield}
 \frame{
   \frametitle{}
@@ -45,7 +89,7 @@
 
 \frametitle{
   \frametitle{}
-  % Plot the production by sub-region
+  % Plot the yield by sub-region
 }
 
 \frame{
@@ -71,7 +115,7 @@
   % Talk a little about linear mixed model and why it works
 }
 
-\subsection{Production}
+\subsection{Production and Area Harvested}
 
 \frame{
   \frametitle{}
@@ -84,35 +128,100 @@
   % Plot the production by sub-region
 }
 
+\frame{
+  \frametitle{}
+  %% Give several plots showing the different behaviour of the time
+  %% series. (Both production and area harvested)
+}
 
-%% Give several plots showing the different behaviour of the time
-%% series.
+\frame{
+  \frametitle{Correlation}
+  % Give several plots of production vs area harvested.
+}
+  
 
+\frame{
+  \frametitle{}
+  We can see there is a strong linear correlation between production
+  and area harvested.
 
+  \vspace{0.1in}
+
+  Which gives us a descent imputation when one of them exist.
+
+  \vspace{0.1in}
+
+  However, the core problem exist when both area harvested and
+  production are missing.
+
+}
 
 \frame{
   \frametitle{What is the solution?}
-  % Talk about how all time series behave differently, and also at the
+
+  Oppose to yield, we have no cross-country information which we can
+  utilize.
+
+    % Talk about how all time series behave differently, and also at the
   % same time that we may have very small number of observed points
   % for any complex modelling.
 }
 
 \frame{
-  \frametitle{Ensemble Learning}
-  % A simple description of what it is
+  \frametitle{What is Ensemble Learning?}
+
+  Ensemble learning in its simplest sense, is to build multiple
+  model/learner and combine them to obtain the final model or
+  prediction.
+
+  \vspace{0.1in}
+
+  It consist of two components:
+  \begin{enumerate}
+    \item Build multiple model or learner
+    \item Combine the model or predictions
+  \end{enumerate}
+
 }
 
 \frame{
-  \frametitle{Ensemble Learning}
-  % Why it solves our problem.
+  \frametitle{Why Ensemble Learning?}
+
+  Ensemble as described by Dietterich(2000) can mitigate the following
+  three issues.
+
+  \vspace{0.1in}
+  
+  \begin{itemize}
+    \setlength{\itemindent}{1in}
+    \item[Statistical:] Lack of data
+    \item[Computational:] Model selection
+    \item[Representational:] Complex model
+  \end{itemize}
+
 }
 
 \frame{
   \frametitle{Implementation}
-  % A description of the ensemble method implemented
-  %
-  % (1) Base learner: Simple parametric functions.
-  % (2) Combiner: non-trainable algebraic combiner.
+  The details of the ensemble implemented is describe here:
+
+  \begin{itemize}
+    \item {\textbf{Base learners:}}
+      \begin{itemize}
+        \item mean
+        \item piecewise linear
+        \item locally smooth linear
+        \item logistic
+        \item naive
+      \end{itemize}
+      \item {\textbf{Combiner:}}
+        non-trainable algebraic combiner - Weighted sum rule
+        \begin{equation}
+          u_j(x) = \sum_{i=1}^N w_i d_{n, j}(x) \nonumber
+        \end{equation}
+  \end{itemize}
+  Where the weights depends on the fit on the available data.
+
 }
 
 
@@ -121,11 +230,35 @@
 
 \frame{
   \frametitle{}
-  % Explain why we need this step to maintain the multivariate
-  % relationship.
 
-  % Also at the same time we make post correction based on the
-  % relationship.
+  After the initial imputation, we perform another step to balance the
+  individual imputation.
+
+
+  This is done not only to satisfy the production equation
+  (\ref{eq:pae}), but to maintain the multivariate relationship between
+  the series.
+
+  Maintaining the multivariate relasionthip is an important property
+  of imputation in particularly when they will be used for further
+  analysis.
+
+}
+
+\frame{
+  \frametitle{}
+
+  During this step, we not only adjust imputations performed in the
+  first step. But at the same time, we adjust values obtained from
+  sources other than official/semi-official.
+
+  This is done by assigning weights to data from difference
+  sources. 
+
+  Official and semi-official sources will have a full weight of 1,
+  while other sources have currently been assigned a weight of 0.5.
+  % Explain the significance of the weighting and how we plan to
+  % estimate the weights from historical data.
 }
 
 \frame{
@@ -142,11 +275,6 @@
   % the spline basis.
 }
 
-\frame{
-  \frametitle{}
-  % Explain the significance of the weighting and how we plan to
-  % estimate the weights from historical data.
-}
 
 \frame{
   \frametitle{}
