@@ -1,3 +1,4 @@
+library(forecast)
 library(FAOSTAT)
 library(lattice)
 library(lme4)
@@ -8,6 +9,7 @@ source("../support_functions/computeYield.R")
 dataPath = "../sua_data"
 dataFile = dir(dataPath)
 
+## dataFile = dataFile[1:10]
 ## NOTE (Michael): Need to check how we are going to handle
 ##                 unimputed value with SWS.
 ##
@@ -15,15 +17,29 @@ dataFile = dir(dataPath)
 ##                 spline decomposition.
 
 start.time = Sys.time()
-## Read the data
-pdf(file = "test.pdf", width = 30, height = 20)
+sameScale = FALSE
+outFile = ifelse(sameScale, "sameScale.pdf", "individualScale.pdf")
+pdf(file = outFile, width = 30, height = 20)
 for(i in dataFile){
+    ## Read the data
     myFile = paste0(dataPath, "/", i)
     wheat.dt = data.table(read.csv(myFile, stringsAsFactors = FALSE))
 
     ## if anything is missing , then we don't impute
     if(NCOL(wheat.dt) != 7)
         next
+
+    ## Experiementing the extrapolation
+    predict.dt = data.table(expand.grid(areaCode = unique(wheat.dt$areaCode),
+        year = c(2012:2013)))
+    predict.dt[, itemCode := unique(wheat.dt$itemCode)]
+    predict.dt[, areaHarvestedValue := as.numeric(NA)]
+    predict.dt[, productionValue := as.numeric(NA)]
+    predict.dt[, areaHarvestedSymb := as.character("M")]
+    predict.dt[, productionSymb := as.character("M")]
+    wheat.dt = rbind(wheat.dt, predict.dt, use.names = TRUE)
+
+
     ## append regional and country information
     regionTable.dt =
         data.table(FAOregionProfile[!is.na(FAOregionProfile$FAOST_CODE),
@@ -63,6 +79,8 @@ for(i in dataFile){
                 by = "areaName"]
     wheatRaw.dt = wheatRaw.dt[info == TRUE, ]
 
+    if(NROW(wheatRaw.dt) < 1)
+        next
     ## Make corrections
     ##
     ## NOTE (Michael): Need to check with the new SWS on this. What if
@@ -102,9 +120,12 @@ for(i in dataFile){
     wheatRaw.dt[, areaHarvestedImputed :=
                 as.numeric(ensembleImpute(areaHarvestedFit)),
                 by = "areaName"]
-    wheatRaw.dt[, yieldImputed :=
-                as.numeric(computeYield(productionImputed,
-                                        areaHarvestedImputed))]
+    ## wheatRaw.dt[, yieldImputed :=
+    ##             as.numeric(computeYield(productionImputed,
+    ##                                     areaHarvestedImputed))]
+    ## wheatRaw.dt[, yieldImputed :=
+    ##             as.numeric(ensembleImpute(yieldFit)),
+    ##             by = "areaName"]
 
     ## Create the weights for spline regression
     wheatRaw.dt[productionSymb %in% c(" ", "*", "", "\\"),
@@ -121,18 +142,50 @@ for(i in dataFile){
                 areaHarvestedWeight := as.numeric(0.5)]
     wheatRaw.dt[, yieldWeight := productionWeight * areaHarvestedWeight]
 
-
     ## Impute yield
-    yieldModel = try(lmer(log(yieldImputed) ~
-        (year|unsdSubReg) + (1|areaCode),
-        data = wheatRaw.dt))
-    if(!inherits(yieldModel, "try-error")){
-        wheatRaw.dt[yieldMissIndex,
-                    yieldImputed := exp(predict(yieldModel,
-                                 newdata = wheatRaw.dt[yieldMissIndex, ],
+
+    ## yieldModelFull = try(lmer(log(yieldFit) ~ (1 + log(year)|areaName),
+    ##     data = wheatRaw.dt,
+    ##     weights = yieldWeight))
+
+    ## wheatRaw.dt[, yieldImputed := as.numeric(NA)]
+    ## if(!inherits(yieldModelFull, "try-error") & !grepl("Nes", i)){
+    ##     wheatRaw.dt[yieldMissIndex,
+    ##                 yieldImputed := exp(predict(yieldModelFull,
+    ##                              newdata = .SD,
+    ##                                  allow.new.levels = TRUE))]
+    ## } else {
+    ##     wheatRaw.dt[, yieldImputed := ensembleImpute(yieldImputed),
+    ##                 by = "areaName"]
+    ## }
+
+
+    wheatRaw.dt[, yieldImputed := yieldFit]
+    yieldModelRecent = try(lmer(log(yieldFit) ~ (1 + log(year)|areaName),
+        data = wheatRaw.dt[year >= 2000],
+        weights = yieldWeight))
+
+    if(!inherits(yieldModelRecent, "try-error") & !grepl("Nes", i)){
+        wheatRaw.dt[intersect(yieldMissIndex, which(year >= 2000)),
+                    yieldImputed := exp(predict(yieldModelRecent,
+                                     newdata = .SD,
                                      allow.new.levels = TRUE))]
     } else {
-        wheatRaw.dt[, yieldImputed := ensembleImpute(yieldImputed)]
+        wheatRaw.dt[, yieldImputed := yieldFit]
+    }
+
+    yieldModelFull = try(lmer(log(yieldImputed) ~ (1 + log(year)|areaName),
+        data = wheatRaw.dt, weights = yieldWeight))
+
+
+    if(!inherits(yieldModelFull, "try-error") & !grepl("Nes", i)){
+        wheatRaw.dt[intersect(yieldMissIndex, which(year < 2000)),
+                    yieldImputed := exp(predict(yieldModelFull,
+                                 newdata = .SD,
+                                     allow.new.levels = TRUE))]
+    } else {
+        wheatRaw.dt[, yieldImputed := ensembleImpute(yieldImputed),
+                    by = "areaName"]
     }
 
     ## wheatRaw.dt[, yieldImputed2 :=
@@ -206,52 +259,84 @@ for(i in dataFile){
                 areaHarvestedImputed2 := residualArea]
     wheatRaw.dt[, productionImputed2 := areaHarvestedImputed2 * yieldImputed2]
 
-    ## Plot the results
-    ## productionPlot =
-    ##     xyplot(productionImputed2 + productionValue ~
-    ##            year|areaName, data = wheatRaw.dt, type = c("g", "l"),
-    ##            auto.key = TRUE,
-    ##            main = gsub("SUA\\.csv", "", i))
-    ## print(productionPlot)
+    if(sameScale){
+        ## Plot the results
+        productionPlot =
+            xyplot(productionImputed2 + productionValue ~
+                   year|areaName, data = wheatRaw.dt, type = c("g", "l"),
+                   auto.key = TRUE,
+                   main = gsub("SUA\\.csv", "", i))
+        print(productionPlot)
 
-    productionPlot =
-        xyplot(productionImputed2 + productionValue ~
-               year|areaName, data = wheatRaw.dt, type = c("g", "l"),
-               auto.key = TRUE, scales = list(y = "free"),
-               main = gsub("SUA\\.csv", "", i))
-    print(productionPlot)
+        areaHarvestedPlot =
+            xyplot(areaHarvestedImputed2 + areaHarvestedValue ~
+                   year|areaName, data = wheatRaw.dt, type = c("g", "l"),
+                   auto.key = TRUE,
+                   main = gsub("SUA\\.csv", "", i))
+        print(areaHarvestedPlot)
 
-    ## areaHarvestedPlot = xyplot(areaHarvestedImputed2 + areaHarvestedValue ~
-    ##     year|areaName, data = wheatRaw.dt, type = c("g", "l"),
-    ##     auto.key = TRUE, scales = list(y = "free"),
-    ##     main = gsub("SUA\\.csv", "", i))
-    ## print(areaHarvestedPlot)
 
-    ## yieldPlot =
-    ##     xyplot(yieldImputed2 + yieldValue ~ year|areaName,
-    ##            data = wheatRaw.dt, type = c("g", "l"), auto.key = TRUE,
-    ##            main = gsub("SUA\\.csv", "", i))
-    ## print(yieldPlot)
+        yieldPlot =
+            xyplot(yieldImputed2 + yieldValue ~
+                   year|areaName, data = wheatRaw.dt, type = c("g", "l"),
+                   auto.key = TRUE,
+                   main = gsub("SUA\\.csv", "", i))
+        print(yieldPlot)
 
+    } else {
+
+        productionPlot =
+            xyplot(productionImputed2 + productionValue ~
+                   year|areaName, data = wheatRaw.dt, type = c("g", "l"),
+                   auto.key = TRUE, scales = list(y = "free"),
+                   main = gsub("SUA\\.csv", "", i))
+        print(productionPlot)
+
+        areaHarvestedPlot = xyplot(areaHarvestedImputed2 +
+            areaHarvestedValue ~
+            year|areaName, data = wheatRaw.dt, type = c("g", "l"),
+            auto.key = TRUE, scales = list(y = "free"),
+            main = gsub("SUA\\.csv", "", i))
+        print(areaHarvestedPlot)
+
+        yieldPlot =
+            xyplot(yieldImputed2 + yieldValue ~ year|areaName,
+                   data = wheatRaw.dt, type = c("g", "l"), auto.key = TRUE,
+                   main = gsub("SUA\\.csv", "", i))
+        print(yieldPlot)
+
+    }
 }
 dev.off()
 Sys.time() - start.time
 
+## Check yield model for kiwi fruit
 
 
 
 
 
+
+
+test = wheatRaw.dt[areaName == "Ukraine", productionFit]
+test[test == 0] = NA
+ensembleImpute(test, plot = TRUE)
+
+test = wheatRaw.dt[areaName == "Chile",
+    areaHarvestedFit]
+test[test == 0] = NA
+ensembleImpute(test, plot = TRUE)
 
 
 xyplot(productionValue ~ year|areaName, wheatFinal.dt,
        type = c("g", "l"))
 
 test = wheatRaw.dt[areaName == "Union of Soviet Socialist Republic",
-    productionValue]
+    productionFit]
 test[test == 0] = NA
 
 ensembleImpute(test, plot = TRUE)
+
 
 
 test = wheatRaw.dt[areaName == "Taiwan and China", productionValue]
