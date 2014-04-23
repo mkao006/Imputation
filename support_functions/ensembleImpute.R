@@ -78,32 +78,32 @@ ensembleImpute = function(x, plot = FALSE){
             logisticFitError = 1/sum(abs(x - logisticFit), na.rm = TRUE)
 
             ## Arima
-            ## tmp = na.approx(x, na.rm = FALSE)
-            ## arimaFit = tmp
-            ## fit = auto.arima(tmp, seasonal = FALSE)
-            ## arimaFit = fitted(fit)
-            ## if(var(arimaFit, na.rm = TRUE) > 1e-3){
-            ##     obs = which(!is.na(arimaFit))
-            ##     numberForward =
-            ##         length(which(is.na(arimaFit[max(obs):length(arimaFit)])))
-            ##     if(numberForward > 0)
-            ##         arimaFit[(max(obs) + 1):length(arimaFit)] =
-            ##             c(forecast(fit, h = numberForward)$mean)
-            ##     numberBackward =
-            ##         length(which(is.na(arimaFit[min(obs):1])))
-            ##     if(numberBackward > 0)
-            ##         arimaFit[(min(obs) - 1):1] =
-            ##             c(forecast(auto.arima(rev(arimaFit),
-            ##                                   seasonal = FALSE),
-            ##                        h = numberBackward)$mean)
-            ##     arimaFit[arimaFit < 0]  = 0
-            ##     arimaFitError =
-            ##         arimaFitError = 1/sum(abs(x - arimaFit),
-            ##             na.rm = TRUE)
-            ## } else {
-            ##     arimaFit = rep(0, T)
-            ##     arimaFitError = 0
-            ## }
+            arimaFit = na.approx(x, na.rm = FALSE)
+            nonMissIndex = which(!is.na(arimaFit))
+            fit = auto.arima(na.omit(arimaFit))
+            arimaFit[nonMissIndex] = fitted(fit)
+            if(var(arimaFit, na.rm = TRUE) > 1e-3){
+                obs = which(!is.na(arimaFit))
+                numberForward =
+                    length(which(is.na(arimaFit[max(obs):length(arimaFit)])))
+                if(numberForward > 0)
+                    arimaFit[(max(obs) + 1):length(arimaFit)] =
+                        c(forecast(fit, h = numberForward)$mean)
+                numberBackward =
+                    length(which(is.na(arimaFit[min(obs):1])))
+                if(numberBackward > 0)
+                    arimaFit[(min(obs) - 1):1] =
+                        c(forecast(auto.arima(rev(arimaFit),
+                                              seasonal = FALSE),
+                                   h = numberBackward)$mean)
+                arimaFit[arimaFit < 0]  = 0
+                arimaFitError =
+                    arimaFitError = 1/sum(abs(x - arimaFit),
+                        na.rm = TRUE)
+            } else {
+                arimaFit = rep(0, T)
+                arimaFitError = 0
+            }
 
             ## Niave
             naiveFit = naiveImputation(x)
