@@ -312,6 +312,8 @@ Sys.time() - start.time
 
 ## Check yield model for kiwi fruit
 
+## Check the rounding error in places where production and area
+## harvested are close to zero.
 
 
 
