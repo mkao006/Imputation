@@ -162,7 +162,7 @@ ensembleImpute = function(x, plot = FALSE){
             x = naiveImputation(x)
         }
     }
-    round(x, 3)
+    as.numeric(x)
 }
 
 
