@@ -1,0 +1,13 @@
+\beamer@endinputifotherversion {3.10pt}
+\beamer@sectionintoc {1}{Introduction}{3}{0}{1}
+\beamer@sectionintoc {2}{Current Methodology}{7}{0}{2}
+\beamer@sectionintoc {3}{Exploratory Data Analysis}{11}{0}{3}
+\beamer@sectionintoc {4}{Proposed Methodology}{17}{0}{4}
+\beamer@subsectionintoc {4}{1}{Imputation for Area Harvested}{19}{0}{4}
+\beamer@subsectionintoc {4}{2}{Imputation for Yield}{20}{0}{4}
+\beamer@subsectionintoc {4}{3}{Imputation Procedure}{24}{0}{4}
+\beamer@sectionintoc {5}{Results}{30}{0}{5}
+\beamer@subsectionintoc {5}{1}{Individual imputation}{31}{0}{5}
+\beamer@subsectionintoc {5}{2}{Simulation Results}{37}{0}{5}
+\beamer@sectionintoc {6}{Implementation}{38}{0}{6}
+\beamer@sectionintoc {7}{Discussion}{40}{0}{7}
