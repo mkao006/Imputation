@@ -9,25 +9,13 @@ library(splines)
 source("../support_functions/ensembleImpute.R")
 source("../support_functions/computeYield.R")
 source("../support_functions/naiveImputation.R")
+source("../support_functions/containInfo.R")
 dataPath = "../sua_data"
 dataFile = dir(dataPath)
 
-
-## ## Merge commodities
-## cereals = c("wheat", "maize", "rice", "sorghum", "barley", "rye", "oats", "millet", "triticale", "buckwheat", "fonio", "quinoa")
-
-## cerealFile = grep(paste0(cereals, collapse = "|"), dataFile, value = TRUE)
-
-## cereal.dt = data.table()
-## for(i in 1:length(cerealFile)){
-##     cereal.dt = rbind(cereal.dt,
-##         data.table(read.csv(paste0(dataPath, "/", cerealFile[i]))))
-## }
-
-
-
+## Read and merge the data
 cereal.dt = data.table()
-for(i in 1:length(dataFile)){
+for(i in seq_along(dataFile)){
     tmp = read.csv(paste0(dataPath, "/", dataFile[i]))
     if(NCOL(tmp) == 7)
         cereal.dt = rbind(cereal.dt, data.table(tmp))
@@ -58,43 +46,33 @@ setnames(regionTable.dt,
          new = c("areaCode", "unsdSubReg", "unsdMacroReg"))
 countryNameTable.dt =
     data.table(FAOcountryProfile[!is.na(FAOcountryProfile$FAOST_CODE),
-                                 c("FAOST_CODE", "ABBR_FAO_NAME")])
-countryNameTable.dt[FAOST_CODE == 357,
-                    ABBR_FAO_NAME := "Taiwan and China"]
-countryNameTable.dt[FAOST_CODE == 107, ABBR_FAO_NAME := "Cote d'Ivoire"]
-countryNameTable.dt[FAOST_CODE == 284, ABBR_FAO_NAME := "Aland Islands"]
-countryNameTable.dt[FAOST_CODE == 279, ABBR_FAO_NAME := "Curacao"]
-countryNameTable.dt[FAOST_CODE == 182, ABBR_FAO_NAME := "Reunion"]
-countryNameTable.dt[FAOST_CODE == 282,
-                    ABBR_FAO_NAME := "Saint Barthelemy"]
+                                 c("FAOST_CODE", "FAO_TABLE_NAME")])
 setnames(countryNameTable.dt,
-         old = c("FAOST_CODE", "ABBR_FAO_NAME"),
+         old = c("FAOST_CODE", "FAO_TABLE_NAME"),
          new = c("areaCode", "areaName"))
 
 ## append item information
-itemName.dt = data.table(unique(FAOmetaTable$itemTable[FAOmetaTable$itemTable$itemCode %in% cereal.dt$itemCode, c("itemCode", "itemName")]))
+itemName.dt =
+    data.table(unique(FAOmetaTable$itemTable[, c("itemCode",
+                                                 "itemName")]))
 itemName.dt[, itemCode := as.numeric(itemCode)]
 
 ## final data frame for processing
 cerealRaw.dt = merge(merge(cereal.dt, regionTable.dt,
     by = "areaCode"), countryNameTable.dt, by = "areaCode")
-cerealRaw.dt = merge(cerealRaw.dt, itemName.dt, by = "itemCode")
+cerealRaw.dt = merge(cerealRaw.dt, itemName.dt, by = "itemCode",
+    all.x = TRUE)
 cerealRaw.dt[, yieldValue :=
              computeYield(productionValue, areaHarvestedValue)]
 
 ## Remove country which contains no information
-hasInfo = function(data, productionSymb, productionValue){
-    ifelse(all(data[, productionSymb, with = FALSE] == "M") |
-           sum(data[, productionValue, with = FALSE], na.rm = TRUE) == 0,
-           FALSE, TRUE)
-}
-
 cerealRaw.dt[,info :=
-             hasInfo(.SD, "productionSymb", "productionValue"),
+             containInfo(.SD, "productionSymb", "productionValue"),
              by = c("areaName", "itemCode")]
 cerealRaw.dt = cerealRaw.dt[info == TRUE, ]
 
 
+## Correct conflicting values.
 cerealRaw.dt[areaHarvestedValue == 0 & productionValue != 0,
              areaHarvestedValue := as.numeric(NA)]
 cerealRaw.dt[areaHarvestedValue != 0 & productionValue == 0,
@@ -303,6 +281,26 @@ pdf(file = "checkIteractionEffect2.pdf", width = 30, height = 20)
 for(i in unique(cerealRaw.dt$areaName)){
     yieldPlot =
         xyplot(newImputationLog3 + newImputationSqrt3 + newImputationSqrt5 + yieldValue ~
+               year|itemName,
+               data = cerealRaw.dt[areaName == i, ], auto.key = TRUE,
+               K = cerealRaw.dt$yieldImputed,
+               panel = function(...){
+                   panel.xyplot(...,
+                                type = c("g", "l"))
+               },
+               main = gsub("SUA\\.csv", "", i))
+    print(yieldPlot)
+}
+dev.off()
+
+
+
+
+
+pdf(file = "checkProductionCorrelation.pdf", width = 30, height = 20)
+for(i in unique(cerealRaw.dt$areaName)){
+    yieldPlot =
+        xyplot(log(productionValue) + log(productionImputed) ~
                year|itemName,
                data = cerealRaw.dt[areaName == i, ], auto.key = TRUE,
                K = cerealRaw.dt$yieldImputed,

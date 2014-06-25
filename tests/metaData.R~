@@ -1,8 +1,0 @@
-
-nSeries = 0
-for(i in dataFile){
-    ## Read the data
-    myFile = paste0(dataPath, "/", i)
-    wheat.dt = data.table(read.csv(myFile, stringsAsFactors = FALSE))
-    nSeries = nSeries + length(unique(wheat.dt$areaCode))
-}

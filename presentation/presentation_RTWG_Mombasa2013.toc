@@ -1,9 +1,0 @@
-\beamer@endinputifotherversion {3.10pt}
-\beamer@sectionintoc {1}{Current Methodology}{4}{0}{1}
-\beamer@sectionintoc {2}{Proposed Methodology}{7}{0}{2}
-\beamer@subsectionintoc {2}{1}{Imputation for Area Harvested}{8}{0}{2}
-\beamer@subsectionintoc {2}{2}{Imputation for Yield}{9}{0}{2}
-\beamer@sectionintoc {3}{Results}{12}{0}{3}
-\beamer@subsectionintoc {3}{1}{Individual imputation}{12}{0}{3}
-\beamer@subsectionintoc {3}{2}{Simulation Results}{17}{0}{3}
-\beamer@sectionintoc {4}{Discussion}{18}{0}{4}
