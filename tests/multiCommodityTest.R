@@ -62,6 +62,8 @@ cerealRaw.dt = merge(merge(cereal.dt, regionTable.dt,
     by = "areaCode"), countryNameTable.dt, by = "areaCode")
 cerealRaw.dt = merge(cerealRaw.dt, itemName.dt, by = "itemCode",
     all.x = TRUE)
+
+## Compute the yield
 cerealRaw.dt[, yieldValue :=
              computeYield(productionValue, areaHarvestedValue)]
 
