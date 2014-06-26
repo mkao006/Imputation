@@ -4,4 +4,5 @@ paZeroEquality = function(production, areaHarvested){
     list(zeroEquality = setequal(productionZero, areaHarvestedZero),
          productionInequality = setdiff(areaHarvestedZero, productionZero),
          areaHarvestedInequality = setdiff(productionZero, areaHarvestedZero)
+         )
 }
