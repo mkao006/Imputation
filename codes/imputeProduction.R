@@ -11,8 +11,8 @@
 ##' @export
 ##' 
 imputeProduction = function(data, productionVar, index){
-    data[eval(parse(text = paste0(productionVar, " := ensembleImpute(",
-                        productionVar, ")"))),
+    data[, eval(parse(text = paste0(productionVar, " := ensembleImpute(",
+                          productionVar, ")"))),
          by = index]
     data
 }
