@@ -23,12 +23,12 @@ vignette("faoswsProductionImputation")
 ### Documentation
 
 The documentation of the current methodology can be found in the
-*methodology_paper* folder. 
+`methodology_paper` folder. 
 
 ### Presentation
 
-The *presentation/* contains previous and current presentation on the
-methodology for a speedy introduction.
+The `presentation` folder contains previous and current presentation
+on the methodology for a speedy introduction.
 
 
 ### Previous Methodology
