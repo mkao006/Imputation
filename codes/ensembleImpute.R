@@ -1,3 +1,13 @@
+##' Function to perform ensemble imputation
+##'
+##' This is an implementation of the ensemble imputation methodology
+##' developed for the FAO production domain.
+##'
+##' @param x A numeric vector
+##' @param plot Whether the result of the ensemble should be plotted.
+##'
+##' @export
+##' 
 ensembleImpute = function(x, plot = FALSE){
     missIndex = which(is.na(x))
     T = length(x)

@@ -1,3 +1,12 @@
+##' Naive imputation
+##'
+##' The naive imputation is simply linear interpolation with last
+##' observation carried forawrd and backwards.
+##'
+##' @param x The numeric vector to be imputed.
+##'
+##' @export
+##' 
 naiveImputation = function(x){
   require(zoo)
   nobserved = length(na.omit(x))
