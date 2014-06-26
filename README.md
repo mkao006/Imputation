@@ -1,4 +1,4 @@
-# Imputation for the FAOSTAT production domain
+# FAOSTAT Production Domain Imputation
 
 This is the **github** repository for the development of the FAOSTAT
 production imputation methodology.
@@ -10,64 +10,29 @@ To install the imputation package, simply run the following command.
 ```r
 library(devtools)
 install_github(repo = "sws_imputation", 
-	       username = "mkao006", subdir = "swsImputation")
+	       username = "mkao006", 
+	       subdir = "faoswsProductionImputation")
 ```
 
 The methodology paper can be accessed via the vignette.
 
 ```r
-vignette("swsImputation")
+vignette("faoswsProductionImputation")
 ```
-
-
-### Core functions
-
-The core functions to carry out the whole imputation process, from
-imputation, diagnosis and simulation can be found in the `code/`
-folder.
-
-`computeYield.R` - This function is used to compute the yield and
-to avoid infinity or NaN.
-
-`naiveImputation.R` - This function performs the naive imputation, that
-is, linear interpolation followed by last/first observation carrid
-forward/backward.
-
-`shocklme4.R` - This is the core function which performs the imputation
-based on linear mixed model with EM estimation of the grouped average
-change.
-
-`predict.shocklme4.R` - The prediction function for the imputation
-model from shocklme4 function.
-
-`swsImputation.R` - This is a wrapper function of the
-*shocklme4* function which imputes the area, production and yield for
-a single commodity.
-
-`impDiag.R` - A function to plot several diagnostic plots.
-
-`impFit.R` - A function to plot the imputed production, area
-harvested, and yield against the official and semi-official figures.
-
-`impBootPred.R` - The function performs bootstrap to estimate the
-prediction error.
 
 ### Documentation
 
 The documentation of the current methodology can be found in the
-*methodology_paper* folder. The pdf can be regenerated with the
-following command. (*LaTeX* is required)
+*methodology_paper* folder. 
 
-```r
-library(knitr)
-knit("methodology_revised.Rnw")
-system("pdflatex \\nonstopmode\\input methodology_revised_shock.tex")
-```
+### Presentation
+
+The *presentation/* contains previous and current presentation on the
+methodology for a speedy introduction.
+
 
 ### Previous Methodology
 
 All relevant material of the previous methodology can be allocated in
 the `previous_methodology` folder.
-
-### Case study
 
