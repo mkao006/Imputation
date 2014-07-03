@@ -14,8 +14,11 @@
 ##' 
 
 removeNoInfo = function(data, productionSymb, productionValue, index){
-    data[, info := containInfo(.SD, productionSymb, productionValue),
+    data[, info :=
+         rep(containInfo(productionSymb, productionValue),
+             NROW(.SD)),
          by = index]
+    
     data = data[info == TRUE, ]
     data[, info := NULL]
     data
