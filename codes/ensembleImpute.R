@@ -8,7 +8,7 @@
 ##'
 ##' @export
 ##' 
-ensembleImpute = function(x, plot = FALSE){
+ensembleImpute = function(x, plot = FALSE, shrink = FALSE){
     missIndex = which(is.na(x))
     T = length(x)
     time = 1:T
@@ -43,7 +43,8 @@ ensembleImpute = function(x, plot = FALSE){
             ## Exponential
             expFit = exp(predict(lm(formula = log(x + 1) ~ time),
                 newdata = data.frame(time = time)))
-            expFitError = ifelse(n.obs/T >= 0.75 &
+            expFitError = ifelse(max(expFit, na.rm = TRUE) <
+                5 * max(x, na.rm = TRUE) & 
                 length(na.omit(tail(x, 5))) > 0,
                 1/sum(abs(x - expFit), na.rm = TRUE), 0)
 
@@ -108,31 +109,45 @@ ensembleImpute = function(x, plot = FALSE){
                            logisticFitError), na.rm = TRUE)
 
             ## Construct the ensemble
-            weights =
-                c(mean = meanFitError,
-                  lm = lmFitError,
-                  mars = marsFitError,
-                  exp = expFitError,
-                  loess = loessFitError,
-                  logistic = logisticFitError,
-                  ## arima = arimaFitError,
-                  naive = naiveFitError)^2/
-                    sum(c(mean = meanFitError,
-                          lm = lmFitError,
-                          mars = marsFitError,
-                          exp = expFitError,
-                          loess = loessFitError,
-                          logisticFitError,
-                          ## arima = arimaFitError,
-                          naive = naiveFitError)^2, na.rm = TRUE)
-            weights[is.na(weights)] = 0
+            if(!shrink){
+                weights =
+                    c(mean = meanFitError,
+                      lm = lmFitError,
+                      mars = marsFitError,
+                      exp = expFitError,
+                      loess = loessFitError,
+                      logistic = logisticFitError,
+                      arima = arimaFitError,
+                      naive = naiveFitError)^2/
+                          sum(c(mean = meanFitError,
+                                lm = lmFitError,
+                                mars = marsFitError,
+                                exp = expFitError,
+                                loess = loessFitError,
+                                logisticFitError,
+                                arima = arimaFitError,
+                                naive = naiveFitError)^2, na.rm = TRUE)
+            } else {
+                weights =
+                    c(mean = meanFitError,
+                      lm = lmFitError,
+                      mars = marsFitError,
+                      exp = expFitError,
+                      loess = loessFitError,
+                      logistic = logisticFitError,
+                      arima = arimaFitError,
+                      naive = naiveFitError)
+                weights[!names(weights) %in%
+                        names(tail(sort(weights), 3))] = 0
+                weights = weights/sum(weights, na.rm = TRUE)
+            }
             finalFit = (meanFit * weights["mean"] +
                         lmFit * weights["lm"] +
                         marsFit * weights["mars"] +
                         expFit * weights["exp"] +
                         loessFit * weights["loess"] +
                         logisticFit * weights["logistic"] +
-                        ## arimaFit * weights["arima"] +
+                        arimaFit * weights["arima"] +
                         naiveFit * weights["naive"])
 
             ## Plot the result
@@ -144,9 +159,8 @@ ensembleImpute = function(x, plot = FALSE){
                                logisticFit,
                                arimaFit,
                                loessFit
-                               ),
-                         na.rm = TRUE)),
-                     pch = 19)
+                               ) * 1.3,
+                         na.rm = TRUE)), type = "n")
                 lines(meanFit, col = "red")
                 lines(lmFit, col = "orange")
                 lines(marsFit, col = "maroon")
@@ -155,7 +169,10 @@ ensembleImpute = function(x, plot = FALSE){
                 lines(logisticFit, col = "green")
                 lines(arimaFit, col = "purple")
                 lines(naiveFit, col = "blue")
-                lines(finalFit, col = "steelblue", lwd = 3)
+                lines(finalFit, col = "steelblue", lwd = 5)
+                points(finalFit[is.na(x)] ~ time[is.na(x)],
+                       cex = 1.5, col = "steelblue", pch = 19)
+                points(x ~ time, pch = 19, cex = 1.5)
                 legend("topleft", legend =
                        paste0(c("mean", "linear", "mars", "exponential",
                                "loess", "logistic", "arima",
@@ -163,7 +180,7 @@ ensembleImpute = function(x, plot = FALSE){
                              round(c(weights, 1), 3) * 100, "%)"),
                        col = c("red", "orange", "maroon", "gold", "brown",
                            "green", "purple", "blue",
-                           "steelblue"), lwd = c(rep(1, 8), 3), bty = "n",
+                           "steelblue"), lwd = c(rep(1, 8), 5), bty = "n",
                        lty = 1)
 
             }
