@@ -10,8 +10,9 @@
 ##' the production value.
 ##'
 ##' @export
-containInfo = function(data, productionSymb, productionValue){
-    ifelse(all(data[, productionSymb, with = FALSE] == "M") |
-           sum(data[, productionValue, with = FALSE], na.rm = TRUE) == 0,
+
+containInfo = function(productionSymb, productionValue){
+    ifelse(all(productionSymb == "M") |
+           sum(productionValue, na.rm = TRUE) == 0,
            FALSE, TRUE)
 }
