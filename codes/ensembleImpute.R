@@ -52,11 +52,10 @@ ensembleImpute = function(x, plot = FALSE, shrink = FALSE){
             loessFit = try(predict(loess(formula = x ~ time,
                 control = loess.control(surface = "direct"),
                 span = ifelse(n.obs/T >= 0.5, 0.3,
-                    ifelse(n.obs <= 5, 1, 0.75)), degree = 1),
+                    ifelse(n.obs >= 10, 0.75, 1)), degree = 1),
                 newdata = data.frame(time)))
             if(!inherits(loessFit, "try-error") &
-               sum(abs(x - loessFit), na.rm = TRUE) > 0.1 &
-               n.obs/T >= 0.5){
+               sum(abs(x - loessFit), na.rm = TRUE) > 1e-3){
                 loessFit[loessFit < 0] = 0
                 loessFitError = 1/sum(abs(x - loessFit), na.rm = TRUE)
             } else {
@@ -74,31 +73,26 @@ ensembleImpute = function(x, plot = FALSE, shrink = FALSE){
             logisticFitError = 1/sum(abs(x - logisticFit), na.rm = TRUE)
 
             ## Arima
-            arimaFit = na.approx(x, na.rm = FALSE)
-            nonMissIndex = which(!is.na(arimaFit))
-            fit = auto.arima(na.omit(arimaFit))
-            arimaFit[nonMissIndex] = fitted(fit)
-            if(var(arimaFit, na.rm = TRUE) > 1e-3){
-                obs = which(!is.na(arimaFit))
-                numberForward =
-                    length(which(is.na(arimaFit[max(obs):length(arimaFit)])))
-                if(numberForward > 0)
-                    arimaFit[(max(obs) + 1):length(arimaFit)] =
-                        c(forecast(fit, h = numberForward)$mean)
-                numberBackward =
-                    length(which(is.na(arimaFit[min(obs):1])))
-                if(numberBackward > 0)
-                    arimaFit[(min(obs) - 1):1] =
-                        c(forecast(auto.arima(rev(arimaFit),
-                                              seasonal = FALSE),
-                                   h = numberBackward)$mean)
-                arimaFit[arimaFit < 0]  = 0
+            ##
+            ## source:
+            ## http://stats.stackexchange.com/questions/104565/how-to-use-auto-arima-to-impute-missing-values
+            arimaModel = auto.arima(x)
+            ## kr = KalmanRun(x, arimaModel$model)
+            kr = KalmanSmooth(x, arimaModel$model)            
+            tmp = which(arimaModel$model$Z == 1)
+            id = ifelse (length(tmp) == 1, tmp[1], tmp[2])
+            ## arimaFit = kr$states[,id]
+            arimaFit = kr$smooth[,id]            
+            arimaFit[arimaFit < 0] = 0
+            if(sum(abs(x - arimaFit), na.rm = TRUE) < 1e-3){
+                arimaFitError = mean(c(meanFitError, lmFitError, marsFitError,
+                    expFitError[expFitError != 0],
+                    loessFitError[loessFitError != 0],
+                    logisticFitError), na.rm = TRUE)
+            } else {
                 arimaFitError =
                     arimaFitError = 1/sum(abs(x - arimaFit),
                         na.rm = TRUE)
-            } else {
-                arimaFit = rep(0, T)
-                arimaFitError = 0
             }
 
             ## Niave
