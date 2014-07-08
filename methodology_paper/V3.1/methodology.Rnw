@@ -19,24 +19,36 @@
 
 <<setup, include=FALSE, cache=FALSE>>=
 opts_chunk$set(fig.path='figure/', fig.align='center', fig.show='hold',
-               warning=FALSE, message=FALSE, tidy=FALSE, results='hide',
-               eval=TRUE, echo=FALSE, cache=FALSE)
+               warning=FALSE, message=FALSE, error=FALSE, tidy=FALSE, 
+               results='hide', eval=TRUE, echo=FALSE, cache=FALSE)
 options(replace.assign=TRUE,width=80)
 @ 
 
 <<load-libraries, cache=FALSE>>=
+## Load libraries
 library(faoswsProductionImputation)
 library(faoswsFlag)
 library(FAOSTAT)
 library(data.table)
 library(lattice)
+library(splines)
 
+## Function to compute the yield as a ratio of production and area harvested.
 computeRatio = function(numerator, denominator){
     as.numeric(ifelse(numerator == 0 | denominator == 0, NA,
                       numerator/denominator))
 }
 
-foo = function(file){
+## A temporary flag table for the old flag system
+oldFlagTable = 
+    data.frame(flagObservationStatus = 
+               c(" ", "*", "T", "P", "E", "F", "M"),
+               flagObservationWeights = 
+               seq(1, 0, length = 7), 
+               stringsAsFactors = FALSE)
+
+## temporary function to read the data
+read.example = function(file){
     tmp = read.csv(file = file, stringsAsFactors = FALSE)
     tmp2 = data.table(merge(tmp, 
         FAOcountryProfile[, c("FAOST_CODE", "FAO_TABLE_NAME")], 
@@ -53,7 +65,12 @@ foo = function(file){
          computeRatio(productionValue, areaHarvestedValue)]
     setkeyv(tmp3, c("areaCode", "year"))
     
+    tmp3[, yieldSymb := 
+         aggregateObservationFlag(productionSymb, 
+                                  areaHarvestedSymb,
+                                  flagTable = oldFlagTable)]
     
+    ## tmp4 = tmp3[areaCode != 357 & year >= 1992, ]
     tmp4 = tmp3[areaCode != 357, ]
     tmp4
 }
@@ -62,10 +79,10 @@ foo = function(file){
 @ 
 
 <<read-data, cache=FALSE>>=
-wheat.dt = foo("wheatSUA.csv")
-grape.dt = foo("grapesSUA.csv")
-pea.dt = foo("peasGreenSUA.csv")
-beef.dt = foo("beefSUA.csv")
+## read data
+wheat.dt = read.example("wheatSUA.csv")
+grape.dt = read.example("grapesSUA.csv")
+beef.dt = read.example("beefSUA.csv")
 
 @ 
 
@@ -84,6 +101,26 @@ beef.dt = foo("beefSUA.csv")
 
 \Abstract{ 
 
+
+  This paper proposes a new imputation method for the FAOSTAT
+  production domain based on linear mixed model and ensemble learning.
+  
+  The proposal provides resolve to many of the shortcomings of the
+  current approach, and offers a flexible and robust framework to
+  incorporate further information to improve performance.
+  
+  We begin with an exploration of three selected variables in the
+  production domain and an attempt to pin point their potential
+  drivers. These provide supports and explainations to the newly
+  proposed methodology.
+  
+  A detailed account of the methodologies is provided. The linear
+  mixed model demonstrates ability to capture cross-country and
+  cross-commodity information which are present in the yield
+  series. On the other hand, the ensemble learning display flexible
+  yet robust characteristics for the imputation of the production
+  where traditional method of applying a single model will fail.
+    
 }
 
 \Keywords{Imputation, Linear Mixed Model, Agricultural Production, Ensemble Learning}
@@ -258,8 +295,9 @@ production and area may be considerably different.\\
 
 \section{Exploratory Data Analysis}
 
-We first visualize the data to grasp an understanding of the pattern
-in our data and the relationship between the variables.
+We first take a visualization tour of the data to grasp an
+understanding of the underlying pattern of the production domain and
+the relationship between the variables.
 
 \subsection{Yield}
 
@@ -268,33 +306,33 @@ from different commodity group, wheat, grape and beef.\\
 
 
 From the graphs, we can first observe that there is a general
-increasing trend in the yield accross all country and commodity
-illustrated. Similar stories are observed in almost all commodity that
-has been studied during the development of the methodology. This is a
-result of continuous advancement in both technology and agricultural
-practice driven by research \& development. Improved irrigation
-provides crop with sufficient and uninterrupted water source, while
-tailored compound feed provide the precise nutrient requirements
-ensuring the livestocks consume the optimal diet for
+increasing trend in the yield accross all countries and commodities
+illustrated. Similar stories are observed in almost all commodities
+that has been studied during the development of the methodology. This
+is a result of continuous advancement in both technology and
+agricultural practice driven by research \& development. Improved
+irrigation provides crop with sufficient and uninterrupted water
+source, while tailored compound feed provide the precise nutrient
+requirements ensuring the livestocks consume the optimal diet for
 growth. Regardless whether these practice are sustainable or
 beneficial, there are strong evidence of increased productivity over
 time.\\
 
 
 
-Nevertheless, just like all available technology such as internet and
-information, the distribution is far from perfect. The adoption of
-technology depends on the access which may be hindered by the presence
-of patents, or it may be restricted by service providers. Imperfect
-information and limit financial resources are also major obstacles for
-embracing the new developments, this is particularly true for
-countries where the majority of the producers are smallholders or
-rural farming.\\
+Nevertheless, just like all available technology such as internet, the
+distribution is far from perfect. The adoption of technology depends
+on the access which may be hindered by the presence of patents, or it
+may be restricted by service providers. Imperfect information and
+limit financial resources are also major obstacles for embracing the
+new developments, this is particularly true for countries where the
+majority of the producers are smallholders or rural farming.\\
 
-Furthermore, countries faces different constraints and cost. Countries
+Furthermore, producers faces different constraints and cost. Countries
 such as Brazil and Russia which has a large amount of arable land does
-not face the same pressure to improve yield compare to small states
-such as the Netherlands. Inovations required are also different for
+not bear the same cost for land acqusition in comparison to small
+states such as the Netherlands, and thus does not face the same
+pressure to improve yield. Inovations required are also different for
 countries, wheat breeding for the development of drought and diease
 resistent variety were crucial to withold Australia's dry climate.  \\
 
@@ -353,11 +391,11 @@ of production is much more unpredictable. \\
 Production is determine by area harvested and hence area sown in the
 previous period by the farmer. Which ultimately depends on the
 perception of information and subjective judgement of the
-producer. Production can increase or decrease to reflect the state of
-the market, wheat field can be substitue to harvest sorghum if prices
-are expected to be high. Markets has been known to be difficult to
-forecast, let alone the prediction of human judgement is just shy of
-impossible.\\
+producer. Production can increase or decrease production as a response
+to the state of the market, wheat field can be substitue to harvest
+sorghum if prices are expected to be high. Markets has been known to
+be difficult to forecast, let alone the prediction of human judgement
+is just shy of impossible.\\
 
 Only in cases where the commodity is a major staple or export item, we
 can observe simple trend explained by the continuous increase in
@@ -439,6 +477,12 @@ of China in 2008 is another example, a change in classification
 resulted in large escalation of production while the area harvested
 remained similar to the previous year resulted in a three-fold
 increase in the yield solely for that particular year.\\
+
+\subsubsection{No indicator distinguish zero, missing values and not application}
+The analyst should be made aware of the fact that although a framework
+does exist to distinguish zero and missing values in the database, in
+practice this may not be the case.
+
 
 These observations prompt us to devise a robust method to safeguard
 ourself from non-sensical imputation.\\
@@ -530,76 +574,6 @@ values display stable characteristics while reflecting changes
 resulting from different aspect.\\
 
 
-The following plots shows the imputation in practice, in this
-illustration we have only utilize cross-country information as it is
-easier to visualize. 
-
-<<wheat-yield-impute, fig.width=15, fig.height=15, fig.cap='We can see the imputation in purple seems to produce descent values. There is a small kink for Slovakia and Serbia \& Montenegro, but this should improve with within-country effect.', fig.pos='!ht'>>=
-
-wheat.dt[, yieldImputedValue := yieldValue]
-wheatYieldImputed.dt = 
-    imputeYield(formula = yieldImputedValue^0.5 ~ -1 + 
-                (1 + bs(year, degree = 1, df = 3)|areaName),
-                data = wheat.dt, index = "areaName", weights = NULL)
-wheatYieldImputed.dt[!is.na(yieldValue), 
-                     yieldImputedValue := as.numeric(NA)]
-wheatYieldImputed.dt[, yieldImputedValue := yieldImputedValue^2]
-
-
-xyplot(yieldValue + yieldImputedValue ~ year|areaName, 
-       data = wheatYieldImputed.dt, type = c("g", "l"),
-       auto.key = 
-       list(text = c("Observed Yield", "Imputed Yield")),
-       ylab = "Wheat Yield (1000 Hg/Ha)", xlab = "")
-@ 
-
-<<grape-yield-impute, fig.width=15, fig.height=15, fig.cap='The imputation for grape also seems to be acceptable, except the instance for Saudi Arabia. Nevertheless, the process of correcting the data should be the case rather than modifying the model to fit the data.', fig.pos='!ht'>>=
-
-grape.dt[, yieldImputedValue := yieldValue]
-grapeYieldImputed.dt = 
-    imputeYield(formula = yieldImputedValue^0.5 ~ -1 + 
-                (1 + bs(year, degree = 1, df = 3)|areaName),
-                data = grape.dt, index = "areaName", weights = NULL)
-grapeYieldImputed.dt[!is.na(yieldValue), 
-                     yieldImputedValue := as.numeric(NA)]
-grapeYieldImputed.dt[, yieldImputedValue := yieldImputedValue^2]
-
-
-xyplot(yieldValue + yieldImputedValue ~ year|areaName, 
-       data = grapeYieldImputed.dt, type = c("g", "l"),
-       auto.key = 
-       list(text = c("Observed Yield", "Imputed Yield")),
-       ylab = "Grape Yield (1000 Hg/Ha)", xlab = "")
-@ 
-
-<<beef-yield-impute, fig.width=15, fig.height=15, fig.cap='Again, the imputation of missing value for beef also seems reasonable. This is largely to due to simple nature of yield.', fig.pos='!ht'>>=
-
-beef.dt[, yieldImputedValue := yieldValue]
-beefYieldImputed.dt = 
-    imputeYield(formula = yieldImputedValue^0.5 ~ -1 + 
-                (1 + year|areaName), data = beef.dt, 
-                index = "areaName", weights = NULL)
-beefYieldImputed.dt[!is.na(yieldValue), 
-                     yieldImputedValue := as.numeric(NA)]
-beefYieldImputed.dt[, yieldImputedValue := yieldImputedValue^2]
-
-
-xyplot(yieldValue + yieldImputedValue ~ year|areaName, 
-       data = beefYieldImputed.dt, type = c("g", "l"),
-       auto.key = 
-       list(text = c("Observed Yield", "Imputed Yield")),
-       ylab = "Beef Yield (1000 Hg/Ha)", xlab = "")
-
-@ 
-
-
-
-
- 
-%% Although it is possible to predict for countries which we don't
-%% observe a single point, however simulation has shown that the
-%% prediction error are generally large and thus we suggest that this
-%% setting is not used.
 
 \FloatBarrier
 \subsection{Imputation for Production}
@@ -654,11 +628,6 @@ resembles putting the eggs in different baskets. Thus we reduce the
 risk of implementing a single model which may produce nonsensical
 imputation for a certain subset of data.\\
 
-%% There are many interpretation of why ensemble works, some suggests
-%% that all models are wrong but some are useful and by combining these
-%% useful model you will be able to obtain a better model. \\
-
-
 Ensemble as described by Dietterich can mitigate the following
 three issues.
 
@@ -677,16 +646,50 @@ three issues.
 \end{figure}
 
 
+The statistical problem refers to the lack of data to support a
+particular hypothesis. The problem can be formulated as finding the
+best hypothesis among competing models in the space $\mathcal{H}$. In
+the top left graph of the following depicion from Dietterich we can
+see that hypothesis within the blue boundary will give the same fit,
+and there is insufficient information to determine which one is
+better. By combining the models, we may reduce the risk of choosing a
+terrible model. If we only observe two data points for a country, then
+fitting a linear line or a log curve can both give the same fit and we
+may have no information to distinguish the two.\\
 
-The application of ensemble solves three main problems in our
-task. First of all, all reasonable candidate model can be utilized and
-weighted against the data supporting the model. Second of all, the
-series may have a complex structure which can not be represented by a
-standard model but can be approximated by a combination of the
-model. Finally, the algorithm is adaptive in the sense that if the
-data generating mechanism changes in the future, the method will shift
-weights to the model which better present the data and hence the name
-learning.\\
+The second problem which is lesser of an issue for our task is the
+computational problem which applies to model which employs greedy
+algorithm such as step-wise regression and classification tree. The
+search within the hypothesis space at each step is local and thus has
+a high probability of failing to achieve global maximum.\\
+
+The final problem, representational, refers to the fact that the true
+function $f$ can not be represented by any of the model. However, by
+combining the models we may expand the space of representable
+functions and potentially approximate the true function $f$ if it
+exist. Take the production of wheat in Uzebekistan and Rwanda for
+example, if the production of a country has been growing at a linear
+rate for the past four decades, but expands rapidly in the last two
+decade, neither linear or exponential model will provide a
+satisfactory result. However, an ensemble combining a linear and
+exponential model will provide a good solution by capturing different
+characteristics of the data.\\
+
+From an integration point of view, the algorithm is adaptive in the
+sense that if the data generating mechanism changes in the future, the
+method will shift weights to models which better present the data and
+thus reducing the need of constant monitoring and updating of
+methodologies.\\
+
+The model can also be seen as a mixture of different
+expectations. From prior discussion, we know that the area and
+production depends on the perception and cognition of information
+leading to optimal judgement. However, even the same information can
+lead to various decision as the information can be interpreted
+differently and the model attempts to capture the difference in the
+judgement by combining various expectation.\\
+
+
 
 \FloatBarrier
 
@@ -718,7 +721,7 @@ will be poor.\\
   \item {\textbf{Combiner:}}
     non-trainable algebraic combiner - Weighted sum rule
 
-    Type I: Standard
+    %% Type I: Standard
     \begin{align}
       p_n(x) &= \sum_{i=1}^K w_i f_{n, i}(x) \nonumber \\
       w_i &= \frac{\sum_{i = 1}^N(1/|f_{n, i}(x) - x|)^2}{\sum_{K}\sum_{i=1}^n(1/|f_{n, i}(x) - x|)^2}\nonumber
@@ -733,15 +736,114 @@ will be poor.\\
 \end{itemize}
 
 Where the weights ($w_i$) of model $i$ depends on its fit ($f_{n,
-  i}(x)$) on the available data. The naive imputation which does not
-have a fitted model always take uniform weights. A much more
-favourable method is to compute weights based on the prediction error
-obtained from bootstrap or jackknife, yet the missing values restrict
-us to draw any reasonable size for sub-sample fitting. This is further
-penalized by the time series nature of the data where boostrap with
-replacement is not possible.\\
+  i}(x)$) on the available data with a ceiling set at 75\%. The naive
+imputation which does not have a fitted model always take uniform
+weights. A much more favourable method is to compute weights based on
+the prediction error obtained from bootstrap or jackknife, yet the
+missing values restrict us to draw any reasonable size for sub-sample
+fitting. This is further penalized by the time series nature of the
+data where boostrap with replacement is not possible.\\
+
+In this section, we take a sample of production from the exploratory
+analysis section and illustrate the imputation methodology. The
+selection of the sample is intended to illustrate the flexibility and
+robustness of the methodology, rather than based on the importance nor
+the quantity produced.\\
+
+The black points in the graph represents observed data while the
+thicker blue line represents the final ensemble model with the points
+being the estimation of missing values. Other lines represents the fit
+of the base learner, the weight of each model is displayed in the
+legend.\\
+
+Component models which failed to fit the data has a weight of 0.\\
+
+<<wheat-swaziland-impute, fig.width=15, fig.height=8, fig.cap='This selected series is the production of wheat in Swaziland, from the black observed production we can see it display the typical erratic behaviour seen previously. Due to the expansion and contraction of production over different period, LOESS took most of the weight to accommodate the change over time while MARS, ARIMA and Naive provides support.', fig.pos='!ht'>>=
 
 
+wheat.dt[, yieldImputedValue := 
+         imputeYield(formula = yieldValue ~ 
+                     -1 + (1 + year|areaName),
+                     data = .SD, index = "areaName")]
+
+
+with(wheat.dt[areaName == "Swaziland", ],
+     ensembleImpute(productionValue, plot = TRUE)
+     )
+
+@ 
+
+<<wheat-mauritania, fig.width=15, fig.height=8, fig.cap='In contrast to swaziland, the wheat production in Mauritania exhibits a simple shape which closely resembles piece wise linear and thus the MARS obtained the higher weight compare to LOESS in the previous case, while ARIMA provids the main imputation.', fig.pos='!ht'>>=
+
+with(wheat.dt[areaName == "Mauritania", ],
+     ensembleImpute(productionValue, plot = TRUE)
+     )
+
+
+@ 
+
+
+<<grape-zimbabwe, fig.width=15, fig.height=8, fig.cap='In this depiction, the grape of Zimbabwe is used for illustration. The data exhibits the piece wise linear as seen in the last case study, but smoother transition in the central part. This is the reason the LOESS model was assigned more weight to capture the smoothness.', fig.pos='!ht'>>=
+
+grape.dt[, yieldImputedValue := 
+         imputeYield(formula = yieldValue ~ 
+                     -1 + (1 + bs(year, df = 3, degree = 1)|areaName),
+                     data = .SD, index = "areaName")]
+
+with(grape.dt[areaName == "Zimbabwe", ],
+     ensembleImpute(productionValue, plot = TRUE)
+     )
+
+
+@
+
+<<grape-tanzania, fig.width=15, fig.height=8, fig.cap='The production for grape is very sparse for Tanzania, with only two non-zero obervation towards the end of the time series. The model result to basically just logistic and niave imputation. As a matter of fact, the logitstic model had a perfect fit due to the zeros in the earlier period. Nevertheless, a cap of 75\\% has been set and thus the remaining 25\\% has been assigned to other models.', fig.pos='!ht'>>=
+
+## with(grape.dt[areaName == "Kuwait", ],
+##      ensembleImpute(productionValue, plot = TRUE)
+##      )
+
+
+with(grape.dt[areaName == "the United Republic of Tanzania",],
+     ensembleImpute(productionValue, plot = TRUE)
+     )
+
+
+@
+
+<<beef-westbank, fig.width=15, fig.height=8, fig.cap='The production of beef in West Bank has not been observed for almost two decades. The observed component shows an increase to a point then tails off slightly. Again, LOESS took the most weight to accommodate the shape but it may capture too much of the increase in the tail. The MARS model makes the correction by pulling it down towards the mean level of the plateu.', fig.pos='!ht'>>=
+
+beef.dt[, yieldImputedValue := 
+         imputeYield(formula = yieldValue ~ 
+                     -1 + (1 + year|areaName),
+                     data = .SD, index = "areaName")]
+
+with(beef.dt[areaName == "the West Bank", ],
+     ensembleImpute(productionValue, plot = TRUE)
+     )
+
+@
+
+<<beef-montenegro, fig.width=15, fig.height=8, fig.cap='This is also an example to illustrate the methodology since we know Montenegro did not gain independence until 2006. Nevertheless, we can see that the other model which has been taking the most weight namely LOESS, MARS and ARIMA failed to fit the data due to the small sample size. The ensemble assigned weights to simple model, and combine the prediction to form the average prediction while at the same time avoids the potential of poor imputation of exponential model.', fig.pos='!ht'>>=
+
+with(beef.dt[areaName == "Montenegro", ],
+     ensembleImpute(productionValue, plot = TRUE)
+     )
+
+
+
+@ 
+
+<<beef-cameroon, fig.width=15, fig.height=8, fig.cap='Finally, we show the production of beef in Cameroon where pratically all model with weights agrees that a linear trend suffice. This demonstrates that the ensemble will select the model which is best supported by the data.', fig.pos='!ht'>>=
+
+with(beef.dt[areaName == "Cameroon", ],
+     ensembleImpute(productionValue, plot = TRUE)
+     )
+
+
+@ 
+
+\FloatBarrier
 \subsection{Imputation for Area Harvested}
 
 After the imputation of production and yield, area harvested is left
@@ -764,87 +866,304 @@ imputation setting.\\
 
 \section{Case Studies}
 
-In this section, we take a sample of production from the exploratory
-analysis section and illustrate the imputation methodology. The
-selection of the sample is intended to illustrate the flexibility and
-robustness of the methodology, rather than based on the importance nor
-the quantity produced.\\
+The imputation of the three commodities are presented in this
+section. Due to the limitation that this is a dynamic generated paper
+we have only include the cross-country information for the imputation
+of the yield.
 
-The black points in the graph represents observed data while the
-thicker blue line represents the final ensemble model with the points
-being the estimation of missing values. Other lines represents the fit
-of the base learner, the weight of each model is displayed in the
-legend.\\
 
-Component models which failed to fit the data has a weight of 0.\\
+\subsection{Wheat}
 
-<<wheat-swaziland-impute, fig.width=15, fig.height=8, fig.cap='This selected series is the production of wheat in Swaziland, from the black observed production we can see it display the typical erratic behaviour seen previously. Due to the expansion and contraction of production over different period, LOESS took most of the weight to accommodate the change over time while MARS, ARIMA and Naive provides support.', fig.pos='!ht'>>=
+<<wheat-yield-imputed, fig.width=15, fig.height=15, fig.cap='We can see the imputation of yield in purple seems to produce reasonable values. There is a small kink for Slovakia and Serbia \\& Montenegro, but this should improve with the addition of within-country effect.', fig.pos='!ht'>>=
 
-with(wheat.dt[areaName == "Swaziland", ],
-     ensembleImpute(productionValue, plot = TRUE)
-     )
+
+wheat.dt[, areaHarvestedImputedValue := areaHarvestedValue]
+wheat.dt[, productionImputedValue := productionValue]
+wheat.dt[is.na(productionImputedValue), 
+         productionImputedValue := 
+         areaHarvestedValue * yieldImputedValue]
+wheat.dt[, productionImputedValue := 
+         ensembleImpute(productionImputedValue), by = "areaName"]
+wheat.dt[is.na(areaHarvestedImputedValue),
+         areaHarvestedImputedValue := 
+         productionImputedValue/yieldImputedValue]
+
+wheat.dt[!is.na(productionValue), 
+         productionImputedValue := as.numeric(NA)]
+
+wheat.dt[!is.na(areaHarvestedValue), 
+         areaHarvestedImputedValue := as.numeric(NA)]
+
+wheat.dt[!is.na(yieldValue), 
+         yieldImputedValue := as.numeric(NA)]
+
+xyplot(yieldValue + yieldImputedValue ~ year|areaName, 
+       data = wheat.dt, type = c("g", "l"),
+       auto.key = 
+       list(text = c("Observed Yield", "Imputed Yield")),
+       ylab = "Wheat Yield (1000 Hg/Ha)", xlab = "")
 
 @ 
 
-<<wheat-mauritania, fig.width=15, fig.height=8, fig.cap='In contrast to swaziland, the wheat production in Mauritania exhibits a simple shape which closely resembles piece wise linear and thus the MARS obtained the higher weight compare to LOESS in the previous case, while ARIMA provids the main imputation.', fig.pos='!ht'>>=
-
-with(wheat.dt[areaName == "Mauritania", ],
-     ensembleImpute(productionValue, plot = TRUE)
-     )
-
-@ 
+<<wheat-production-imputed, fig.width=15, fig.height=15, fig.cap='There does not appear to be any peculariy in any of the imputation of the production of wheat.', fig.pos='!ht'>>=
 
 
-<<grape-zimbabwe, fig.width=15, fig.height=8, fig.cap='In this depiction, the grape of Zimbabwe is used for illustration. The data exhibits the piece wise linear as seen in the last case study, but smoother transition in the central part. This is the reason the LOESS model was assigned more weight to capture the smoothness.', fig.pos='!ht'>>=
-with(grape.dt[areaName == "Zimbabwe", ],
-     ensembleImpute(productionValue, plot = TRUE)
-     )
 
+wheat.dt[, scaledProductionValue :=
+         productionValue/max(productionValue, productionImputedValue,
+                             na.rm = !all(is.na(productionValue))),
+         by = "areaName"]
+
+
+wheat.dt[, scaledProductionImputedValue :=
+         productionImputedValue/max(productionImputedValue, productionValue,
+                             na.rm = !all(is.na(productionImputedValue))),
+         by = "areaName"]
+
+
+xyplot(scaledProductionValue + scaledProductionImputedValue ~ 
+       year|areaName, 
+       data = wheat.dt, type = c("g", "l"),
+       auto.key = 
+       list(text = c("Observed production", "Imputed production")),
+       ylab = "", xlab = "", 
+       scales = list(y = list(draw = FALSE)))
 
 @
 
-<<grape-kuwait, fig.width=15, fig.height=8, fig.cap='The production of grape in Kuwait shows an increase in production since data available until the invasion in 1990 where maybe no production exist. This is then followed by a growth since the 2000s. The value imputed during the period of war is at doubt and the effect of the war is unknown, nonetheless the ensemble provide a good imputation with the data given.', fig.pos='!ht'>>=
+<<wheat-areaharvested-imputed, fig.width=15, fig.height=15, fig.cap='The balance of area harvested also does not show any sign of divergence or problematic symptoms.', fig.pos='!ht'>>=
 
-with(grape.dt[areaName == "Kuwait", ],
-     ensembleImpute(productionValue, plot = TRUE)
-     )
+wheat.dt[, scaledAreaHarvestedValue :=
+         areaHarvestedValue/max(areaHarvestedValue, 
+                                areaHarvestedImputedValue,
+                             na.rm = !all(is.na(areaHarvestedValue))),
+         by = "areaName"]
 
-@
 
-<<beef-westbank, fig.width=15, fig.height=8, fig.cap='The production of beef in West Bank has not been observed for almost two decades. The observed component shows an increase to a point then tails off slightly. Again, LOESS took the most weight to accommodate the shape but it may capture too much of the increase in the tail. The MARS model makes the correction by pulling it down towards the mean level of the plateu.', fig.pos='!ht'>>=
+wheat.dt[, scaledAreaHarvestedImputedValue :=
+         areaHarvestedImputedValue/max(c(areaHarvestedImputedValue, 
+                                         areaHarvestedValue), 
+                             na.rm = !all(is.na(areaHarvestedImputedValue))),
+         by = "areaName"]
 
-with(beef.dt[areaName == "the West Bank", ],
-     ensembleImpute(productionValue, plot = TRUE)
-     )
 
-@
+xyplot(scaledAreaHarvestedValue + scaledAreaHarvestedImputedValue ~ 
+       year|areaName, 
+       data = wheat.dt, type = c("g", "l"), 
+       auto.key = 
+       list(text = c("Observed Area Harvested", 
+                "Imputed Area Harvested")),
+       ylab = "", xlab = "", 
+       scales = list(y = list(draw = FALSE)))
 
-<<beef-montenegro, fig.width=15, fig.height=8, fig.cap='This is also an example to illustrate the methodology since we know Montenegro did not gain independence until 2006. Nevertheless, we can see that the other model which has been taking the most weight namely LOESS, MARS and ARIMA failed to fit the data due to the small sample size. The ensemble assigned weights to simple model, and combine the prediction to form the average prediction while at the same time avoids the potential of poor imputation of exponential model.', fig.pos='!ht'>>=
-with(beef.dt[areaName == "Montenegro", ],
-     ensembleImpute(productionValue, plot = TRUE)
-     )
 
+
+@ 
+
+\FloatBarrier
+\subsection{Grape}
+
+<<grape-yield-imputed, fig.width=15, fig.height=15, fig.cap='The imputation of yield also appears to be reasonable, with the exception of Saudi Arabia as expected where the correction should be done at the data collection level.', fig.pos='!ht'>>=
+
+grape.dt[, areaHarvestedImputedValue := areaHarvestedValue]
+grape.dt[, productionImputedValue := productionValue]
+grape.dt[is.na(productionImputedValue), 
+         productionImputedValue := 
+         areaHarvestedValue * yieldImputedValue]
+grape.dt[, productionImputedValue := 
+         ensembleImpute(productionImputedValue), by = "areaName"]
+grape.dt[is.na(areaHarvestedImputedValue),
+         areaHarvestedImputedValue := 
+         productionImputedValue/yieldImputedValue]
+
+grape.dt[!is.na(productionValue), 
+         productionImputedValue := as.numeric(NA)]
+
+grape.dt[!is.na(areaHarvestedValue), 
+         areaHarvestedImputedValue := as.numeric(NA)]
+
+grape.dt[!is.na(yieldValue), 
+         yieldImputedValue := as.numeric(NA)]
+
+
+xyplot(yieldValue + yieldImputedValue ~ 
+       year|areaName, 
+       data = grape.dt, type = c("g", "l"),
+       auto.key = 
+       list(text = c("Observed Yield", "Imputed Yield")),
+       ylab = "", xlab = "", 
+       scales = list(y = list(draw = FALSE)))
 
 
 @ 
 
-<<beef-cameroon, fig.width=15, fig.height=8, fig.cap='Finally, we show the production of beef in Cameroon where pratically all model agrees that a linear trend suffice. This demonstrates that the ensemble will select the model which is best supported by the data.', fig.pos='!ht'>>=
 
-with(beef.dt[areaName == "Cameroon", ],
-     ensembleImpute(productionValue, plot = TRUE)
-     )
+<<grape-production-imputed, fig.width=15, fig.height=15, fig.cap='The imputation of grape prodution.', fig.pos='!ht'>>=
 
+grape.dt[, scaledProductionValue :=
+         productionValue/max(productionValue, productionImputedValue,
+                             na.rm = !all(is.na(productionValue))),
+         by = "areaName"]
+
+
+grape.dt[, scaledProductionImputedValue :=
+         productionImputedValue/max(productionImputedValue, 
+                                    productionValue,
+                                    na.rm = !all(is.na(productionImputedValue))),
+         by = "areaName"]
+
+
+xyplot(scaledProductionValue + scaledProductionImputedValue ~ 
+       year|areaName, 
+       data = grape.dt, type = c("g", "l"),
+       auto.key = 
+       list(text = c("Observed production", "Imputed production")),
+       ylab = "", xlab = "", 
+       scales = list(y = list(draw = FALSE)))
 @ 
 
+<<grape-areaharvested-imputed, fig.width=15, fig.height=15, fig.cap='Imputation of area harvested of grape. The area harvested of Viet Nam does appear to be problematic, the unexpectantly high area harvested is a result of an extremely low yield in the earlier years. This is due to the fact that long extrapolation for over 40 years with only approximately 10 years of data is unreasonable. We can eliminate this problem if we restrict the working data to the past 3 decades.', fig.pos='!ht'>>=
+grape.dt[, scaledAreaHarvestedValue :=
+         areaHarvestedValue/max(areaHarvestedValue, 
+                                areaHarvestedImputedValue,
+                             na.rm = !all(is.na(areaHarvestedValue))),
+         by = "areaName"]
+
+
+grape.dt[, scaledAreaHarvestedImputedValue :=
+         areaHarvestedImputedValue/max(c(areaHarvestedImputedValue, 
+                                         areaHarvestedValue), 
+                             na.rm = !all(is.na(areaHarvestedImputedValue))),
+         by = "areaName"]
+
+
+xyplot(scaledAreaHarvestedValue + scaledAreaHarvestedImputedValue ~ 
+       year|areaName, 
+       data = grape.dt, type = c("g", "l"), 
+       auto.key = 
+       list(text = c("Observed areaHarvested", "Imputed areaHarvested")),
+       ylab = "", xlab = "", 
+       scales = list(y = list(draw = FALSE)))
+
+@ 
 
 
 \FloatBarrier
+\subsection{Beef}
+
+<<beef-yield-imputed, fig.width=15, fig.height=15, fig.cap='Imputation of beef carcass weight. We can again observe that the method is robust to shocks such as the one observed in the Fomer Yigoslave Republic and to some extent Estonia.', fig.pos='!ht'>>=
+
+beef.dt[, areaHarvestedImputedValue := areaHarvestedValue]
+beef.dt[, productionImputedValue := productionValue]
+beef.dt[is.na(productionImputedValue), 
+         productionImputedValue := 
+        areaHarvestedValue * yieldImputedValue]
+beef.dt[, productionImputedValue := 
+         ensembleImpute(productionImputedValue), by = "areaName"]
+beef.dt[is.na(areaHarvestedImputedValue),
+         areaHarvestedImputedValue := 
+         productionImputedValue/yieldImputedValue]
+
+beef.dt[!is.na(productionValue), 
+         productionImputedValue := as.numeric(NA)]
+
+beef.dt[!is.na(areaHarvestedValue), 
+         areaHarvestedImputedValue := as.numeric(NA)]
+
+beef.dt[!is.na(yieldValue), 
+         yieldImputedValue := as.numeric(NA)]
+
+
+xyplot(yieldValue + yieldImputedValue ~ 
+       year|areaName, 
+       data = beef.dt, type = c("g", "l"),
+       auto.key = 
+       list(text = c("Observed Yield", "Imputed Yield")),
+       ylab = "", xlab = "", 
+       scales = list(y = list(draw = FALSE)))
+@ 
+
+<<beef-production-imputed, fig.width=15, fig.height=15, fig.cap='Imputation of Beef production.', fig.pos='!ht'>>=
+
+
+beef.dt[, scaledProductionValue :=
+         productionValue/max(productionValue, productionImputedValue,
+                             na.rm = !all(is.na(productionValue))),
+         by = "areaName"]
+
+
+beef.dt[, scaledProductionImputedValue :=
+         productionImputedValue/max(productionImputedValue, productionValue,
+                             na.rm = !all(is.na(productionImputedValue))),
+         by = "areaName"]
+
+
+xyplot(scaledProductionValue + scaledProductionImputedValue ~ 
+       year|areaName, 
+       data = beef.dt, type = c("g", "l"),
+       auto.key = 
+       list(text = c("Observed production", "Imputed production")),
+       ylab = "", xlab = "", 
+       scales = list(y = list(draw = FALSE)))
+
+@ 
+
+
+<<beef-areaharvested-imputed, fig.width=15, fig.height=15, fig.cap='Imputation of number of animals slaughtered.', fig.pos='!ht'>>=
+
+beef.dt[, scaledAreaHarvestedValue :=
+         areaHarvestedValue/max(areaHarvestedValue, 
+                                areaHarvestedImputedValue,
+                             na.rm = !all(is.na(areaHarvestedValue))),
+         by = "areaName"]
+
+
+beef.dt[, scaledAreaHarvestedImputedValue :=
+         areaHarvestedImputedValue/max(c(areaHarvestedImputedValue, 
+                                         areaHarvestedValue), 
+                             na.rm = !all(is.na(areaHarvestedImputedValue))),
+         by = "areaName"]
+
+
+xyplot(scaledAreaHarvestedValue + scaledAreaHarvestedImputedValue ~ 
+       year|areaName, 
+       data = beef.dt, type = c("g", "l"),
+       auto.key = 
+       list(text = c("Observed Area Harvested", 
+                "Imputed Area Harvested")),
+       ylab = "", xlab = "", 
+       scales = list(y = list(draw = FALSE)))
+
+@ 
+
+
+
+
+
+
+<<one-step-imputation, eval=FALSE>>=
+## Need to think of a way to pass the formula
+wheatImputed.dt = 
+    imputeProductionDomain(wheat.dt, productionVar = "productionValue", 
+                           areaHarvestedVar = "areaHarvestedValue", 
+                           yieldVar = "yieldValue", 
+                           productionObservationFlag = "productionSymb", 
+                           areaHarvestedObservationFlag = "areaHarvestedSymb", 
+                           yieldObservationFlag = "yieldSymb", 
+                           index = "areaName", flagTable = oldFlagTable, 
+                           yieldFormula = yieldValue ~ (-1 + 
+                           (1 + bs(year, degree = 1, df = 3)|areaName))^2)
+
+@ 
+
+\FloatBarrier
+
 From the case studies, we can see that we have an extremely flexible
 model with almost no possibility of over-fitting since none of the
 model are itself complex. The model is robust as a result of the
 variance reduction property of ensemble and even in cases where we
-have extremely sparse data we can still fall back to the model with
-the least assumption.\\
+have extremely sparse data we can still fall back to simpler models
+with fewer assumption.\\
 
 
 The model is not only flexible in adapting to change in the data
@@ -855,35 +1174,35 @@ further enhance the ensemble.\\
 
 
 \FloatBarrier
-\section{Simulation Results}
+%% \section{Simulation Results}
 
-In order to understand the capability and performance of the
-imputation, we conduct bootstrap simulation to estimate the prediction
-error.\\
+%% In order to understand the capability and performance of the
+%% imputation, we conduct bootstrap simulation to estimate the prediction
+%% error.\\
 
-For each bootstrap, we take a sample containing only official and
-semi-official data and impute the values which are issing. The
-imputation is then benchmarked with the actual observed official and
-semi-official data. We use the Mean Absolute Percentage Error (MAPE)
-for assessing the accuracy of the imputed values; and we compute the
-coverage rate defined as the proportion of missing value imputed to
-examine the applicability of the method.
+%% For each bootstrap, we take a sample containing only official and
+%% semi-official data and impute the values which are issing. The
+%% imputation is then benchmarked with the actual observed official and
+%% semi-official data. We use the Mean Absolute Percentage Error (MAPE)
+%% for assessing the accuracy of the imputed values; and we compute the
+%% coverage rate defined as the proportion of missing value imputed to
+%% examine the applicability of the method.
 
-\begin{equation}
-  \text{MAPE} = \frac{1}{N} \sum |y_i - \hat{y}_i|\\
-\end{equation}
+%% \begin{equation}
+%%   \text{MAPE} = \frac{1}{N} \sum |y_i - \hat{y}_i|\\
+%% \end{equation}
 
 
-Each simulation draws a sample of varying missing proportion, this is
-to investigate the prediction error over different degree of
-missingess and at the same time to detect the breaking point of the
-method.\\
+%% Each simulation draws a sample of varying missing proportion, this is
+%% to investigate the prediction error over different degree of
+%% missingess and at the same time to detect the breaking point of the
+%% method.\\
 
-Since there are already missing value in the data, the benchmark is
-can only be computed on the available official and semi-official data
-which varies between commodity. We have over 70\% availability of
-benchmark observations for wheat, while only slightly over 20\% for
-pepper.\\
+%% Since there are already missing value in the data, the benchmark is
+%% can only be computed on the available official and semi-official data
+%% which varies between commodity. We have over 70\% availability of
+%% benchmark observations for wheat, while only slightly over 20\% for
+%% pepper.\\
 
 %% Provide a table of the error rate and the number of producer
 %% countries
@@ -892,7 +1211,22 @@ pepper.\\
 
 \FloatBarrier
 \section{Conclusion and Further Improvements}
+This paper demonstrated the flexibility and robustness of the
+imputation methodology. The robust methodology is capable of capturing
+cross-country and cross-commodity improvements in the producticity,
+while providing flexibility to extend the models wherever possible.\\
 
+An ongoing project is dedicated to the designation of weights
+reflecting the information content of the observations. Data collected
+from official and semi-official sources may be deems as more reliable
+while observation from expert judgement may be less reliable. A
+weighting scheme will allow the models to better assess the quality of
+information and improve the performance.\\
+
+A metrix is also in development to capture the nature of the yield
+series. Although a linear term appear to be sufficient, but in other
+cases non-linear terms such as spline provide better result. A balance
+between the available information and flexibility is being worked on.\\
 
 
 
