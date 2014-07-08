@@ -4,15 +4,15 @@
 ##' domain.
 ##'
 ##' @param data The data
-##' @param productionVar The production statistics
+##' @param productionVar The name of the production column
 ##' @param index The keys to split the data for performing the
 ##' imputation separately.
 ##'
 ##' @export
 ##' 
 imputeProduction = function(data, productionVar, index){
-    data[, eval(parse(text = paste0(productionVar, " := ensembleImpute(",
-                          productionVar, ")"))),
-         by = index]
-    data
+    dataCopy = copy(data)
+    setnames(dataCopy, old = productionVar, new = "productionVar")
+
+    unlist(dataCopy[, ensembleImpute(productionVar), by = index]$V1)
 }
