@@ -10,29 +10,38 @@
 ##'
 ##' @export
 ##' 
-imputeYield = function(formula, data, weights, index){
-    model = try(lmer(formula = formula, data = data, weights = weights))
+
+imputeYield = function(formula, data, weights = NULL, index){
+
+    dataCopy = copy(data)
     response = all.vars(formula)[1]
-    
+    setnames(dataCopy, response, "response")
+
+    ## Fit the model
+    newFormula = update(formula, response ~.)
+    model =
+        try(
+            lmer(formula = newFormula, data = dataCopy,
+                 weights = weights)
+            )
+
     if(!inherits(model, "try-error")){
-        missingString = paste0("is.na(", response, ")")
-        predictionString =
-            paste0(response, " := predict(model, newdata = .SD, allow.new.levels = TRUE)")
-
-        ## Impute the data
-        data[eval(parse(text = missingString)),
-             eval(parse(text = predictionString))]
-
-        ## Remove negative value from data
-        data[eval(parse(text = paste0(response, "<= 0"))),
-             eval(parse(text = paste0(response, " := as.numeric(NA)")))]
-
-        ## Impute with naive imputation for those values that were
-        ## negative
-
-        data[, eval(parse(text = paste0(response, " := naiveImputation(",
-                         response, ")"))),
-                    by = index]
+        ## Impute the data with lme.
+        dataCopy[is.na(response),
+                 response := predict(model, newdata = .SD,
+                              allow.new.levels = TRUE)]
+        
+        ## Remove negative value from data.
+        dataCopy[response <= 0, response := as.numeric(NA)]
+        
+        ## Reimpute with naive imputation for those values that were
+        ## negative.
+        dataCopy[, response := naiveImputation(response), by = index]
+        imputedYield = unlist(dataCopy[, response])
+        
+    } else {
+        imputedYield = data[, response, with = FALSE]
     }
-    data
+    
+    imputedYield
 }
