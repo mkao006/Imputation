@@ -1,14 +1,17 @@
-##' This function imputes hte whole production domain.
+##' This function imputes the whole production domain.
 ##'
 ##' The function will impute production, area harvested and yield at
 ##' the same time.
+##'
+##' Transformation in the yield formula is not allowed and will not be
+##' taken into account.
 ##'
 ##' @param data The data
 ##' @param productionVar The name of the production variable.
 ##' @param areaHarvestedVar The name of the area harvested variable.
 ##' @param yieldVar The name of the yield variable.
 ##' @param productionObservationFlag The observation flag of production.
-##' @param areaHarvestedObservatoinFlag The observation flag of area
+##' @param areaHarvestedObservationFlag The observation flag of area
 ##' harvested.
 ##' @param yieldObservationFlag The observation flag of yield.
 ##' @param index The unique key identifier.
@@ -16,84 +19,83 @@
 ##' @export
 ##' 
 
-imputeproductionDomain = function(data, productionVar, areaHarvestedVar,
+imputeProductionDomain = function(data, productionVar, areaHarvestedVar,
     yieldVar, productionObservationFlag, areaHarvestedObservationFlag,
-    yieldObservationFlag, index){
+    yieldObservationFlag, index, flagTable, yieldFormula){
 
-
-    ## Convert flags to weights
-    data[, c(productionWeight,
-             areaHarvestedWeight,
-             yieldWeight) :=
-         list(eval(parse(text = paste0("flag2weight(",
-                             productionObservationFlag, ")"))),
-              eval(parse(text = paste0("flag2weight(",
-                             areaHarvestedObservationFlag, ")"))),
-              eval(parse(text = paste0("flag2weight(",
-                             yieldObservationFlag, ")")))
-              )]
+    
+    ## Make a copy of the data
+    dataCopy = copy(data)
+    setnames(dataCopy,
+             old = c(productionVar, areaHarvestedVar, yieldVar,
+                 productionObservationFlag, areaHarvestedObservationFlag,
+                 yieldObservationFlag),
+             new = c("productionVar", "areaHarvestedVar", "yieldVar",
+                 "productionObservationFlag", "areaHarvestedObservationFlag",
+                 "yieldObservationFlag"))
+    
+    ## Convert flags to weight
+    dataCopy[, c("productionWeight", "areaHarvestedWeight", "yieldWeight") :=
+             list(flag2weight(productionObservationFlag, flagTable = flagTable),
+                  flag2weight(areaHarvestedObservationFlag, flagTable = flagTable),
+                  flag2weight(yieldObservationFlag, flagTable = flagTable))]
 
     ## Create missing index
-    productionMissIndex = data[, productionVar, with = FALSE]
-    areaHarvestedMissIndex = data[, areaHarvestedVar, with = FALSE]
-    yieldMissIndex = data[, yieldVar, with = FALSE]
+    productionMissIndex = dataCopy[, is.na(productionVar)]
+    areaHarvestedMissIndex = dataCopy[, is.na(areaHarvestedVar)]
+    yieldMissIndex = dataCopy[, is.na(yieldVar)]
+    
+    ## update the formula  for the updated name
+    newYieldFormula = update(yieldFormula, yieldVar ~.)
 
+    ## Imputation
+    ## ---------------------------------------------------------------------
     ## Step (1): Impute yield first
-    yieldImputed =
-        imputedYield(formula = yieldFormula, data = data,
-                     ## NOTE (Michael): Need to add in weights here
-                     index = index)
-
+    dataCopy[, yieldVar := 
+             imputeYield(formula = newYieldFormula, data = .SD,
+                         ## NOTE (Michael): Need to add in weights here
+                         index = index, weights = NULL)]
     ## Modify yield flag
-    ##
-    ## NOTE (Michael): This is currently hard coded, maybe we can
-    ##                 change this.
-    yieldImputed[yieldMissIndex &
-                 !is.na(eval(parse(text = yieldVar))),
-                 eval(parse(text = paste0(yieldObservationStatusFlag,
-                                " := I")))]
+    dataCopy[yieldMissIndex & !is.na(yieldVar),
+             yieldObservationFlag := "I"]
 
     ## Step (2): Calculate production if area harvested and yield
     ##           exists.
-    yieldImputed[productionMissIndex,
-                 eval(parse(text = paste0(productionVar, " := ",
-                                areaHarvestedVar, " * ", yieldVar)))]
-
+    dataCopy[productionMissIndex,
+             productionVar := areaHarvestedVar * yieldVar]
     ## Calculate the balanced production flag
-    yieldImputed[productionMissIndex &
-                 !is.na(eval(parse(text = productionVar))),
-                 eval(parse(text = paste0(productionObservationStatusFlag,
-                                " := aggregateObservationStatusFlag(",
-                                areaHarvestedObservationStatusFlag, ", ",
-                                yieldObservationStatusFlag, ")")))]
+    dataCopy[productionMissIndex & !is.na(productionVar),
+             productionObservationFlag :=
+             aggregateObservationFlag(areaHarvestedObservationFlag,
+                                      yieldObservationFlag, flagTblae = flagTable)]
     
     ## Step (3): Impute production    
-    productionImputed = imputeProduction(data = yieldImputed,
-        productionVar = productionVar, index = index)
-
+    dataCopy[, productionVar :=
+        imputeProduction(data = .SD,
+                         productionVar = "productionVar", index = index)]
     ## Modify imputed production flag
-    productionImputed[productionMissIndex &
-                      !is.na(eval(parse(text = productionVar))),
-                      eval(parse(text =
-                                 paste0(productionObservationStatusFlag,
-                                        " := I")))]
-
+    dataCopy[productionMissIndex & !is.na(productionVar),
+                      productionObservationFlag := "I"]
+    
     ## Step (4): Balance area harvested
-    allImputed =
-        productionImputed[, eval(parse(text =
-                                       paste0(areaHarvstedVar, " : =",
-                                              productionVar, "/",
-                                              yieldVar)))]
+    dataCopy[, areaHarvestedVar := productionVar/yieldVar]    
+    ## Modify balanced area harvested flag    
+    dataCopy[areaHarvestedMissIndex & !is.na(areaHarvestedVar),
+               areaHarvestedObservationFlag :=
+               aggregateObservationFlag(productionObservationFlag,
+                                        yieldObservationFlag,
+                                        flagTable = flagTable)]
 
-    ## Modify balanced area harvested flag
-    allImputed[areaHarvestedMissIndex &
-                 !is.na(eval(parse(text = areaHarvestedVar))),
-                 eval(parse(text =
-                            paste0(areaHarvestedObservationStatusFlag,
-                                   " := aggregateObservationStatusFlag(",
-                                   productionObservationStatusFlag,
-                                   ", ",
-                                   yieldObservationStatusFlag, ")")))]
-
-    allImputed
+    ## ---------------------------------------------------------------------
+    ## Rename the column
+    setnames(dataCopy,
+             old = c("productionVar", "areaHarvestedVar", "yieldVar",
+                 "productionObservationFlag", "areaHarvestedObservationFlag",
+                 "yieldObservationFlag"),
+             new = c(productionVar, areaHarvestedVar, yieldVar,
+                 productionObservationFlag, areaHarvestedObservationFlag,
+                 yieldObservationFlag))
+    dataCopy[, c("productionWeight", "areaHarvestedWeight", "yieldWeight") := NULL]
+    
+    dataCopy
 }
