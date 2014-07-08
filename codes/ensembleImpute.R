@@ -36,7 +36,7 @@ ensembleImpute = function(x, plot = FALSE, shrink = FALSE){
                 marsFit[marsFit < 0] = 0
                 marsFitError = 1/sum(abs(x - marsFit), na.rm = TRUE)
             } else {
-                marsFit = rep(0, T)
+                marsFit = rep(NA, T)
                 marsFitError = 0
             }
 
@@ -59,7 +59,7 @@ ensembleImpute = function(x, plot = FALSE, shrink = FALSE){
                 loessFit[loessFit < 0] = 0
                 loessFitError = 1/sum(abs(x - loessFit), na.rm = TRUE)
             } else {
-                loessFit = rep(0, T)
+                loessFit = rep(NA, T)
                 loessFitError = 0
             }
 
@@ -76,32 +76,42 @@ ensembleImpute = function(x, plot = FALSE, shrink = FALSE){
             ##
             ## source:
             ## http://stats.stackexchange.com/questions/104565/how-to-use-auto-arima-to-impute-missing-values
-            arimaModel = auto.arima(x)
-            ## kr = KalmanRun(x, arimaModel$model)
-            kr = KalmanSmooth(x, arimaModel$model)            
-            tmp = which(arimaModel$model$Z == 1)
-            id = ifelse (length(tmp) == 1, tmp[1], tmp[2])
-            ## arimaFit = kr$states[,id]
-            arimaFit = kr$smooth[,id]            
-            arimaFit[arimaFit < 0] = 0
-            if(sum(abs(x - arimaFit), na.rm = TRUE) < 1e-3){
-                arimaFitError = mean(c(meanFitError, lmFitError, marsFitError,
-                    expFitError[expFitError != 0],
-                    loessFitError[loessFitError != 0],
-                    logisticFitError), na.rm = TRUE)
+            arimaModel = try(auto.arima(x))
+            if(!inherits(arimaModel, "try-error")){
+                ## kr = KalmanRun(x, arimaModel$model)
+                kr = KalmanSmooth(x, arimaModel$model)            
+                tmp = which(arimaModel$model$Z == 1)
+                id = ifelse (length(tmp) == 1, tmp[1], tmp[2])
+                ## arimaFit = kr$states[,id]
+                arimaFit = kr$smooth[,id]
+                arimaFit[arimaFit < 0] = 0
+                if(sum(abs(x - arimaFit), na.rm = TRUE) < 1e-3){
+                    arimaFitError = mean(c(meanFitError,
+                        lmFitError, marsFitError,
+                        expFitError[expFitError != 0],
+                        loessFitError[loessFitError != 0],
+                        logisticFitError), na.rm = TRUE)
+                } else {
+                    arimaFitError =
+                        arimaFitError = 1/sum(abs(x - arimaFit),
+                            na.rm = TRUE)
+                }
             } else {
-                arimaFitError =
-                    arimaFitError = 1/sum(abs(x - arimaFit),
-                        na.rm = TRUE)
+                arimaFit = rep(NA, T)
+                arimaFitError = 0
             }
-
+                
             ## Niave
             naiveFit = naiveImputation(x)
-            naiveFitError = mean(c(meanFitError, lmFitError, marsFitError,
-                           expFitError[expFitError != 0],
-                           loessFitError[loessFitError != 0],
-                           logisticFitError), na.rm = TRUE)
-
+            naiveFitError =
+                mean(c(meanFitError,
+                       lmFitError,
+                       marsFitError,
+                       expFitError[expFitError != 0],
+                       loessFitError[loessFitError != 0],
+                       logisticFitError),
+                     na.rm = TRUE)
+            
             ## Construct the ensemble
             if(!shrink){
                 weights =
@@ -121,6 +131,14 @@ ensembleImpute = function(x, plot = FALSE, shrink = FALSE){
                                 logisticFitError,
                                 arima = arimaFitError,
                                 naive = naiveFitError)^2, na.rm = TRUE)
+                if(any(weights >= 0.75)){
+                    weights[which(weights < 0.75)] =
+                        weights[which(weights < 0.75)] *
+                            (0.25/sum(weights[which(weights < 0.75)],
+                                      na.rm = TRUE))
+                    weights[which(weights >= 0.75)] = 0.75
+                }
+                
             } else {
                 weights =
                     c(mean = meanFitError,
@@ -135,14 +153,17 @@ ensembleImpute = function(x, plot = FALSE, shrink = FALSE){
                         names(tail(sort(weights), 3))] = 0
                 weights = weights/sum(weights, na.rm = TRUE)
             }
-            finalFit = (meanFit * weights["mean"] +
-                        lmFit * weights["lm"] +
-                        marsFit * weights["mars"] +
-                        expFit * weights["exp"] +
-                        loessFit * weights["loess"] +
-                        logisticFit * weights["logistic"] +
-                        arimaFit * weights["arima"] +
-                        naiveFit * weights["naive"])
+            
+            finalFit =
+                rowSums(matrix(c(meanFit * weights["mean"],
+                                 lmFit * weights["lm"],
+                                 marsFit * weights["mars"],
+                                 expFit * weights["exp"],
+                                 loessFit * weights["loess"],
+                                 logisticFit * weights["logistic"],
+                                 arimaFit * weights["arima"],
+                                 naiveFit * weights["naive"]), nc = 8),
+                        na.rm = TRUE)
 
             ## Plot the result
             if(plot){
@@ -172,11 +193,11 @@ ensembleImpute = function(x, plot = FALSE, shrink = FALSE){
                                "loess", "logistic", "arima",
                                "naive", "final"), " (",
                              round(c(weights, 1), 3) * 100, "%)"),
-                       col = c("red", "orange", "maroon", "gold", "brown",
-                           "green", "purple", "blue",
-                           "steelblue"), lwd = c(rep(1, 8), 5), bty = "n",
+                       col = c("red", "orange", "maroon", "gold",
+                           "brown", "green", "purple", "blue",
+                           "steelblue"),
+                       lwd = c(rep(1, 8), 5), bty = "n",
                        lty = 1)
-
             }
             x[missIndex] = finalFit[missIndex]
         } else {
@@ -185,8 +206,3 @@ ensembleImpute = function(x, plot = FALSE, shrink = FALSE){
     }
     as.numeric(x)
 }
-
-
-
-
-
