@@ -13,6 +13,7 @@
 \usepackage{float}
 \usepackage{placeins}
 \usepackage{mathrsfs}
+\usepackage{multirow}
 %% \usepackage{mathbbm}
 \DeclareMathOperator{\sgn}{sgn}
 \DeclareMathOperator*{\argmax}{\arg\!\max}
@@ -151,6 +152,9 @@ It is in the view of the author that imputation should be implemented
 as a last resort, rather as a replacement for data
 collection. Imputation itself does not create information it merely
 create observations based on assumption. 
+
+This paper is dynamically generated on \today{} and is subject to
+changes and updates.
 
 \section{Introduction}
 Missing values are commonplace in the agricultural production domain,
@@ -331,16 +335,17 @@ majority of the producers are smallholders or rural farming.\\
 Furthermore, producers faces different constraints and cost. Countries
 such as Brazil and Russia which has a large amount of arable land does
 not bear the same cost for land acqusition in comparison to small
-states such as the Netherlands, and thus does not face the same
-pressure to improve yield. Inovations required are also different for
-countries, wheat breeding for the development of drought and diease
-resistent variety were crucial to withold Australia's dry climate.  \\
+states such as the Netherlands. The cost translates to different
+pressure to improve productivity and yield. Inovations required are
+also different for countries, wheat breeding for the development of
+drought and diease resistent variety were crucial to withold
+Australia's dry climate.  \\
 
 
-Despite the various level of technology advancement and economic
-factors that could contribute to the difference among the countries,
-these factor contribute towards a positive result which can be
-estimated as an aggregated mixture effect.\\
+Despite the differences among the countries branching from various
+combination of technological advancement and economic condition, these
+factors all contribute towards a positive improvement in productitive
+which can be estimated as an aggregated mixture effect.\\
 
 <<wheat-yield-explore, fig.width=15, fig.height=12, fig.cap='This figure illustrates the yield of wheat accross all countries, it provide strong support to the facts previously mentioned. First of all, we can observe the concordant increasing trend accross all country where technological innovation such as improved seed, and synthetic nitrogen fertilizer contributed to the increase in productivity. Yet at the same time, we can also observe that the rate of growth differ between countries.', fig.pos='!ht'>>=
 
@@ -349,9 +354,6 @@ xyplot(yieldValue ~ year|areaName, data = wheat.dt, type = c("g", "l"),
 
 @ 
 
-
-
-%% Maybe talk more about irrigation or something.
 
 
 
@@ -393,13 +395,16 @@ previous period by the farmer. Which ultimately depends on the
 perception of information and subjective judgement of the
 producer. Production can increase or decrease production as a response
 to the state of the market, wheat field can be substitue to harvest
-sorghum if prices are expected to be high. Markets has been known to
+sorghum if prices are expected to be high. Further, individual
+entities faces different risk profile, even under the assumption of
+all producers are profit-seeking the risk profile may alter the
+portfolio of products held by the producer. Markets has been known to
 be difficult to forecast, let alone the prediction of human judgement
 is just shy of impossible.\\
 
-Only in cases where the commodity is a major staple or export item, we
-can observe simple trend explained by the continuous increase in
-demand. However in the case where the commodity is of relative lesser
+Only in cases where the commodity is a major staple or exporting item,
+we can observe simple trend explained by the continuous increase in
+demand. On the other hand, commodities which are of relative lesser
 importance, the pattern of the production may display unpredictable
 erratic behaviour.\\
 
@@ -461,7 +466,7 @@ prevalent in the production domain and the analyst should bear in mind
 of these characteristics.
 
 
-\subsubsection{Sparse Data}
+\subsubsection{Extremely High Sparsity}
 Although missing values are expected provided the goal of the task is
 to impute missing values, but one may be stunned at the sparsity of
 the data. For commodity such as pepper, merely 20\% of the data are
@@ -469,7 +474,7 @@ observed which raises the question whether imputation remain valid.
 
 \subsubsection{Diverging Trends and shocks}
 Another issue arose from the quality of the data reported and
-recorded. It is not uncommen to observe unexplainable divergin trends
+recorded. It is not uncommon to observe unexplainable diverging trends
 or shocks of production and area harvested which resulted in exploding
 yield. The yield of grape in Saudia Arabia in figure
 \ref{fig:grape-yield-explore} is a prime example. Coconut production
@@ -481,7 +486,7 @@ increase in the yield solely for that particular year.\\
 \subsubsection{No indicator distinguish zero, missing values and not application}
 The analyst should be made aware of the fact that although a framework
 does exist to distinguish zero and missing values in the database, in
-practice this may not be the case.
+practice this may not be the case.\\
 
 
 These observations prompt us to devise a robust method to safeguard
@@ -633,9 +638,9 @@ three issues.
 
 \begin{itemize}
   \setlength{\itemindent}{1in}
-  \item[Statistical:] Lack of data to identify an unique solution.
-  \item[Computational:] Optimization
-  \item[Representational:] Complex model
+  \item[\textbf{Statistical:}] Lack of data to identify an unique solution.
+  \item[\textbf{Computational:}] Optimization
+  \item[\textbf{Representational:}] Complex model
 \end{itemize}
 
 
@@ -648,14 +653,15 @@ three issues.
 
 The statistical problem refers to the lack of data to support a
 particular hypothesis. The problem can be formulated as finding the
-best hypothesis among competing models in the space $\mathcal{H}$. In
-the top left graph of the following depicion from Dietterich we can
-see that hypothesis within the blue boundary will give the same fit,
-and there is insufficient information to determine which one is
-better. By combining the models, we may reduce the risk of choosing a
-terrible model. If we only observe two data points for a country, then
-fitting a linear line or a log curve can both give the same fit and we
-may have no information to distinguish the two.\\
+best hypothesis among competing models in the space
+$\mathbf{\mathcal{H}}$. In the top left graph of the following
+depicion from Dietterich we can see that hypothesis within the blue
+boundary will give the same fit, and there is insufficient information
+to determine which one is better. By combining the models, we may
+reduce the risk of choosing a terrible model. If we only observe two
+data points for a country, then fitting a linear line or a log curve
+can both give the same fit and we may have no information to
+distinguish the two.\\
 
 The second problem which is lesser of an issue for our task is the
 computational problem which applies to model which employs greedy
@@ -1174,39 +1180,73 @@ further enhance the ensemble.\\
 
 
 \FloatBarrier
-%% \section{Simulation Results}
+\section{Simulation Styudy}
 
-%% In order to understand the capability and performance of the
-%% imputation, we conduct bootstrap simulation to estimate the prediction
-%% error.\\
+In order to understand the performance and characteristics of the
+imputation, we have conducted simulation to estimate the prediction
+error.\\
 
-%% For each bootstrap, we take a sample containing only official and
-%% semi-official data and impute the values which are issing. The
-%% imputation is then benchmarked with the actual observed official and
-%% semi-official data. We use the Mean Absolute Percentage Error (MAPE)
-%% for assessing the accuracy of the imputed values; and we compute the
-%% coverage rate defined as the proportion of missing value imputed to
-%% examine the applicability of the method.
+For each bootstrap, we take a sample containing only official and
+semi-official data and impute the values which are missing. The
+imputation is then benchmarked with the actual observed official and
+semi-official data. We use the Mean Absolute Percentage Error (MAPE)
+for assessing the accuracy of the imputed values; and we compute the
+coverage rate defined as the proportion of missing value imputed to
+examine the applicability of the method.
 
-%% \begin{equation}
-%%   \text{MAPE} = \frac{1}{N} \sum |y_i - \hat{y}_i|\\
-%% \end{equation}
+\begin{equation}
+  \text{MAPE} = \frac{1}{N} \sum \left|\frac{y_i -
+    \hat{y}_i}{y_i}\right|\\
+\end{equation}
 
 
-%% Each simulation draws a sample of varying missing proportion, this is
-%% to investigate the prediction error over different degree of
-%% missingess and at the same time to detect the breaking point of the
-%% method.\\
+Each simulation draws a sample of varying missing proportion, this is
+to investigate the prediction error over different degree of
+missingess and at the same time to detect the breaking point of the
+method.\\
 
-%% Since there are already missing value in the data, the benchmark is
-%% can only be computed on the available official and semi-official data
-%% which varies between commodity. We have over 70\% availability of
-%% benchmark observations for wheat, while only slightly over 20\% for
-%% pepper.\\
+Since there are already missing value in the data, the benchmark is
+can only be computed on the available official and semi-official data
+which varies between commodity. We have over 70\% availability of
+benchmark observations for wheat, while only slightly over 20\% for
+pepper.\\
 
-%% Provide a table of the error rate and the number of producer
-%% countries
 
+Here is the table for the result of the simulation, 50 boot strap
+samples were drawn for each scenario. The final percentage error is
+calculated as the average of all the bootstrapped error within the
+group. The missing percentage for grapes and beef were higher than
+20\% already and thus a simulation was not possible for the group of
+20\% missing proportion.
+
+\begin{table}
+  \centering
+  \label{tab:simResult}
+  \caption{Simulation result for the imputation methodology.}  
+  \begin{tabular}{|c|c|c|c|}
+    \hline
+    Commodity & Total Missing Proportion & Effective Missing Proportion & MAPE (\%)\\
+    \hline \hline
+    \multirow{4}{*}{Wheat}
+      & 30.9\%  & 20\% & 3.68\\
+      & 48.1\%  & 40\% & 7.84\\
+      & 65.4\%  & 60\% & 13.01\\
+      & 82.7\%  & 80\% & 25.19\\
+    \hline
+    \multirow{4}{*}{Grapes}
+      & 39.5\%  & 20\% & 4.49\\
+      & 54.6\%  & 40\% & 9.31\\
+      & 69.7\%  & 60\% & 14.63\\
+      & 84.9\%  & 80\% & 21.69\\
+    \hline
+    \multirow{4}{*}{Beef}
+      & 57.4\%  & 20\% & 1.04\\
+      & 68.1\%  & 40\% & 2.32\\
+      & 78.7\%  & 60\% & 4.15\\
+      & 89.4\%  & 80\% & 7.67\\
+    \hline 
+  \end{tabular}
+\end{table}
 
 
 \FloatBarrier
@@ -1242,8 +1282,7 @@ feedbacks.
 
 The data, source code and documentation can all be found and
 downloaded from \url{https://github.com/mkao006/sws_imputation}, the
-package can also be installed by following the instruction. This paper
-is generated on \today and is subject to changes and updates.
+package can also be installed by following the instruction. 
 
 \FloatBarrier
 \section*{Annex 2: Pseudo Codes}
