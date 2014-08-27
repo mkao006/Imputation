@@ -25,5 +25,5 @@ unlink("./faoswsProductionImputation/inst/", recursive = TRUE)
 ## Build and check the package
 system("R CMD INSTALL --build faoswsProductionImputation")
 system("R CMD build faoswsProductionImputation")
-system("R CMD check --as-cran faoswsProductionImputation")
+## system("R CMD check --as-cran faoswsProductionImputation")
 
