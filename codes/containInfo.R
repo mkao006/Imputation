@@ -3,16 +3,14 @@
 ##' If the data contains only of missing value or zero then it is
 ##' marked as no information.
 ##'
-##' @param data The data.
-##' @param productionValue The column name corresponding to the
-##' production value.
-##' @param productionSymb The column name which contains the flag of
-##' the production value.
+##' @param value A numeric vector to be checked
+##' @param flag The observation flag corresponding to the value.
+##' @param naFlag The observation flag which corresponds to missing
+##' value.
 ##'
 ##' @export
 
-containInfo = function(productionSymb, productionValue){
-    ifelse(all(productionSymb == "M") |
-           sum(productionValue, na.rm = TRUE) == 0,
+containInfo = function (value, flag, naFlag = "M"){
+    ifelse(all(flag == naFlag) | sum(value, na.rm = TRUE) == 0,
            FALSE, TRUE)
 }

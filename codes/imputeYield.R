@@ -3,45 +3,51 @@
 ##' This function imputes the yield through linear mixed model
 ##'
 ##' @param formula The formula to pass to the linear mixed model.
+##' @param yieldObservationFlag The observation flag of yield.
+##' @param imputationFlag Flag value for new imputation values.
+##' @param flagTable see data(faoswsFlagTable) in \pkg{faoswsFlag}
 ##' @param data The data
 ##' @param weights The weights for the observation
-##' @param index The keys for performing naive imputation if linear
-##' mixed model fails.
+##' @param byKey The unique key identifier.
 ##'
 ##' @export
 ##' 
 
-imputeYield = function(formula, data, weights = NULL, index){
 
-    dataCopy = copy(data)
+imputeYield = function(formula, yieldObservationFlag, imputationFlag,
+    flagTable = faoswsFlagTable, data, weights = NULL, byKey){
     response = all.vars(formula)[1]
-    setnames(dataCopy, response, "response")
+    setnames(x = data, old = c(response, yieldObservationFlag),
+             new = c("response", "yieldObservationFlag"))
 
-    ## Fit the model
-    newFormula = update(formula, response ~.)
+    yieldMissingIndex = is.na(data[, response])
+    
+    newFormula = update(formula, response ~ .)
     model =
         try(
-            lmer(formula = newFormula, data = dataCopy,
+            lmer(formula = newFormula,
+                 data = data,
                  weights = weights)
             )
 
     if(!inherits(model, "try-error")){
         ## Impute the data with lme.
-        dataCopy[is.na(response),
-                 response := predict(model, newdata = .SD,
-                              allow.new.levels = TRUE)]
+        data[yieldMissingIndex,
+             response := predict(model, newdata = .SD,
+                          allow.new.levels = TRUE)]
         
         ## Remove negative value from data.
-        dataCopy[response <= 0, response := as.numeric(NA)]
+        data[response <= 0, response := as.numeric(NA)]
         
-        ## Reimpute with naive imputation for those values that were
-        ## negative.
-        dataCopy[, response := naiveImputation(response), by = index]
-        imputedYield = unlist(dataCopy[, response])
-        
-    } else {
-        imputedYield = data[, response, with = FALSE]
+
     }
-    
-    imputedYield
+    ## Reimpute with naive imputation for those values that were
+    ## negative, or if the model failed.
+    data[, response := defaultNaive(response), by = byKey]
+    data[yieldMissingIndex & !is.na(response),
+         yieldObservationFlag := imputationFlag]
+
+    setnames(x = data,
+             old = c("response", "yieldObservationFlag"),
+             new = c(response, yieldObservationFlag))
 }

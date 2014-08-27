@@ -6,20 +6,15 @@
 ##' imformation for imputation.
 ##'
 ##' @param data The data
-##' @param productionValue The value of the production.
-##' @param productionSymb The flag/symbol of production.
-##' @param index The unique keys which identify groups.
+##' @param value The value of the production.
+##' @param flag The flag/symbol of production.
+##' @param byKey The unique keys which identify groups.
 ##'
 ##' @export
 ##' 
 
-removeNoInfo = function(data, productionSymb, productionValue, index){
-    data[, info :=
-         rep(containInfo(productionSymb, productionValue),
-             NROW(.SD)),
-         by = index]
-    
-    data = data[info == TRUE, ]
-    data[, info := NULL]
-    data
+removeNoInfo = function (data, value, flag, byKey){
+    info = data[, rep(containInfo(get(value), get(flag)),
+        NROW(.SD)), by = byKey]$V1
+    data = data[info, ]
 }
