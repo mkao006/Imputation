@@ -9,5 +9,5 @@
 
 remove0M = function(data, value, flag, naFlag = "M"){
     missingIndex = which(data[[flag]] == naFlag)
-    data[missingIndex, `:=`(c(value), list(NA))]
+    invisible(data[missingIndex, `:=`(c(value), list(NA))])
 }

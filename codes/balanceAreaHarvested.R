@@ -4,15 +4,15 @@
 ##'
 ##' @param productionValue The column name corresponding to production
 ##' value.
-##' @param productionFlag The column name corresponding to the
+##' @param productionObservationFlag The column name corresponding to the
 ##' observation flag of production.
 ##' @param areaHarvestedValue The column name corresponding to area
 ##' harvested value.
-##' @param areaHarvestedFlag The column name corresponding to the
-##' observation flag of area harvested.
+##' @param areaHarvestedObservationFlag The column name corresponding
+##' to the observation flag of area harvested.
 ##' @param yieldValue The columne name corresponding to yield value.
-##' @param yieldFlag The column name corresponding to the observation
-##' flag of yield.
+##' @param yieldObservationFlag The column name corresponding to the
+##' observation flag of yield.
 ##' @param flagTable see data(faoswsFlagTable) in \pkg{faoswsFlag}
 ##' @param data The data.table object containing the data.
 ##'
@@ -20,18 +20,26 @@
 ##' 
 
 
-balanceAreaHarvested = function(productionValue, productionFlag,
-    areaHarvestedValue, areaHarvestedFlag, yieldValue, yieldFlag,
-    flagTable = faoswsFlagTable, data){
-    origName = c(productionValue, productionFlag,
-        areaHarvestedValue, areaHarvestedFlag, yieldValue, yieldFlag)
-    tmpName = c("pValue", "pFlag", "aValue", "aFlag", "yValue", "yFlag")
+balanceAreaHarvested = function(productionValue,
+    productionObservationFlag, 
+    areaHarvestedValue, areaHarvestedObservationFlag,
+    areaHarvestedMethodFlag, yieldValue, yieldObservationFlag,
+    newMethodFlag, flagTable = faoswsFlagTable, data){
+    
+    origName = c(productionValue, productionObservationFlag,
+        areaHarvestedValue,
+        areaHarvestedObservationFlag, areaHarvestedMethodFlag,
+        yieldValue, yieldObservationFlag)
+    tmpName = c("pValue", "pObsFlag", "aValue", "aObsFlag",
+        "aMetFlag", "yValue", "yObsFlag")
     setnames(data, old = origName, new = tmpName)
-    data[!is.na(pValue) & is.na(aValue),
-         c("aValue", "aFlag") :=
+    
+    data[!is.na(pValue) & is.na(aValue) & !is.na(yValue),
+         c("aValue", "aObsFlag", "aMetFlag") :=
          list(computeRatio(pValue, yValue),
-              aggregateObservationFlag(pFlag, yFlag,
-                                       flagTable = flagTable))
+              aggregateObservationFlag(pObsFlag, yObsFlag,
+                                       flagTable = flagTable),
+              newMethodFlag)
          ]
     setnames(data, old = tmpName, new = origName)
 }

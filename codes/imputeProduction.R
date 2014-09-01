@@ -5,14 +5,14 @@
 ##'
 ##' @param productionValue The column name corresponding to production
 ##' value.
-##' @param productionFlag The column name corresponding to the
+##' @param productionObservationFlag The column name corresponding to the
 ##' observation flag of production.
 ##' @param areaHarvestedValue The column name corresponding to area
 ##' harvested value.
-##' @param areaHarvestedFlag The column name corresponding to the
+##' @param areaHarvestedObservationFlag The column name corresponding to the
 ##' observation flag of area harvested.
 ##' @param yieldValue The columne name corresponding to yield value.
-##' @param yieldFlag The column name corresponding to the observation
+##' @param yieldObservationFlag The column name corresponding to the observation
 ##' flag of yield.
 ##' @param imputationFlag Flag value for new imputation values.
 ##' @param flagTable see data(faoswsFlagTable) in \pkg{faoswsFlag}
@@ -28,10 +28,12 @@
 ##' @export
 ##' 
 
-imputeProduction = function(productionValue, productionFlag,
-    areaHarvestedValue, areaHarvestedFlag, yieldValue, yieldFlag,
-    imputationFlag = "I", data, byKey, restrictWeights = TRUE,
-    maximumWeights = 0.7,
+imputeProduction = function(productionValue, productionObservationFlag,
+    productionMethodFlag, areaHarvestedValue,
+    areaHarvestedObservationFlag, areaHarvestedMethodFlag, yieldValue,
+    yieldObservationFlag, yieldMethodFlag, imputationFlag = "I",
+    newMethodFlag, data,
+    byKey, restrictWeights = TRUE, maximumWeights = 0.7,
     ensembleModel = list(defaultMean, defaultLm, defaultExp,
         defaultLogistic, defaultLoess, defaultSpline, defaultArima,
         defaultMars, defaultNaive), flagTable = faoswsFlagTable){
@@ -39,18 +41,25 @@ imputeProduction = function(productionValue, productionFlag,
 
     ## By balancing first
     balanceProduction(productionValue = productionValue,
-                      productionFlag = productionFlag,
+                      productionObservationFlag =
+                          productionObservationFlag,
+                      productionMethodFlag =
+                          productionMethodFlag,
                       areaHarvestedValue = areaHarvestedValue,
-                      areaHarvestedFlag = areaHarvestedFlag,
+                      areaHarvestedObservationFlag =
+                          areaHarvestedObservationFlag,
+                      newMethodFlag = newMethodFlag,
                       yieldValue = yieldValue,
-                      yieldFlag = yieldFlag,
+                      yieldObservationFlag = yieldObservationFlag,
                       data = data,
                       flagTable = flagTable)
 
     ## Then imputation by ensemble
     setnames(x = data,
-             old = c(productionValue, productionFlag),
-             new = c("productionValue", "productionFlag"))
+             old = c(productionValue, productionObservationFlag,
+                 productionMethodFlag),
+             new = c("productionValue", "productionObservationFlag",
+                 "productionMethodFlag"))
 
     productionMissingIndex = is.na(data[, productionValue])
     data[, productionValue :=
@@ -59,9 +68,12 @@ imputeProduction = function(productionValue, productionFlag,
                         plot = FALSE),
          by = byKey]
     data[productionMissingIndex & !is.na(productionValue),
-         productionFlag := imputationFlag]
+         c("productionObservationFlag", "productionMethodFlag") :=
+         list(imputationFlag, newMethodFlag)]
     
     setnames(x = data,
-             old = c("productionValue", "productionFlag"),
-             new = c(productionValue, productionFlag))
+             old = c("productionValue", "productionObservationFlag",
+                 "productionMethodFlag"),
+             new = c(productionValue, productionObservationFlag,
+                 productionMethodFlag))
 }

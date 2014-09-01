@@ -2,9 +2,14 @@
 ##'
 ##' This function imputes the yield through linear mixed model
 ##'
-##' @param formula The formula to pass to the linear mixed model.
+##' @param yieldValue The column name of the yield variable.
 ##' @param yieldObservationFlag The observation flag of yield.
+##' @param yieldMethodFlag The method flag of yield.
+##' @param yearValue The column name corresponding to year.
 ##' @param imputationFlag Flag value for new imputation values.
+##' @param newMethodFlag The new method flag to be assigned to imputed
+##' value.
+##' @param maxdf The maximum degree of freedom for the spline.
 ##' @param flagTable see data(faoswsFlagTable) in \pkg{faoswsFlag}
 ##' @param data The data
 ##' @param weights The weights for the observation
@@ -14,40 +19,87 @@
 ##' 
 
 
-imputeYield = function(formula, yieldObservationFlag, imputationFlag,
-    flagTable = faoswsFlagTable, data, weights = NULL, byKey){
-    response = all.vars(formula)[1]
-    setnames(x = data, old = c(response, yieldObservationFlag),
-             new = c("response", "yieldObservationFlag"))
+imputeYield = function(yieldValue, yieldObservationFlag, yieldMethodFlag,
+    yearValue, imputationFlag, newMethodFlag, maxdf = 5, 
+    flagTable = faoswsFlagTable, data, weights = NULL, byKey,
+    yieldFormula){
 
-    yieldMissingIndex = is.na(data[, response])
+    setnames(x = data, old = c(yieldValue, yieldObservationFlag,
+                           yieldMethodFlag, yearValue),
+             new = c("yieldValue", "yieldObservationFlag",
+                 "yieldMethodFlag", "yearValue"))
     
-    newFormula = update(formula, response ~ .)
-    model =
-        try(
-            lmer(formula = newFormula,
-                 data = data,
-                 weights = weights)
+    yieldMissingIndex = is.na(data[, yieldValue])
+    
+    if(missing(yieldFormula)){
+        yieldFormula = as.formula(paste0("yieldValue ~ -1 + (1 + yearValue|",
+            byKey, ")"))
+        ## print(yieldFormula)
+        model = try(
+            lmer(formula = yieldFormula, data = data,
+                 ## weights = data[, productionValue],
+                 weights = weights,
+                 REML = FALSE)
             )
-
+        
+        if(!inherits(model, "try-error")){
+            for(i in 2:maxdf){
+                newYieldFormula =
+                    as.formula(paste0("yieldValue ~ -1 + (1 + bs(yearValue, df = ",
+                                      i, ", degree = 1)|", byKey, ")"))
+                ## print(newYieldFormula)
+                newModel = try(
+                    lmer(formula = newYieldFormula,
+                         data = data,
+                         ## weights = data[, productionValue],
+                         weights = weights,
+                         REML = FALSE)
+                    )
+                if(!inherits(newModel, "try-error")){
+                    m = bootMer(model, FUN = function(x)
+                        as.numeric(logLik(x)), nsim = 100)
+                    nm = bootMer(newModel, FUN = function(x)
+                        as.numeric(logLik(x)), nsim = 100)
+                    if(quantile(-2 * m$t + 2 * nm$t, prob = 0.05) < 0){
+                        break
+                    } else {
+                        yieldFormula = newYieldFormula
+                        model = newModel
+                    }
+                }
+            }
+        }
+    } else {
+        model = try(
+            lmer(formula = yieldFormula, data = data,
+                 ## weights = data[, productionValue],
+                 weights = weights,
+                 REML = FALSE)
+            )
+    }
+                
     if(!inherits(model, "try-error")){
+        
         ## Impute the data with lme.
         data[yieldMissingIndex,
-             response := predict(model, newdata = .SD,
-                          allow.new.levels = TRUE)]
+             yieldValue := predict(model, newdata = .SD,
+                            allow.new.levels = TRUE)]
         
         ## Remove negative value from data.
-        data[response <= 0, response := as.numeric(NA)]
+        data[yieldValue <= 0, yieldValue := as.numeric(NA)]
         
 
     }
     ## Reimpute with naive imputation for those values that were
     ## negative, or if the model failed.
-    data[, response := defaultNaive(response), by = byKey]
-    data[yieldMissingIndex & !is.na(response),
-         yieldObservationFlag := imputationFlag]
+    data[, yieldValue := defaultNaive(yieldValue), by = byKey]
+    data[yieldMissingIndex & !is.na(yieldValue),
+         c("yieldObservationFlag", "yieldMethodFlag") :=
+         list(imputationFlag, newMethodFlag)]
 
     setnames(x = data,
-             old = c("response", "yieldObservationFlag"),
-             new = c(response, yieldObservationFlag))
+             old = c("yieldValue", "yieldObservationFlag",
+                 "yieldMethodFlag"),
+             new = c(yieldValue, yieldObservationFlag,
+                 yieldMethodFlag))
 }
