@@ -27,8 +27,8 @@ ensembleImpute = function(x, restrictWeights = TRUE,
         if(length(unique(na.omit(x))) == 1){
             ensemble = defaultMean(x)
         } else {
-            modelFits = lapply(ensembleModel,
-                FUN = function(x, value) x(value), value = x)
+            modelFits = computeEnsembleFit(x = x,
+                ensembleModel = ensembleModel)
             modelWeights = computeEnsembleWeight(x, modelFits,
                 restrictWeights = restrictWeights,
                 maximumWeights = maximumWeights)
