@@ -14,47 +14,47 @@
 ##' @export
 
 removeZeroConflict = function(productionValue, areaHarvestedValue,
-    yieldValue, productionFlag, areaHarvestedFlag, yieldFlag,
-    naFlag = "M", data){
+    yieldValue, productionObservationFlag, areaHarvestedObservationFlag,
+    yieldObservationFlag, naFlag = "M", data){
 
     setnames(x = data,
              old = c(productionValue,
                      areaHarvestedValue,
                      yieldValue,
-                     productionFlag,
-                     areaHarvestedFlag,
-                     yieldFlag),
+                     productionObservationFlag,
+                     areaHarvestedObservationFlag,
+                     yieldObservationFlag),
              new = c("productionValue",
                      "areaHarvestedValue",
                      "yieldValue",
-                     "productionFlag",
-                     "areaHarvestedFlag",
-                     "yieldFlag"))
+                     "productionObservationFlag",
+                     "areaHarvestedObservationFlag",
+                     "yieldObservationFlag"))
              
     data[productionValue == 0 & areaHarvestedValue,
          `:=`(areaHarvestedValue = NA,
               yieldValue = NA,
-              areaHarvestedFlag = naFlag,
-              yieldFlag = naFlag)]
+              areaHarvestedObservationFlag = naFlag,
+              yieldObservationFlag = naFlag)]
 
     data[areaHarvestedValue == 0 & productionValue,
          `:=`(productionValue = NA,
               yieldValue = NA,
-              productionFlag = naFlag,
-              yieldFlag = naFlag)]
+              productionObservationFlag = naFlag,
+              yieldObservationFlag = naFlag)]
 
     setnames(x = data,
              old = c("productionValue",
                      "areaHarvestedValue",
                      "yieldValue",
-                     "productionFlag",
-                     "areaHarvestedFlag",
-                     "yieldFlag"),
+                     "productionObservationFlag",
+                     "areaHarvestedObservationFlag",
+                     "yieldObservationFlag"),
              new = c(productionValue,
                      areaHarvestedValue,
                      yieldValue,
-                     productionFlag,
-                     areaHarvestedFlag,
-                     yieldFlag))
+                     productionObservationFlag,
+                     areaHarvestedObservationFlag,
+                     yieldObservationFlag))
     
 }
