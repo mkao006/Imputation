@@ -8,5 +8,5 @@
 computeEnsemble = function(fits, weights){
     fitsMatrix = matrix(unlist(fits), ncol = length(fits))
     fitsMatrix[is.na(fitsMatrix)] = 0
-    fitsMatrix %*% weights
+    c(fitsMatrix %*% weights)
 }
