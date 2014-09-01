@@ -2,49 +2,54 @@
 ##'
 ##' @param productionValue The column name corresponding to production
 ##' value.
-##' @param productionFlag The column name corresponding to the
-##' observation flag of production.
+##' @param productionObservationFlag The column name corresponding to
+##' the observation flag of production.
 ##' @param areaHarvestedValue The column name corresponding to area
 ##' harvested value.
-##' @param areaHarvestedFlag The column name corresponding to the
-##' observation flag of area harvested.
+##' @param areaHarvestedObservationFlag The column name corresponding
+##' to the observation flag of area harvested.
 ##' @param yieldValue The columne name corresponding to yield value.
-##' @param yieldFlag The column name corresponding to the observation
-##' flag of yield.
+##' @param yieldObservationFlag The column name corresponding to the
+##' observation flag of yield.
 ##' @param flagTable see data(faoswsFlagTable) in \pkg{faoswsFlag}
 ##' @param data The data.table object containing the data.
 ##'
 ##' @export
 
 
-computeYield = function(productionValue, productionFlag,
-    areaHarvestedValue, areaHarvestedFlag, yieldValue, yieldFlag,
+computeYield = function(productionValue, productionObservationFlag,
+    areaHarvestedValue, areaHarvestedObservationFlag, yieldValue,
+    yieldObservationFlag, yieldMethodFlag, newMethodFlag,
     flagTable = faoswsFlagTable, data){
     
     if(!yieldValue %in% colnames(data))
         data[, c(yieldValue) := NA]
-    if(!yieldFlag %in% colnames(data))
-        data[, c(yieldFlag) := NA]
+    if(!yieldObservationFlag %in% colnames(data))
+        data[, c(yieldObservationFlag) := NA]
+    if(!yieldMethodFlag %in% colnames(data))
+        data[, c(yieldMethodFlag) := NA]    
 
     setnames(x = data,
-             old = c(productionValue, productionFlag,
-                     areaHarvestedValue, areaHarvestedFlag,
-                     yieldValue, yieldFlag),
-             new = c("productionValue", "productionFlag",
-                     "areaHarvestedValue", "areaHarvestedFlag",
-                     "yieldValue", "yieldFlag"))
+             old = c(productionValue, productionObservationFlag,
+                     areaHarvestedValue, areaHarvestedObservationFlag,
+                     yieldValue, yieldObservationFlag, yieldMethodFlag),
+             new = c("productionValue", "productionObservationFlag",
+                 "areaHarvestedValue", "areaHarvestedObservationFlag",
+                 "yieldValue", "yieldObservationFlag", "yieldMethodFlag"))
     
     data[, yieldValue :=
          computeRatio(productionValue, areaHarvestedValue)]
-    data[, yieldFlag :=
-         aggregateObservationFlag(productionFlag, areaHarvestedFlag,
+    data[, yieldObservationFlag :=
+         aggregateObservationFlag(productionObservationFlag,
+                                  areaHarvestedObservationFlag,
                                   flagTable = flagTable)]
-
+    data[, yieldMethodFlag := newMethodFlag]
+    
     setnames(x = data,
-             old = c("productionValue", "productionFlag",
-                     "areaHarvestedValue", "areaHarvestedFlag",
-                     "yieldValue", "yieldFlag"),
-             new = c(productionValue, productionFlag,
-                     areaHarvestedValue, areaHarvestedFlag,
-                     yieldValue, yieldFlag))
+             old = c("productionValue", "productionObservationFlag",
+                 "areaHarvestedValue", "areaHarvestedObservationFlag",
+                 "yieldValue", "yieldObservationFlag", "yieldMethodFlag"),
+             new = c(productionValue, productionObservationFlag,
+                 areaHarvestedValue, areaHarvestedObservationFlag,
+                 yieldValue, yieldObservationFlag, yieldMethodFlag))
 }
