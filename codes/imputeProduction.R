@@ -34,9 +34,12 @@ imputeProduction = function(productionValue, productionObservationFlag,
     yieldObservationFlag, yieldMethodFlag, imputationFlag = "I",
     newMethodFlag, data,
     byKey, restrictWeights = TRUE, maximumWeights = 0.7,
-    ensembleModel = list(defaultMean, defaultLm, defaultExp,
-        defaultLogistic, defaultLoess, defaultSpline, defaultArima,
-        defaultMars, defaultNaive), flagTable = faoswsFlagTable){
+    ensembleModel = list(defaultMean = defaultMean,
+        defaultLm = defaultLm, defaultExp = defaultExp,
+        defaultLogistic = defaultLogistic, defaultLoess = defaultLoess,
+        defaultSpline = defaultSpline, defaultArima = defaultArima,
+        defaultMars = defaultMars, defaultNaive = defaultNaive),
+    flagTable = faoswsFlagTable){
 
 
     ## By balancing first
