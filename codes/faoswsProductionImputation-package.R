@@ -15,6 +15,7 @@
 ##' @import forecast
 ##' @import splines
 ##' @import zoo
+##' @import RColorBrewer
 ##' 
 ##'
 NULL
