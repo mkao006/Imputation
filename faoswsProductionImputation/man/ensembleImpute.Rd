@@ -4,9 +4,10 @@
 \title{Function to perform ensemble imputation}
 \usage{
 ensembleImpute(x, restrictWeights = TRUE, maximumWeights = 0.7,
-  ensembleModel = list(defaultMean, defaultLm, defaultExp, defaultLogistic,
-  defaultLoess, defaultSpline, defaultArima, defaultMars, defaultNaive),
-  plot = FALSE)
+  ensembleModel = list(defaultMean = defaultMean, defaultLm = defaultLm,
+  defaultExp = defaultExp, defaultLogistic = defaultLogistic, defaultLoess =
+  defaultLoess, defaultSpline = defaultSpline, defaultArima = defaultArima,
+  defaultMars = defaultMars, defaultNaive = defaultNaive), plot = FALSE)
 }
 \arguments{
 \item{x}{A numeric vector}

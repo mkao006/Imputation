@@ -10,9 +10,11 @@ imputeProductionDomain(data, productionValue, areaHarvestedValue, yieldValue,
   removePriorImputation = TRUE, removeConflictValues = TRUE,
   imputedFlag = "E", imputationFlag = "I", newMethodFlag = "",
   naFlag = "M", maxdf = 5, byKey = "areaCode", restrictWeights = TRUE,
-  maximumWeights = 0.7, ensembleModel = list(defaultMean, defaultLm,
-  defaultExp, defaultLogistic, defaultLoess, defaultSpline, defaultArima,
-  defaultMars, defaultNaive), yieldFormula)
+  maximumWeights = 0.7, ensembleModel = list(defaultMean = defaultMean,
+  defaultLm = defaultLm, defaultExp = defaultExp, defaultLogistic =
+  defaultLogistic, defaultLoess = defaultLoess, defaultSpline = defaultSpline,
+  defaultArima = defaultArima, defaultMars = defaultMars, defaultNaive =
+  defaultNaive), yieldFormula)
 }
 \arguments{
 \item{data}{The data}

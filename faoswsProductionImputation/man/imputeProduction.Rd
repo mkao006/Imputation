@@ -7,9 +7,11 @@ imputeProduction(productionValue, productionObservationFlag,
   productionMethodFlag, areaHarvestedValue, areaHarvestedObservationFlag,
   areaHarvestedMethodFlag, yieldValue, yieldObservationFlag, yieldMethodFlag,
   imputationFlag = "I", newMethodFlag, data, byKey, restrictWeights = TRUE,
-  maximumWeights = 0.7, ensembleModel = list(defaultMean, defaultLm,
-  defaultExp, defaultLogistic, defaultLoess, defaultSpline, defaultArima,
-  defaultMars, defaultNaive), flagTable = faoswsFlagTable)
+  maximumWeights = 0.7, ensembleModel = list(defaultMean = defaultMean,
+  defaultLm = defaultLm, defaultExp = defaultExp, defaultLogistic =
+  defaultLogistic, defaultLoess = defaultLoess, defaultSpline = defaultSpline,
+  defaultArima = defaultArima, defaultMars = defaultMars, defaultNaive =
+  defaultNaive), flagTable = faoswsFlagTable)
 }
 \arguments{
 \item{productionValue}{The column name corresponding to production

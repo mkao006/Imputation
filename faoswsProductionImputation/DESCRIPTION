@@ -18,9 +18,14 @@ Imports:
     reshape2 (>= 1.4),
     earth (>= 3.2-7),
     forecast (>= 5.5),
-    zoo (>= 1.7-11)
+    zoo (>= 1.7-11),
+    RColorBrewer (>= 1.0-5)
 Depends:
     faoswsFlag (>= 1.0),
     splines (>= 3.1.1)
 LazyData: yes
 ZipData: no
+VignetteBuilder: knitr
+Suggests:
+    knitr,
+    ggplot2
