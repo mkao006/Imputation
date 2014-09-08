@@ -11,6 +11,6 @@
 
 removeImputation = function(data, value, flag, imputedFlag = "T",
     naFlag = "M"){
-    imputedIndex = which(data[[flag]] == imputedFlag)
+    imputedIndex = which(data[[flag]] %in% imputedFlag)
     invisible(data[imputedIndex, `:=`(c(value, flag), list(NA, naFlag))])
 }

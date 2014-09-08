@@ -15,7 +15,7 @@ defaultLoess = function(x){
         span = span, degree = 1),
         newdata = data.frame(time)), silent = TRUE)
     
-    if(!inherits(loessFit, "try-error")){
+    if(!inherits(loessFit, "try-error") & n.obs >= 5){
         loessFit[loessFit < 0] = 0
     } else {
         loessFit = rep(NA, T)

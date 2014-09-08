@@ -18,7 +18,7 @@ computeEnsembleWeight = function(x, fits, restrictWeights = TRUE,
             }
         )
     ## NOTE (Michael): Maybe change this to uniform weight
-    error[error < 1e-3] = mean(error, na.rm = TRUE)
+    error[error < 1e-3] = mean(error[error >= 1e-3], na.rm = TRUE)
     weights = (1/error^2)/sum(1/error^2, na.rm = TRUE)
     weights[is.na(weights)] = 0
     if(restrictWeights & any(weights > maximumWeights)){
