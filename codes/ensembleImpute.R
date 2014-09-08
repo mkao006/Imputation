@@ -18,9 +18,13 @@
 
 ensembleImpute = function(x, restrictWeights = TRUE,
     maximumWeights = 0.7,
-    ensembleModel = list(defaultMean, defaultLm, defaultExp,
-        defaultLogistic, defaultLoess, defaultSpline, defaultArima,
-        defaultMars, defaultNaive), plot = FALSE){
+    ensembleModel = list(defaultMean = defaultMean,
+        defaultLm = defaultLm, defaultExp = defaultExp,
+        defaultLogistic = defaultLogistic, defaultLoess = defaultLoess,
+        defaultSpline = defaultSpline, defaultArima = defaultArima,
+        defaultMars = defaultMars, defaultNaive = defaultNaive),
+    plot = FALSE){
+    n.model = length(ensembleModel)
     ensemble = x
     missIndex = is.na(ensemble)
     if(any(is.na(x))){
@@ -36,10 +40,28 @@ ensembleImpute = function(x, restrictWeights = TRUE,
             ensembleFit = computeEnsemble(modelFits, modelWeights)
             ensemble[missIndex] = ensembleFit[missIndex]
             if(plot){
-                plot(x, ylim = range(lapply(modelFits, range),
-                            na.rm = TRUE))
-                lapply(modelFits, lines)
-                lines(ensemble, col = "red", lwd = 2)
+                if(is.null(names(ensembleModel))){
+                    modelNames = paste0("Model ", 1:n.model)
+                } else {
+                    modelNames = names(ensembleModel)
+                }
+
+                plot(x, ylim = c(0, 1.1 * max(sapply(modelFits, max),
+                            na.rm = TRUE)), type = "n",
+                     xlab = "", ylab = "")
+                colPal = brewer.pal(n.model, "Paired")
+                for(i in 1:n.model){
+                    lines(modelFits[[i]], col = colPal[i])
+                }
+                lines(ensembleFit, col = "steelblue", lwd = 3)
+                points(x, pch = 19)
+                legend("topleft",
+                       legend = c(paste0(modelNames, "(",
+                           round(modelWeights * 100, 2),
+                           "%)"), "Ensemble"),
+                       col = c(colPal, "steelblue"),
+                       lwd = c(rep(1, n.model), 3),
+                       bty = "n")
             }
         }
     } else {
