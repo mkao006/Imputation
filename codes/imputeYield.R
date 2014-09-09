@@ -32,7 +32,8 @@ imputeYield = function(yieldValue, yieldObservationFlag, yieldMethodFlag,
     yieldMissingIndex = is.na(data[, yieldValue])
     
     if(missing(yieldFormula)){
-        yieldFormula = as.formula(paste0("yieldValue ~ -1 + (1 + yearValue|",
+        yieldFormula =
+            as.formula(paste0("yieldValue ~ -1 + (1 + yearValue|",
             byKey, ")"))
         ## print(yieldFormula)
         model = try(
@@ -41,9 +42,23 @@ imputeYield = function(yieldValue, yieldObservationFlag, yieldMethodFlag,
                  weights = weights,
                  REML = FALSE)
             )
+                    
+        predictError = function(x, y, newdata){
+            yhat = predict(x, newdata = newdata)
+            amse = sum((yhat - y)^2,na.rm = TRUE)/
+                length(na.omit(y))
+            amse
+        }
+
+        benchmarkError = bootMer(model,
+            FUN = function(x){
+                predictError(x = x, y = data$yieldValue,
+                             newdata = data)
+            }, nsim = 100)
         
         if(!inherits(model, "try-error")){
             for(i in 2:maxdf){
+                ## cat("proposing df:", i, "\n")
                 newYieldFormula =
                     as.formula(paste0("yieldValue ~ -1 + (1 + bs(yearValue, df = ",
                                       i, ", degree = 1)|", byKey, ")"))
@@ -56,16 +71,34 @@ imputeYield = function(yieldValue, yieldObservationFlag, yieldMethodFlag,
                          REML = FALSE)
                     )
                 if(!inherits(newModel, "try-error")){
-                    m = bootMer(model, FUN = function(x)
-                        as.numeric(logLik(x)), nsim = 100)
-                    nm = bootMer(newModel, FUN = function(x)
-                        as.numeric(logLik(x)), nsim = 100)
-                    if(quantile(-2 * m$t + 2 * nm$t, prob = 0.05) < 0){
-                        break
-                    } else {
+
+                    newModelError = bootMer(newModel,
+                        FUN = function(x){
+                            predictError(x = x, y = data$yieldValue,
+                                         newdata = data)
+                        }, nsim = 100)
+                    ## cat("old:", mean(benchmarkError$t), "\n")
+                    ## cat("new:", mean(newModelError$t), "\n")
+                    if(mean(benchmarkError$t) > mean(newModelError$t)){
                         yieldFormula = newYieldFormula
                         model = newModel
-                    }
+                        benchmarkError = newModelError
+                    } else {
+                        cat("Model with", i - 1,
+                            "degree of freedom is selected\n")
+                        break
+                    }                   
+                    
+                    ## m = bootMer(model, FUN = function(x)
+                    ##     as.numeric(logLik(x)), nsim = 100)
+                    ## nm = bootMer(newModel, FUN = function(x)
+                    ##     as.numeric(logLik(x)), nsim = 100)
+                    ## if(quantile(-2 * m$t + 2 * nm$t, prob = 0.05) < 0){
+                    ##     break
+                    ## } else {
+                    ##     yieldFormula = newYieldFormula
+                    ##     model = newModel
+                    ## }
                 }
             }
         }
