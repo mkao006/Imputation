@@ -4,6 +4,8 @@ This is the **github** repository for the development of the FAOSTAT
 production imputation methodology.
 
 
+
+
 ### Installation
 To install the imputation package, simply run the following command. 
 
@@ -19,6 +21,15 @@ install_github(repo = "sws_imputation",
 	       username = "mkao006", 
 	       subdir = "faoswsProductionImputation")
 ```
+
+#### Vignettes
+
+There are two vignettes associated with the package, one for the
+methodology while the other for the step-by-step tutorial of the
+functionality.
+
+We recommend to skim through the methodlogy paper before proceeding to
+the tutorial.
 
 The methodology paper can be accessed via the vignette.
 
