@@ -183,9 +183,9 @@ food supply in FBS.\\
 
 Presented in table \ref{tab:swsflag} is a description of the existing
 flags in the current Statistical Working System (SWS). In this
-exercise, non-official/semi-official data which are marked as either
-\textbf{F}, \textbf{E} and \textbf{T} are the target values to be
-imputed.\\
+exercise, estimated and previously imputed data which are marked as
+either \textbf{F}, \textbf{E} and \textbf{T} are the target values to
+be imputed.\\
 
 \begin{table}[h!]
   \label{tab:swsflag}
@@ -213,10 +213,11 @@ imputed.\\
 
 \subsection{Scope of the project}
 %% Need to check 
-A total of 169 commodities just in the crop domain and 19 primary
-livestock and 59 processed livestock. There are in total of 245
-countries including obsolete classifications and territories which
-result in more than 180,000+ potential times series to impute.\\
+A total of 247 commodities requires imputation, 169 commodities from
+the crop domain, 19 in primary livestock and 59 processed
+livestock. There are in total of 245 countries including obsolete
+classifications and territories which result in more than 180,000+
+potential times series to impute.\\
 
 
 \FloatBarrier
@@ -292,12 +293,13 @@ production and area may be considerably different.\\
 
 We first take a visualization tour of the data to grasp an
 understanding of the underlying pattern of the production domain and
-the relationship between the variables.
+the relationship between the variables. The series commence in 1992
+and continues to 2011.
 
 \subsection{Yield}
 
-The next three graph depicts the yield of three selected commodity
-from different commodity group, wheat, grape and beef.\\
+The next three graph depicts the yield of four selected commodity from
+different commodity group, wheat, grape, okra and beef.\\
 
 
 From the graphs, we can first observe that there is a general
@@ -317,8 +319,8 @@ time.\\
 
 Nevertheless, just like all available technology such as internet, the
 distribution is far from perfect. The adoption of technology depends
-on the access which may be hindered by the presence of patents, or it
-may be restricted by service providers. Imperfect information and
+on the access which may be hindered by the presence of patents, or
+restriction imposed by service providers. Imperfect information and
 limit financial resources are also major obstacles for embracing the
 new developments, this is particularly true for countries where the
 majority of the producers are smallholders or rural farming.\\
@@ -338,6 +340,10 @@ combination of technological advancement and economic condition, these
 factors all contribute towards a positive improvement in productitive
 which can be estimated as an aggregated mixture effect.\\
 
+Forces of nature also play a vital role in the determination of crop
+productivity. However, unlike technological advancement, precipitation
+and temperature are associated more closely to year-to-year variation.\\
+
 \begin{knitrout}
 \definecolor{shadecolor}{rgb}{0.969, 0.969, 0.969}\color{fgcolor}\begin{figure}[!ht]
 
@@ -346,7 +352,7 @@ which can be estimated as an aggregated mixture effect.\\
 
 }
 
-\caption[This figure illustrates the yield of wheat accross all countries, it provide strong support to the facts previously mentioned]{This figure illustrates the yield of wheat accross all countries, it provide strong support to the facts previously mentioned. First of all, we can observe the concordant increasing trend accross all country where technological innovation such as improved seed, and synthetic nitrogen fertilizer contributed to the increase in productivity. Yet at the same time, we can also observe that the rate of growth differ between countries.\label{fig:wheat-yield-explore}}
+\caption[This figure illustrates the yield of wheat accross all countries, it provide strong support to the facts stated]{This figure illustrates the yield of wheat accross all countries, it provide strong support to the facts stated. First of all, we can observe the concordant increasing trend accross all country where technological innovation such as improved seed, and synthetic nitrogen fertilizer contributed to the increase in productivity. Yet at the same time, we can also observe that the rate of growth differ between countries. The single yield spike in Zambia raises concern on data quality.\label{fig:wheat-yield-explore}}
 \end{figure}
 
 
@@ -364,7 +370,7 @@ which can be estimated as an aggregated mixture effect.\\
 
 }
 
-\caption[Unlike the yield of wheat, the yield for grape has remain rather constant over time except a few selective country such as Peru and Azerbaijian]{Unlike the yield of wheat, the yield for grape has remain rather constant over time except a few selective country such as Peru and Azerbaijian. There are a few spikes observed, namely Iraq, the invasion of Iraq may have contributed to the negative shock.\label{fig:grape-yield-explore}}
+\caption[Unlike the yield of wheat, the yield for grape has remain rather constant over time except a few selective country such as Peru and Azerbaijian]{Unlike the yield of wheat, the yield for grape has remain rather constant over time except a few selective country such as Peru and Azerbaijian. There are a few spikes observed, namely Iraq, the invasion of Iraq may have contributed to the negative shock. The considerable fall in the yield for India is of unknown cause, and potentially a data entry error.\label{fig:grape-yield-explore}}
 \end{figure}
 
 
@@ -425,7 +431,7 @@ entities faces different risk profile, even under the assumption of
 all producers are profit-seeking the risk profile may alter the
 portfolio of products held by the producer. Markets has been known to
 be difficult to forecast, let alone the prediction of human judgement
-is just shy of impossible.\\
+is just shy of impossible under curren state of understanding.\\
 
 Only in cases where the commodity is a major staple or exporting item,
 we can observe simple trend explained by the continuous increase in
@@ -443,7 +449,7 @@ erratic behaviour.\\
 
 }
 
-\caption[Wheat production and area harvested by country]{Wheat production and area harvested by country. The figure shows that excluding several producers such as Turkemenistan, Nepal, and Pakistan which has a stable trend in production, both the production and area display erratic behavior.\label{fig:wheat-production-area-explore}}
+\caption[Wheat production and area harvested by country]{Wheat production and area harvested by country. The figure shows that excluding several producers such as India, Nepal, and Pakistan which has a stable trend in production, both the production and area of most countries display erratic behavior.\label{fig:wheat-production-area-explore}}
 \end{figure}
 
 
@@ -474,7 +480,7 @@ erratic behaviour.\\
 
 }
 
-\caption[Even more so than both wheat and grape, the production appears to demonstrate unpredictable trends and shocks]{Even more so than both wheat and grape, the production appears to demonstrate unpredictable trends and shocks.\label{fig:okra-production-area-explore}}
+\caption[Even more so than both wheat and grape, the production of okra appears to demonstrate unpredictable trends and shocks]{Even more so than both wheat and grape, the production of okra appears to demonstrate unpredictable trends and shocks.\label{fig:okra-production-area-explore}}
 \end{figure}
 
 
@@ -495,13 +501,13 @@ erratic behaviour.\\
 \end{knitrout}
 
 
-One worthnoting point is that production which display simple pattern
-are typically commodities in countries which are highly commercialized
-or important for consumption as staple or trade for financial
-resources. These item are rarely the one we need to impute as they are
-generally complete, it is commodities of lesser importance that are
-required to be imputed and as a result that are often harder due to
-their unstable demand and nature.\\
+%% One worthnoting point is that production which display simple pattern
+%% are typically commodities in countries which are highly commercialized
+%% or important for consumption as staple or traded for financial
+%% resources. These item are rarely the one we need to impute as they are
+%% generally complete, it is commodities of lesser importance that are
+%% required to be imputed and as a result that are often harder due to
+%% their unstable demand and nature.\\
 
 
 \FloatBarrier
@@ -577,16 +583,17 @@ of each event may be different.
 
 On the other hand, the continuous advacement of technology and
 innovation and increasing productivity can be capture by a simple
-linear trend.\\
+smoothing trend.\\
 
 The proposed methodology for imputing the yield is a linear mixed
-model, the utilization of this model enables all information available
-both historical and cross-sectional to be incorporated. This allows us
-to capture not only the technological advancements in a specific
-commodity, but at the same time the relative speed of technological
-adoption of the country. In addition, proposed indicators such as the
-vegetation index, $\text{CO}_2$ concentration and other drivers can be
-tested and incorporated if proven to improve predictive power.\\
+model with splines, the utilization of this model enables all
+information available both historical and cross-sectional to be
+incorporated. This allows us to capture not only the technological
+advancements in a specific commodity, but at the same time the
+relative speed of technological adoption of the country. In addition,
+proposed indicators such as the vegetation index, $\text{CO}_2$
+concentration and other drivers can be tested and incorporated if
+proven to improve predictive power.\\
 
 
 \subsubsection{The model}
@@ -626,13 +633,13 @@ process by testing the hypothesis whether additional degree of freedom
 is necessary.\\
 
 Imputation is predictive in nature, therefore the test is designed to
-select the model which provides optimum predictive performance. The
+select the model which provides optimal predictive performance. The
 testing is performed by drawing bootstrapped samples and re-fitting
 the model to obtain $b$ sets of prediction errors. Then we test
 whether the newly proposed model has a lower out-of-sample prediction
 error when compared to the benchmark model. The algorithm will test
 iteratively until the proposed model has higher prediction error or
-when the maximum degree of freedom is reached.\\
+when the maximum degree of freedom specified has been reached.\\
 
 \begin{gather*}
   H_0 : d\le0 ,\\
@@ -643,8 +650,8 @@ when the maximum degree of freedom is reached.\\
   \frac{1}{N_2}\sum_{i=1}^{N_2}(\hat{Y}_{b, df + 1} - Y)^2\right)
 \end{gather*}
 
-The B-splines implemented is first degree linear, from the analysis we
-believe that higher order polynomial are not required. The
+The B-splines implemented is first degree linear, from the exploratory
+analysis we believe that higher order polynomial are not required. The
 non-linearity can already be captured by having multiple degree of
 freedom, increasing the order would only over-fit the data and can
 display erratic imputation in the tails.\\
@@ -666,7 +673,7 @@ From the exploratory analysis, we can see that the trend and shape of
 production and area harvested are closely related. Nonetheless, both
 the series and missing mechanism can behave very different depending
 on the country and the commodity. Furthermore, there does not seem to
-be any dependable information for us to model.\\
+be any readily usable information for us to model.\\
 
 
 This is partly inherint in the nature of the size of the data which
@@ -691,6 +698,9 @@ have decided to impute production and leave area harvested to balance.
 This is based on expert advice that the production data are often much
 more reliable and comprehensive.\\
 
+In contrast to yield where all countries are imputed by a single model
+to capture cross-country and cross-commodity effects; The production
+imputation is performed country by country.\\
 
 \subsubsection{The algorithm}
 Ensemble learning in its simplest sense, is to build a collection of
@@ -710,7 +720,8 @@ The method consist of two steps:
 The ensemble method reduces the risk of choosing a poor model, this
 resembles putting the eggs in different baskets. Thus we reduce the
 risk of implementing a single model which may produce nonsensical
-imputation for a certain subset of data.\\
+imputation for a certain subset of data. Moreover, model selection is
+unecessary, since all model are included in the final ensemble.\\
 
 Ensemble as described by Dietterich can mitigate the following
 three issues.
@@ -752,13 +763,12 @@ The final problem, representational, refers to the fact that the true
 function $f$ can not be represented by any of the model. However, by
 combining the models we may expand the space of representable
 functions and potentially approximate the true function $f$ if it
-exist. Take the production of wheat in Uzebekistan and Rwanda for
-example, if the production of a country has been growing at a linear
-rate for the past four decades, but expands rapidly in the last two
-decade, neither linear or exponential model will provide a
-satisfactory result. However, an ensemble combining a linear and
-exponential model will provide a good solution by capturing different
-characteristics of the data.\\
+exist. Take the production of beef in Oman and Vietnam for example, if
+the production of a country has been growing at a linear rate in the
+past, but expands rapidly in recent time, neither linear or
+exponential model will provide a satisfactory result. However, an
+ensemble combining a linear and exponential model will provide a good
+solution by capturing different characteristics of the data.\\
 
 From an integration point of view, the algorithm is adaptive in the
 sense that if the data generating mechanism changes in the future, the
@@ -780,12 +790,12 @@ judgement by combining various expectation.\\
 
 
 The details of the ensemble implemented is describe here, the base
-learner are listed in increaseing order of complexity.\\
-
-An effective ensemble will have base models as diverse as possible. If
-there are no diversity and all model generates similar result, then a
-correction and the variance reduction property of the ensemble model
-will be poor.\\
+learner are listed in increaseing order of complexity. An effective
+ensemble will have base models as diverse as possible. If there are no
+diversity and all model generates similar result, then a correction
+and the variance reduction property of the ensemble model will be
+poor. The component chosen here range from no parameter global fitting
+to flexible model which can capture local behaviours.\\
 
 \begin{itemize}
   \item {\textbf{Base learners:}}
@@ -821,25 +831,26 @@ will be poor.\\
     
 \end{itemize}
 
-Where the weights ($w_i$) of model $i$ depends on its fit ($f_{n,
-  i}(x)$) on the available data with a ceiling set at 70\%. The naive
-imputation which does not have a fitted model always take uniform
-weights. A much more favourable method is to compute weights based on
-the prediction error obtained from bootstrap or jackknife, yet the
-missing values restrict us to draw any reasonable size for sub-sample
-fitting. This is further penalized by the time series nature of the
-data where boostrap with replacement is not possible.\\
+Where the weights ($w_i$) of model $i$ depends on the corresponding
+fit ($f_{n, i}(x)$) on the available data with a ceiling set at
+70\%. The naive imputation which does not have a fitted model always
+take uniform weights. A much more favourable method is to compute
+weights based on the prediction error obtained from bootstrap or
+jackknife, yet the missing values restrict us to draw any reasonable
+size for sub-sample fitting. This is further penalized by the time
+series nature of the data where boostrap with replacement is not
+possible.\\
 
 In this section, we take a sample of production from the exploratory
 analysis section and illustrate the imputation methodology. The
 selection of the sample is intended to illustrate the flexibility and
 robustness of the methodology, rather than based on the importance nor
-the quantity produced.\\
+the quantity of the product.\\
 
 The black points in the graph represents observed data while the
 thicker blue line represents the final ensemble model with the points
 being the estimation of missing values. Other lines represents the fit
-of the base learner, the weight of each model is displayed in the
+of the component models, the weight of each model is displayed in the
 legend.\\
 
 Component models which failed to fit the data has a weight of 0.\\
@@ -852,7 +863,7 @@ Component models which failed to fit the data has a weight of 0.\\
 
 }
 
-\caption[This selected series is the production of wheat in Swaziland, from the black observed production we can see that no data has been observed in the paste 10 years]{This selected series is the production of wheat in Swaziland, from the black observed production we can see that no data has been observed in the paste 10 years. Yet, the ensemble fits several possible extrapolation which all seem reasonable. Yet, we can see that although the linear regression obtained the highest weight the ensemble is safe guarded by naive interpolation and spline so it does not go below zero.\label{fig:wheat-swaziland-impute}}
+\caption[This selected series is the production of wheat in Swaziland, from the black observed production we can see that no data has been observed in the paste 10 years]{This selected series is the production of wheat in Swaziland, from the black observed production we can see that no data has been observed in the paste 10 years. Yet, the ensemble fits several possible extrapolation which all seem reasonable. Yet, we can see that although the linear regression obtained the highest weight the ensemble is safe guarded by naive imputation and spline so it does not go below zero.\label{fig:wheat-swaziland-impute}}
 \end{figure}
 
 
@@ -895,7 +906,7 @@ Component models which failed to fit the data has a weight of 0.\\
 
 }
 
-\caption[This time series for the grape produciton in Kuwait also displays simple exponential like growth]{This time series for the grape produciton in Kuwait also displays simple exponential like growth. Here, the smooth LOESS model obtained the highest weight and in fact reached the ceiling of 70 percent. The exponential failed because the default model requires that at least one point need to be observed at the first and the last 5 time point. This is to prevent the exponential model imputing values which are not supported by the data.\label{fig:grape-kuwait}}
+\caption[This time series for the grape productionn in Kuwait also displays simple exponential like growth]{This time series for the grape productionn in Kuwait also displays simple exponential like growth. Here, the smooth LOESS model obtained the highest weight and in fact reached the ceiling of 70 percent. The exponential failed because the default model requires that at least one point need to be observed at the first and the last 5 time point. This is to prevent the exponential model imputing values which are not supported by the data.\label{fig:grape-kuwait}}
 \end{figure}
 
 
@@ -926,7 +937,7 @@ Component models which failed to fit the data has a weight of 0.\\
 
 }
 
-\caption[Finally, a more complex example is shown here, the series is the production of Okra in Barbados]{Finally, a more complex example is shown here, the series is the production of Okra in Barbados. There were a few observation in the beginning of the series, then in the center of the time series the production doubled before falling to prior level. A relative complex model is required to fit such a time series, loess took most of the weight with the remaining weight assigned to other model.\label{fig:okra-barbados}}
+\caption[Finally, a more complex example is shown here, the series is the production of Okra in Barbados]{Finally, a more complex example is shown here, the series is the production of Okra in Barbados. There were a few observation in the beginning of the series, then in the center of the time series the production doubled before falling to prior level. A relative complex model is required to fit such a time series, loess took most of the weight with the remaining weight assigned equally to other model.\label{fig:okra-barbados}}
 \end{figure}
 
 
@@ -1249,12 +1260,32 @@ group. The missing percentage for grapes and beef were higher than
 
 
 \FloatBarrier
-\section{Conclusion and Further Improvements}
-This paper demonstrated the flexibility and robustness of the
-imputation methodology. The robust methodology is capable of capturing
-cross-country and cross-commodity improvements in the producticity,
-while providing flexibility to extend the models wherever possible.\\
+\section{Conclusion}
 
+In this paper, we have proposed a new complete framework to impute the
+production domain which encompase the production, area harvested and
+yield. Due to the size of the project scope, flexibility and
+robustness were essential elements of the model developed.
+
+Demonstration shows that the two proposed models tailored were
+successful in solving problems faced by previous methodology. The
+linear mixed model for spline allows historical trend, cross-country
+and cross-commodity information to all be utilized. Further, the
+pooled information also enpowered the model to be safe-guarded by
+outliers observed in the data. The ensemble tackles the problem in an
+entirely different way as the correlation structure and behaviour does
+not resemble those of the yield. Yet, the result is the same, model
+were robust and flexible to accommodate anything from a simple trend
+to complex time series.
+
+Despite the outcome seemingly promising, there are still shortcomings
+in the model. The proposed linear mixed model for yield does not have
+the ability to seize the year-to-year variation displayed. Further,
+the three variables are still modelled separately. A fully integrated
+framework which models the whole identity equation is desirable.
+
+
+\section{Further Improvements}
 An ongoing project is dedicated to the designation of weights
 reflecting the information content of the observations. Data collected
 from official and semi-official sources may be deems as more reliable
@@ -1262,10 +1293,14 @@ while observation from expert judgement may be less reliable. A
 weighting scheme will allow the models to better assess the quality of
 information and improve the performance.\\
 
-Further, a pilot experienment for utilizing remote sensing data is
-tested. The potentials remain unknown, but it may provide a better
-estimation of the area sown and harvested.\\
-
+Further, to capture the year-to-year variation of the yield, a pilot
+experienment for utilizing remote sensing data is tested. The
+temperature and precipitation published by the World Bank does not
+have both the temporal and spatial resolution to accurately estimate
+the variation. We are making an attempt to match the precipitation and
+teperature to specific crops by combining information from satelite
+images of Normalized Differenced Vegetation Index (NDVI) and rainfaull
+both from NASA.
 
 
 \section*{Acknowledgement}
