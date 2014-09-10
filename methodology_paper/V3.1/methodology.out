@@ -1,0 +1,18 @@
+\BOOKMARK [1][-]{Section.0.Introduction.1}{Introduction}{}% 1
+\BOOKMARK [2][-]{Subsection.1.0.Scope of the project.2}{Scope of the project}{Section.0.Introduction.1}% 2
+\BOOKMARK [1][-]{Section.1.Background and Review of the Current Methodology.1}{Background and Review of the Current Methodology}{}% 3
+\BOOKMARK [1][-]{Section.2.Exploratory Data Analysis.1}{Exploratory Data Analysis}{}% 4
+\BOOKMARK [2][-]{Subsection.3.0.Yield.2}{Yield}{Section.2.Exploratory Data Analysis.1}% 5
+\BOOKMARK [2][-]{Subsection.3.1.Production and Area Harvested.2}{Production and Area Harvested}{Section.2.Exploratory Data Analysis.1}% 6
+\BOOKMARK [2][-]{Subsection.3.2.Data Quality Issues.2}{Data Quality Issues}{Section.2.Exploratory Data Analysis.1}% 7
+\BOOKMARK [1][-]{Section.3.Proposed Methodology.1}{Proposed Methodology}{}% 8
+\BOOKMARK [2][-]{Subsection.4.0.Imputation for Yield.2}{Imputation for Yield}{Section.3.Proposed Methodology.1}% 9
+\BOOKMARK [2][-]{Subsection.4.1.Imputation for Production.2}{Imputation for Production}{Section.3.Proposed Methodology.1}% 10
+\BOOKMARK [2][-]{Subsection.4.2.Imputation for Area Harvested.2}{Imputation for Area Harvested}{Section.3.Proposed Methodology.1}% 11
+\BOOKMARK [2][-]{Subsection.4.3.Use of external variables.2}{Use of external variables}{Section.3.Proposed Methodology.1}% 12
+\BOOKMARK [1][-]{Section.4.Case Studies.1}{Case Studies}{}% 13
+\BOOKMARK [2][-]{Subsection.5.0.Wheat.2}{Wheat}{Section.4.Case Studies.1}% 14
+\BOOKMARK [2][-]{Subsection.5.1.Grape.2}{Grape}{Section.4.Case Studies.1}% 15
+\BOOKMARK [2][-]{Subsection.5.2.Beef.2}{Beef}{Section.4.Case Studies.1}% 16
+\BOOKMARK [1][-]{Section.5.Simulation Styudy.1}{Simulation Styudy}{}% 17
+\BOOKMARK [1][-]{Section.6.Conclusion and Further Improvements.1}{Conclusion and Further Improvements}{}% 18
