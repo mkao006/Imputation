@@ -24,6 +24,7 @@ ensembleImpute = function(x, restrictWeights = TRUE,
         defaultSpline = defaultSpline, defaultArima = defaultArima,
         defaultMars = defaultMars, defaultNaive = defaultNaive),
     plot = FALSE){
+    T = length(x)
     n.model = length(ensembleModel)
     ensemble = x
     missIndex = is.na(ensemble)
@@ -53,7 +54,9 @@ ensembleImpute = function(x, restrictWeights = TRUE,
                 for(i in 1:n.model){
                     lines(modelFits[[i]], col = colPal[i])
                 }
-                lines(ensembleFit, col = "steelblue", lwd = 3)
+                lines(1:T, ensembleFit, col = "steelblue", lwd = 3)
+                points((1:T)[missIndex], ensembleFit[missIndex],
+                       col = "steelblue", cex = 1, pch = 19)
                 points(x, pch = 19)
                 legend("topleft",
                        legend = c(paste0(modelNames, "(",
