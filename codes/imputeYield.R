@@ -132,7 +132,7 @@ imputeYield = function(yieldValue, yieldObservationFlag, yieldMethodFlag,
 
     setnames(x = data,
              old = c("yieldValue", "yieldObservationFlag",
-                 "yieldMethodFlag"),
+                 "yieldMethodFlag", "yearValue"),
              new = c(yieldValue, yieldObservationFlag,
-                 yieldMethodFlag))
+                 yieldMethodFlag, yearValue))
 }
