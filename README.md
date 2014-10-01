@@ -41,25 +41,26 @@ The step by step explaination of functionality of the package is
 described in a separate documentation also shipped with the pacakge.
 
 ```r
-vignette(topic = "api_vignette", package = "faoswsProductionImputation")
+vignette(topic = "faoswsProductionImputation", package = "faoswsProductionImputation")
 ```
 
 
 
 ### Documentation
 
-The documentation of the current methodology can be found in the
-`methodology_paper` folder. The methodology corresponds to the package
-version.
+All relevant documentation of the current methodology can be found in
+the `documentation` folder. There are three folder in this directory.
+
+* `faoswsProductionImputation` - This is the repository containing the
+  vignette *faoswsProductionImputation*
+* `methodology` - This is the repository containing the vignette
+  *methodology*, the version number corresponds to different version
+  of the packages.
+* `previous_methodology` - This folder contains all the relevant
+  materials on the previous methodology.
 
 ### Presentation
 
 The `presentation` folder contains previous and current presentation
 on the methodology for a speedy introduction.
-
-
-### Previous Methodology
-
-All relevant material of the previous methodology can be allocated in
-the `previous_methodology` folder.
 
