@@ -141,32 +141,34 @@ values. The function will convert the previously imputed value to NA
 and the flag from previous imputation to a missing flag.
 
 <<remove-prior-imputation, eval=TRUE>>=
+okraProcessed = copy(okrapd)
+
 ## Removing prior imputation for production
-table(okrapd$productionFlag)
-removeImputation(data = okrapd,
+table(okraProcessed$productionFlag)
+removeImputation(data = okraProcessed,
                  value = "productionValue",
                  flag = "productionFlag",
                  imputedFlag = "E",
                  naFlag = "M")
-table(okrapd$productionFlag)
+table(okraProcessed$productionFlag)
 
 ## Removing prior imputation for area harvested
-table(okrapd$areaHarvestedFlag)
-removeImputation(data = okrapd,
+table(okraProcessed$areaHarvestedFlag)
+removeImputation(data = okraProcessed,
                  value = "areaHarvestedValue",
                  flag = "areaHarvestedFlag",
                  imputedFlag = "E",
                  naFlag = "M")
-table(okrapd$areaHarvestedFlag)
+table(okraProcessed$areaHarvestedFlag)
 
 ## Removing prior imputation for yield
-table(okrapd$yieldFlag)
-removeImputation(data = okrapd,
+table(okraProcessed$yieldFlag)
+removeImputation(data = okraProcessed,
                  value = "yieldValue",
                  flag = "yieldFlag",
                  imputedFlag = "E",
                  naFlag = "M")
-table(okrapd$yieldFlag)
+table(okraProcessed$yieldFlag)
 
 @ 
 
@@ -178,17 +180,17 @@ missing values were represented with a value of zero with a flag of
 "M".
 
 <<remove-zero-value, eval=TRUE>>=
-remove0M(data = okrapd,
+remove0M(data = okraProcessed,
          value = "productionValue",
          flag = "productionFlag",
          naFlag = "M")
 
-remove0M(data = okrapd,
+remove0M(data = okraProcessed,
          value = "areaHarvestedValue",
          flag = "areaHarvestedFlag",
          naFlag = "M")
 
-remove0M(data = okrapd,
+remove0M(data = okraProcessed,
          value = "yieldValue",
          flag = "yieldFlag",
          naFlag = "M")
@@ -201,13 +203,44 @@ observation is required for each country. Thus, this function removes
 countries which contains no information or no observation at all.
 
 <<remove-info, eval=TRUE>>=
-okrapd =
-    removeNoInfo(data = okrapd,
+okraProcessed =
+    removeNoInfo(data = okraProcessed,
                  flag = "yieldFlag",
                  value = "yieldValue",
                  byKey = "areaCode")
 
 @ 
+
+
+The function \code{processProductionDomain} is a wrapper to execute
+all the data processing above.
+
+<<processProductionDomain>>=
+okraProcessed = 
+    processProductionDomain(data = okrapd,
+                           productionValue = "productionValue",
+                           areaHarvestedValue =
+                               "areaHarvestedValue",
+                           yieldValue = "yieldValue",
+                           yearValue = "year",
+                           productionObservationFlag =
+                               "productionFlag",
+                           areaHarvestedObservationFlag =
+                               "areaHarvestedFlag",
+                           yieldObservationFlag = "yieldFlag",
+                           productionMethodFlag =
+                               "productionFlag2",
+                           areaHarvestedMethodFlag =
+                               "areaHarvestedFlag2",
+                           yieldMethodFlag = "yieldFlag2",
+                           removePriorImputation = TRUE,
+                           removeConflictValues = TRUE,
+                           imputedFlag = "E",
+                           naFlag = "M",
+                           byKey = "areaCode")
+
+@ 
+
 
 \subsection{Imputation}
 
@@ -232,7 +265,7 @@ imputeYield(yieldValue = "yieldValue",
             newMethodFlag = "e",
             maxdf = 5,
             byKey = "areaCode",
-            data = okrapd)
+            data = okraProcessed)
 
 @ 
 
@@ -260,12 +293,12 @@ imputeProduction(productionValue = "productionValue",
                  yieldValue = "yieldValue",
                  yieldObservationFlag = "yieldFlag",
                  newMethodFlag = "e",
-                 data = okrapd,
-                 ensembleModel = myModel,
+                 data = okraProcessed,
                  restrictWeights = TRUE,
                  maximumWeights = 0.7,
                  byKey = "areaCode",
                  flagTable = swsOldFlagTable)
+
 @ 
 
 
@@ -281,8 +314,9 @@ balanceAreaHarvested(productionValue = "productionValue",
                      yieldValue = "yieldValue",
                      yieldObservationFlag = "yieldFlag",
                      newMethodFlag = "e",
-                     data = okrapd,
+                     data = okraProcessed,
                      flagTable = swsOldFlagTable)
+
 @ 
 
 
@@ -381,7 +415,7 @@ inserted into a list, we can first compute the fits and weights then
 combine it to form the ensemble with the following functions.
 
 <<ensemble-illustration>>=
-bahrainExample = okrapd[areaName == "Bahrain", productionValue]
+bahrainExample = okraProcessed[areaName == "Bahrain", productionValue]
 
 ## Compute fit for all component models
 modelFits =
@@ -407,7 +441,7 @@ the weight and set the maximum weight of a model can take to 0.7.
 
 <<ensemble-imputation, eval=TRUE, fig.height=7, fig.width=10>>=
 
-fijiExample = okrapd[areaName == "Fiji Islands", productionValue]
+fijiExample = okraProcessed[areaName == "Fiji Islands", productionValue]
 ensembleFit =
     ensembleImpute(x = fijiExample,
                    restrictWeights = TRUE,

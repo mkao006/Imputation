@@ -47,7 +47,7 @@ imputeProductionDomain = function(data, productionValue,
     areaHarvestedValue, yieldValue, yearValue, productionObservationFlag,
     areaHarvestedObservationFlag,
     yieldObservationFlag, productionMethodFlag, areaHarvestedMethodFlag,
-    yieldMethodFlag,flagTable = faoswsFlagTable,
+    yieldMethodFlag, flagTable = faoswsFlagTable,
     removePriorImputation = TRUE, removeConflictValues = TRUE,
     imputedFlag = "E", imputationFlag = "I", newMethodFlag = "",
     naFlag = "M", maxdf = 5, 
@@ -86,100 +86,37 @@ imputeProductionDomain = function(data, productionValue,
                      "yieldMethodFlag")
              )
 
-    ## These should be documented and checked.
-    ## Make sure the types are correct
+    ## These should be documented and checked.  Make sure the types
+    ## are correct
     dataCopy[, productionValue := as.numeric(productionValue)]
     dataCopy[, areaHarvestedValue := as.numeric(areaHarvestedValue)]
     dataCopy[, yieldValue := as.numeric(yieldValue)]
-    
-    ## Optional step: Remove prior imputation
-    if(removePriorImputation){
-        removeImputation(data = dataCopy,
-                         value = "areaHarvestedValue",
-                         flag = "areaHarvestedObservationFlag",
-                         imputedFlag = imputedFlag,
-                         naFlag = naFlag)
-        
-        removeImputation(data = dataCopy,
-                         value = "productionValue",
-                         flag = "productionObservationFlag",
-                         imputedFlag = imputedFlag,
-                         naFlag = naFlag)
 
-        removeImputation(data = dataCopy,
-                         value = "yieldValue",
-                         flag = "yieldObservationFlag",
-                         imputedFlag = imputedFlag,
-                         naFlag = naFlag)        
-    }
-    ## print(colnames(dataCopy))
-    ## print(table(dataCopy$productionObservationFlag))
-    ## print(table(dataCopy$areaHarvestedObservationFlag))    
-    
-    ## Optional step: Remove missing zero
-    if(removePriorImputation){
-        remove0M(data = dataCopy,
-                 value = "areaHarvestedValue",
-                 flag = "areaHarvestedObservationFlag",
-                 naFlag = naFlag)
-        
-        remove0M(data = dataCopy,
-                 value = "productionValue",
-                 flag = "productionObservationFlag",
-                 naFlag = naFlag)
-        
-        remove0M(data = dataCopy,
-                 value = "yieldValue",
-                 flag = "yieldObservationFlag",
-                 naFlag = naFlag)        
-    }
-    
-    ## Optional step: Compute yield if not available
-    ## if(!yieldValue %in% colnames(dataCopy)){
-    ##     computeYield(productionValue = "productionValue",
-    ##                  productionObservationFlag =
-    ##                      "productionObservationFlag",
-    ##                  areaHarvestedValue = "areaHarvestedValue",
-    ##                  areaHarvestedObservationFlag =
-    ##                      "areaHarvestedObservationFlag",
-    ##                  yieldValue = yieldValue,
-    ##                  yieldObservationFlag = yieldObservationFlag,
-    ##                  yieldMethodFlag = yieldMethodFlag,
-    ##                  newMethodFlag = newMethodFlag,
-    ##                  flagTable = flagTable,
-    ##                  data = dataCopy)
-    ## }
-    ## setnames(x = dataCopy,
-    ##          old = c(yieldValue, yieldObservationFlag, yieldMethodFlag),
-    ##          new = c("yieldValue", "yieldObservationFlag",
-    ##              "yieldMethodFlag"))
-    ## print(table(dataCopy$yieldObservationFlag))
-
-    ## Optional step: Remove conflict values
-    if(removeConflictValues){
-        removeZeroConflict(productionValue = "productionValue",
-                           productionObservationFlag =
-                               "productionObservationFlag",
-                           areaHarvestedValue = "areaHarvestedValue",
-                           areaHarvestedObservationFlag =
-                               "areaHarvestedObservationFlag",
-                           yieldValue = "yieldValue",
-                           yieldObservationFlag = "yieldObservationFlag",
-                           data = dataCopy)
-    }
-    
-    ## Step one: Remove country with no info.
     dataCopy =
-        removeNoInfo(data = dataCopy,
-                     flag = "yieldObservationFlag",
-                     value = "yieldValue",
-                     byKey = byKey)
+        processProductionDomain(data = dataCopy,
+                                productionValue = "productionValue",
+                                productionObservationFlag =
+                                    "productionObservationFlag",
+                                productionMethodFlag =
+                                    "productionMethodFlag",
+                                areaHarvestedValue =
+                                    "areaHarvestedValue",
+                                areaHarvestedObservationFlag =
+                                    "areaHarvestedObservationFlag",
+                                yieldValue = "yieldValue",
+                                yieldObservationFlag =
+                                    "yieldObservationFlag",
+                                removePriorImputation =
+                                    removePriorImputation,
+                                removeConflictValues =
+                                    removeConflictValues,
+                                imputedFlag = imputedFlag,
+                                naFlag = naFlag,
+                                byKey = byKey)    
 
+    ## Step two: Impute Yield
     cat("Imputing Yield ...\n")
     n.missYield = length(which(is.na(dataCopy$yieldValue)))
-    ## Step two: Impute Yield
-    ## print(table(dataCopy$yieldObservationFlag))
-    ## print(table(is.na(dataCopy$yieldValue)))
     if(!missing(yieldFormula))
         yieldFormula =
             as.formula(gsub(yearValue, "yearValue",
@@ -199,15 +136,11 @@ imputeProductionDomain = function(data, productionValue,
     n.missYield2 = length(which(is.na(dataCopy$yieldValue)))
     cat("Number of values imputed: ", n.missYield - n.missYield2, "\n")
     cat("Number of values still missing: ", n.missYield2, "\n")
-    
-    ## print(table(dataCopy$yieldObservationFlag))
-    ## print(table(is.na(dataCopy$yieldValue)))
 
+    ## step three: Impute production
     cat("Imputing Production ...\n")
     n.missProduction = length(which(is.na(dataCopy$productionValue)))
-    ## print(table(dataCopy$productionObservationFlag))
-    ## print(table(is.na(dataCopy$productionValue)))
-    ## step three: Impute production
+
     imputeProduction(productionValue = "productionValue",
                      productionObservationFlag =
                          "productionObservationFlag",
@@ -225,19 +158,17 @@ imputeProductionDomain = function(data, productionValue,
                      maximumWeights = maximumWeights,
                      byKey = byKey,
                      flagTable = flagTable)
-    ## print(table(dataCopy$productionObservationFlag))
-    ## print(table(is.na(dataCopy$productionValue)))
+
     n.missProduction2 = length(which(is.na(dataCopy$productionValue)))
     cat("Number of values imputed: ",
         n.missProduction - n.missProduction2, "\n")
     cat("Number of values still missing: ", n.missProduction2, "\n")
 
+    ## step four: balance area harvested
     cat("Imputing Area Harvested ...\n")
     n.missAreaHarvested =
         length(which(is.na(dataCopy$areaHarvestedValue)))
-    ## print(table(dataCopy$areaHarvestedObservationFlag))
-    ## print(table(is.na(dataCopy$areaHarvestedValue)))    
-    ## step four: balance area harvested
+
     balanceAreaHarvested(productionValue = "productionValue",
                          productionObservationFlag =
                              "productionObservationFlag",
@@ -251,35 +182,35 @@ imputeProductionDomain = function(data, productionValue,
                          newMethodFlag = newMethodFlag,
                          data = dataCopy,
                          flagTable = flagTable)
-    ## print(table(dataCopy$areaHarvestedObservationFlag))
-    ## print(table(is.na(dataCopy$areaHarvestedValue)))
+
     n.missAreaHarvested2 =
         length(which(is.na(dataCopy$areaHarvestedValue)))
     cat("Number of values imputed: ",
         n.missAreaHarvested - n.missAreaHarvested2, "\n")
     cat("Number of values still missing: ", n.missAreaHarvested2, "\n")
     
+    ## Reset the names
     setnames(x = dataCopy,
              old = c("productionValue",
-                 "areaHarvestedValue",
-                 "yieldValue",
-                 "yearValue",
-                 "productionObservationFlag",
-                 "areaHarvestedObservationFlag",
-                 "yieldObservationFlag",
-                 "productionMethodFlag",
-                 "areaHarvestedMethodFlag",
-                 "yieldMethodFlag"),
+                     "areaHarvestedValue",
+                     "yieldValue",
+                     "yearValue",
+                     "productionObservationFlag",
+                     "areaHarvestedObservationFlag",
+                     "yieldObservationFlag",
+                     "productionMethodFlag",
+                     "areaHarvestedMethodFlag",
+                     "yieldMethodFlag"),
              new = c(productionValue,
-                 areaHarvestedValue,
-                 yieldValue,
-                 yearValue,
-                 productionObservationFlag,
-                 areaHarvestedObservationFlag,
-                 yieldObservationFlag,
-                 productionMethodFlag,
-                 areaHarvestedMethodFlag,
-                 yieldMethodFlag)             
+                     areaHarvestedValue,
+                     yieldValue,
+                     yearValue,
+                     productionObservationFlag,
+                     areaHarvestedObservationFlag,
+                     yieldObservationFlag,
+                     productionMethodFlag,
+                     areaHarvestedMethodFlag,
+                     yieldMethodFlag)             
              )
 
     dataCopy
