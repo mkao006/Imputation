@@ -18,8 +18,7 @@ package.skeleton("faoswsProductionImputation",
 ## build the flag table data
 dir.create("faoswsProductionImputation/data")
 okrapd =
-    data.table(read.csv(file = "./api_integration/Okra.csv",
-                        header = TRUE))
+    data.table(read.csv(file = "Okra.csv", header = TRUE))
 save(okrapd,
      file = "faoswsProductionImputation/data/okrapd.RData")
 
@@ -36,13 +35,13 @@ roxygenize("faoswsProductionImputation")
 dir.create("./faoswsProductionImputation/vignettes/")
 dir.create("./faoswsProductionImputation/inst/")
 dir.create("./faoswsProductionImputation/inst/doc/")
-file.copy(from = "./api_integration/api_vignette.pdf",
+file.copy(from = "./documentation/faoswsProductionImputation/faoswsProductionImputation.pdf",
           to = "./faoswsProductionImputation/inst/doc/",
           overwrite = TRUE)
-file.copy(from = "./api_integration/api_vignette.Rnw",
+file.copy(from = "./documentation/faoswsProductionImputation/faoswsProductionImputation.Rnw",
           to = "./faoswsProductionImputation/vignettes/",
           overwrite = TRUE)
-file.copy(from = "./methodology_paper/V4.1/methodology.pdf",
+file.copy(from = "./documentation/methodology/V4.1/methodology.pdf",
           to = "./faoswsProductionImputation/inst/doc/",
           overwrite = TRUE)
 cat("%\\VignetteIndexEntry{Statistical Working Paper on Imputation Methodology for the FAOSTAT Production Domain}\n%\\VignetteEngine{knitr::knitr}\n\\documentclass{article}\n\\begin{document}\n\\end{document}", file = "./faoswsProductionImputation/vignettes/methodology.Rnw")
