@@ -161,58 +161,58 @@ lapply(imputedData.lst,
 graphics.off()
 
 
-## Impute the data
-imputedDataAuto.lst = lapply(testData.lst,
-    FUN = function(x){
-        print(unique(x$itemName))
-        imputeProductionDomain(data = x,
-                               productionValue = "productionValue",
-                               areaHarvestedValue = "areaHarvestedValue",
-                               yieldValue = "yieldValue",
-                               yearValue = "year",
-                               productionObservationFlag =
-                                   "productionFlag",
-                               areaHarvestedObservationFlag =
-                                   "areaHarvestedFlag",
-                               yieldObservationFlag = "yieldFlag",
-                               productionMethodFlag = "productionFlag2",
-                               areaHarvestedMethodFlag =
-                                   "areaHarvestedFlag2",
-                               yieldMethodFlag = "yieldFlag2",
-                               flagTable = swsOldFlagTable,
-                               imputedFlag = "E",
-                               naFlag = "M",
-                               imputationFlag = "I",
-                               newMethodFlag = "",
-                               maxdf = 5)
-    }
-       )
+## ## Impute the data
+## imputedDataAuto.lst = lapply(testData.lst,
+##     FUN = function(x){
+##         print(unique(x$itemName))
+##         imputeProductionDomain(data = x,
+##                                productionValue = "productionValue",
+##                                areaHarvestedValue = "areaHarvestedValue",
+##                                yieldValue = "yieldValue",
+##                                yearValue = "year",
+##                                productionObservationFlag =
+##                                    "productionFlag",
+##                                areaHarvestedObservationFlag =
+##                                    "areaHarvestedFlag",
+##                                yieldObservationFlag = "yieldFlag",
+##                                productionMethodFlag = "productionFlag2",
+##                                areaHarvestedMethodFlag =
+##                                    "areaHarvestedFlag2",
+##                                yieldMethodFlag = "yieldFlag2",
+##                                flagTable = swsOldFlagTable,
+##                                imputedFlag = "E",
+##                                naFlag = "M",
+##                                imputationFlag = "I",
+##                                newMethodFlag = "",
+##                                maxdf = 5)
+##     }
+##        )
 
 
-pdf(file = "allImputedAuto.pdf",  width = 20, height = 12)
-lapply(imputedDataAuto.lst,
-       FUN = function(x){
-           print(
-               xyplot(log(productionValue) ~ year|areaName,
-                      data = x,
-                      group = x$productionFlag == "I",
-                      main = unique(x$itemName))
-               )
-           print(
-               xyplot(log(areaHarvestedValue) ~ year|areaName,
-                      data = x,
-                      group = x$areaHarvestedFlag == "I",
-                      main = unique(x$itemName))
-               )
-           print(
-               xyplot(yieldValue ~ year|areaName,
-                      data = x,
-                      group = x$yieldFlag == "I",
-                      main = unique(x$itemName))
-               )                      
-       }
-       )
-graphics.off()
+## pdf(file = "allImputedAuto.pdf",  width = 20, height = 12)
+## lapply(imputedDataAuto.lst,
+##        FUN = function(x){
+##            print(
+##                xyplot(log(productionValue) ~ year|areaName,
+##                       data = x,
+##                       group = x$productionFlag == "I",
+##                       main = unique(x$itemName))
+##                )
+##            print(
+##                xyplot(log(areaHarvestedValue) ~ year|areaName,
+##                       data = x,
+##                       group = x$areaHarvestedFlag == "I",
+##                       main = unique(x$itemName))
+##                )
+##            print(
+##                xyplot(yieldValue ~ year|areaName,
+##                       data = x,
+##                       group = x$yieldFlag == "I",
+##                       main = unique(x$itemName))
+##                )                      
+##        }
+##        )
+## graphics.off()
 
 
 ## check = imputedData.lst[[19]][areaName == "Switzerland", ]
