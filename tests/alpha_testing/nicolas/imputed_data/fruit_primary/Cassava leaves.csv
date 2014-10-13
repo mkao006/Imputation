@@ -1,0 +1,7 @@
+"areaCode","areaName","itemCode","itemName","variable","2009_num","2009_symb","2010_num","2010_symb","2011_num","2011_symb","2012_num","2012_symb","2013_num","2013_symb"
+26,"Brunei Darussalam",378,"Cassava leaves","areaHarvested","1","I","1","I","1","I","1","I","1","I"
+26,"Brunei Darussalam",378,"Cassava leaves","production","7","I","7","I","7","I","7","I","7","I"
+26,"Brunei Darussalam",378,"Cassava leaves","yield","70775","I","71941","I","73108","I","74275","I","75441","I"
+46,"Congo",378,"Cassava leaves","areaHarvested","7758","I","7939","I","7700","F","7700","T","7571","I"
+46,"Congo",378,"Cassava leaves","production","81716","I","85000","F","85000","F","85000","T","85005","I"
+46,"Congo",378,"Cassava leaves","yield","105327","I","107063","I","110390","F","110390","T","112272","I"
