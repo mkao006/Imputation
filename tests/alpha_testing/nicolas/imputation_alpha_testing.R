@@ -1,7 +1,7 @@
 ## Load the library
 library(faoswsProductionImputation)
 library(faoswsFlag)
-library(faoswsExtra)
+library(faoswsUtil)
 library(data.table)
 library(lattice)
 library(reshape2)

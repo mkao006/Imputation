@@ -86,7 +86,7 @@ Before we begin, we will need to load the required library
 <<loda-library, eval=TRUE>>=
 ## Load libraries
 library(faoswsProductionImputation)
-library(faoswsExtra)
+library(faoswsUtil)
 library(data.table)
 library(lattice)
 @ 

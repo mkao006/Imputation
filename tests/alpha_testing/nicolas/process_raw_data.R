@@ -1,5 +1,5 @@
 ## Load the libraries
-library(faoswsExtra)
+library(faoswsUtil)
 library(data.table)
 library(reshape2)
 library(RJDBC)
