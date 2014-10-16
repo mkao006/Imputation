@@ -13,8 +13,8 @@ To install the imputation package, simply run the following command.
 library(devtools)
 
 ## The package depends on the faoswsFlag package
-install_github(repo = "sws_r_api", username = "mkao006", 
-               subdir = "faoswsFlag/faoswsFlag")
+install_github(repo = "sws_flag", username = "mkao006", 
+               subdir = "faoswsFlag")
 
 ## The imputation package
 install_github(repo = "sws_imputation", 
