@@ -6,8 +6,6 @@ library(RJDBC)
 library(FAOSTAT)
 
 ## Set the commodity group to extract and impute
-commodityFolder = "vegetable_primary"
-commodityCode = "1989"
 splitDataDirectory = paste0("./split_data/", commodityFolder, "/")
 
 ## Connect to the database
@@ -98,8 +96,8 @@ dataProcess = function(data){
 if(!file.exists(splitDataDirectory))
     dir.create(splitDataDirectory)
 
-## commodityList = getCommodityList(conn, commodityCode)
-commodityList = read.csv(file = "vegetable_primary_1735_test_set.csv")
+commodityList = getCommodityList(conn, commodityCode)
+## commodityList = read.csv(file = "vegetable_primary_1735_test_set.csv")
 
 lapply(commodityList$itemCode,
        FUN = function(x){
