@@ -8,6 +8,10 @@ library(reshape2)
 library(splines)
 library(lme4)
 
+## Set the commodity
+commodityFolder = "spices"
+commodityCode = "1743"
+
 ## Get the raw data
 source("process_raw_data.R")
 files = as.list(dir(splitDataDirectory, full.names = TRUE))
@@ -23,7 +27,12 @@ swsOldFlagTable[swsOldFlagTable$flagObservationStatus == "E",
 ## Further process the data
 testData.lst = lapply(files,
     FUN = function(x){
-        tmp = data.table(read.csv(file = x, stringsAsFactors = FALSE))
+        tmp =
+            data.table(read.csv(file = x, stringsAsFactors = FALSE,
+                                colClasses = c("integer", "character",
+                                    "integer", "character", "integer",
+                                    "double", "character", "double",
+                                    "character", "double", "character")))
         tmp[, productionValue := as.numeric(productionValue)]
         tmp[, areaHarvestedValue := as.numeric(areaHarvestedValue)]
         ## Remove 2013 "T" values as per instruction of Nicolas.
@@ -67,7 +76,8 @@ lapply(testData.lst,
 imputedData.lst = lapply(testData.lst,
     FUN = function(x){
         print(unique(x$itemName))
-        imputeProductionDomain(data = x,
+        tmp = copy(x)
+        imputed = try(imputeProductionDomain(data = tmp,
                                productionValue = "productionValue",
                                areaHarvestedValue = "areaHarvestedValue",
                                yieldValue = "yieldValue",
@@ -87,7 +97,10 @@ imputedData.lst = lapply(testData.lst,
                                imputationFlag = "I",
                                newMethodFlag = "",
                                maxdf = 5,
-                               yieldFormula = yieldValue ~ -1 + (1 + bs(year, df = 2, degree = 1)|areaCode))
+                               yieldFormula = yieldValue ~ -1 + (1 + bs(year, df = 2, degree = 1)|areaCode)))
+        if(inherits(imputed, "try-error"))
+            imputed = x
+        imputed
     }
        )
 
@@ -190,7 +203,7 @@ graphics.off()
 
 
 ## pdf(file = "allImputedAuto.pdf",  width = 20, height = 12)
-## lapply(imputedDataAuto.lst,
+## lapply(imputedData.lst,
 ##        FUN = function(x){
 ##            print(
 ##                xyplot(log(productionValue) ~ year|areaName,
