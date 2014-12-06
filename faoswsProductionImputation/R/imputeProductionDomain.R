@@ -39,6 +39,7 @@
 ##' is fitted.
 ##' @param ensembleModel A list of models to be used to build the
 ##' ensemble.
+##' @param errorType See ?computeErrorRate.
 ##'
 ##' @export
 ##' 
@@ -52,12 +53,8 @@ imputeProductionDomain = function(data, productionValue,
     imputedFlag = "E", imputationFlag = "I", newMethodFlag = "",
     naFlag = "M", maxdf = 5, 
     byKey = "areaCode", restrictWeights = TRUE, maximumWeights = 0.7,
-    ensembleModel = list(defaultMean = defaultMean,
-        defaultLm = defaultLm, defaultExp = defaultExp,
-        defaultLogistic = defaultLogistic, defaultLoess = defaultLoess,
-        defaultSpline = defaultSpline, defaultArima = defaultArima,
-        defaultMars = defaultMars, defaultNaive = defaultNaive),
-        yieldFormula){
+    ensembleModel = allDefaultModels(),
+    yieldFormula, errorType = "loocv"){
 
     cat("Initializing ... \n")
     dataCopy = copy(data)
@@ -157,7 +154,8 @@ imputeProductionDomain = function(data, productionValue,
                      restrictWeights = restrictWeights,
                      maximumWeights = maximumWeights,
                      byKey = byKey,
-                     flagTable = flagTable)
+                     flagTable = flagTable,
+                     errorType = errorType)
 
     n.missProduction2 = length(which(is.na(dataCopy$productionValue)))
     cat("Number of values imputed: ",

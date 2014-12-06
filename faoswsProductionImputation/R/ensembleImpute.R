@@ -11,6 +11,7 @@
 ##' @param ensembleModel A list of models to be used to build the
 ##' ensemble.
 ##' @param plot Whether the result of the ensemble should be plotted.
+##' @param errorType See ?computeErrorRate.
 ##'
 ##' @export
 ##' 
@@ -18,12 +19,8 @@
 
 ensembleImpute = function(x, restrictWeights = TRUE,
     maximumWeights = 0.7,
-    ensembleModel = list(defaultMean = defaultMean,
-        defaultLm = defaultLm, defaultExp = defaultExp,
-        defaultLogistic = defaultLogistic, defaultLoess = defaultLoess,
-        defaultSpline = defaultSpline, defaultArima = defaultArima,
-        defaultMars = defaultMars, defaultNaive = defaultNaive),
-    plot = FALSE){
+    ensembleModel = allDefaultModels(),
+    plot = FALSE, errorType = "loocv"){
     T = length(x)
     n.model = length(ensembleModel)
     ensemble = x
@@ -36,7 +33,8 @@ ensembleImpute = function(x, restrictWeights = TRUE,
                 ensembleModel = ensembleModel)
             modelWeights = computeEnsembleWeight(x, modelFits,
                 restrictWeights = restrictWeights,
-                maximumWeights = maximumWeights)
+                maximumWeights = maximumWeights,
+                ensembleModel = ensembleModel, errorType = errorType)
             ## print(modelWeights)
             ensembleFit = computeEnsemble(modelFits, modelWeights)
             ensemble[missIndex] = ensembleFit[missIndex]

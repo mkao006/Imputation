@@ -24,6 +24,7 @@
 ##' be imposed.
 ##' @param maximumWeights The maximum weight to be imposed, must be
 ##' between [0.5, 1].
+##' @param errorType See ?computeErrorRate.
 ##' 
 ##' @export
 ##' 
@@ -34,12 +35,8 @@ imputeProduction = function(productionValue, productionObservationFlag,
     yieldObservationFlag, yieldMethodFlag, imputationFlag = "I",
     newMethodFlag, data,
     byKey, restrictWeights = TRUE, maximumWeights = 0.7,
-    ensembleModel = list(defaultMean = defaultMean,
-        defaultLm = defaultLm, defaultExp = defaultExp,
-        defaultLogistic = defaultLogistic, defaultLoess = defaultLoess,
-        defaultSpline = defaultSpline, defaultArima = defaultArima,
-        defaultMars = defaultMars, defaultNaive = defaultNaive),
-    flagTable = faoswsFlagTable){
+    ensembleModel = allDefaultModels(),
+    flagTable = faoswsFlagTable, errorType = "loocv"){
 
 
     ## By balancing first
@@ -68,7 +65,7 @@ imputeProduction = function(productionValue, productionObservationFlag,
     data[, productionValue :=
          ensembleImpute(productionValue,
                         ensembleModel = ensembleModel,
-                        plot = FALSE),
+                        plot = FALSE, errorType = errorType),
          by = byKey]
     data[productionMissingIndex & !is.na(productionValue),
          c("productionObservationFlag", "productionMethodFlag") :=
