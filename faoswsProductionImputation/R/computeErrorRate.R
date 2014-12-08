@@ -27,7 +27,7 @@ computeErrorRate = function(x, fit, model = NULL,
     ### Run the function:
     #If all fit values are NA, set error to Inf so this model is not used.
     if( all(is.na(fit)) )
-        return(Inf)
+        return(NA)
     if(errorType == "mse")
         er = mean((x - fit)^2, na.rm = !all(is.na(fit)))    
     if(errorType == "loocv"){

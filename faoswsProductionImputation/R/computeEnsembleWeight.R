@@ -29,7 +29,7 @@ computeEnsembleWeight = function(x, fits, restrictWeights = TRUE,
     benchmark = x
     error = sapply(1:length(fits),
         FUN = function(i){
-            computeErrorRate(x = benchmark, fit = fits[[i]], type = errorType
+            computeErrorRate(x = benchmark, fit = fits[[i]], errorType = errorType
                 ,model = ensembleModel[[i]] )
             }
         )
