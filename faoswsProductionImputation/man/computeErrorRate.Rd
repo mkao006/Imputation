@@ -3,19 +3,19 @@
 \alias{computeErrorRate}
 \title{Function to compute the error of different model fits}
 \usage{
-computeErrorRate(x, fit, model = NULL, type = ifelse(is.null(model), "mse",
-  "loocv"))
+computeErrorRate(x, fit, model = NULL, errorType = ifelse(is.null(model),
+  "mse", "loocv"))
 }
 \arguments{
 \item{x}{A numeric vector to be imputed.}
 
 \item{fit}{The fitted value from the model.}
 
-\item{model}{The model fit to x.  If type=="loocv" then this will be used
-to compute the leave-one-out cross-validation errors.  If type=="mse", this
+\item{model}{The model fit to x.  If errorType="loocv" then this will be used
+to compute the leave-one-out cross-validation errors.  If errorType="mse", this
 is ignored.}
 
-\item{type}{Specifies what type of error to compute.  Currently, "mse"
+\item{errorType}{Specifies what type of error to compute.  Currently, "mse"
 and "loocv" are implemented.  "mse" computes the mean squared error between
 the model and observed data.  "loocv" performs leave-one-out
 cross-validation to determine the predictive error of the model.  "loocv"
