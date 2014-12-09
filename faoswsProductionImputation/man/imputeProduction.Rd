@@ -8,7 +8,7 @@ imputeProduction(productionValue, productionObservationFlag,
   areaHarvestedMethodFlag, yieldValue, yieldObservationFlag, yieldMethodFlag,
   imputationFlag = "I", newMethodFlag, data, byKey, restrictWeights = TRUE,
   maximumWeights = 0.7, ensembleModel = allDefaultModels(),
-  flagTable = faoswsFlagTable, ...)
+  flagTable = faoswsFlagTable, errorType = "loocv")
 }
 \arguments{
 \item{productionValue}{The column name corresponding to production
@@ -45,7 +45,7 @@ ensemble.}
 
 \item{flagTable}{see data(faoswsFlagTable) in \pkg{faoswsFlag}}
 
-\item{...}{Additional arguments.}
+\item{errorType}{See ?computeErrorRate.}
 }
 \description{
 This is a wrapper of the ensemble imputation for the production

@@ -17,10 +17,7 @@ be imposed.}
 \item{maximumWeights}{The maximum weight to be imposed, must be
 between [0.5, 1].}
 
-\item{errorType}{Specifies what type of error model should be used to
-compute model weights.  Currently, one of "mse" (mean squared error
-between the observed values and the model values) or "loocv" (error
-computed via leave-one-out cross-validation).}
+\item{errorType}{See ?computeErrorRate.}
 
 \item{ensembleModel}{A list of the models fit.  This is only needed if
 errorType = "loocv".}

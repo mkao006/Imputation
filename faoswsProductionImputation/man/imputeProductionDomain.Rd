@@ -11,7 +11,7 @@ imputeProductionDomain(data, productionValue, areaHarvestedValue, yieldValue,
   imputedFlag = "E", imputationFlag = "I", newMethodFlag = "",
   naFlag = "M", maxdf = 5, byKey = "areaCode", restrictWeights = TRUE,
   maximumWeights = 0.7, ensembleModel = allDefaultModels(), yieldFormula,
-  ...)
+  errorType = "loocv")
 }
 \arguments{
 \item{data}{The data}
@@ -70,7 +70,7 @@ ensemble.}
 model for the imputation of yield, if missing default spline model
 is fitted.}
 
-\item{...}{Additional arguments.}
+\item{errorType}{See ?computeErrorRate.}
 }
 \description{
 The function will impute production, area harvested and yield at
