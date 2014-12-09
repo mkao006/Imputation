@@ -25,25 +25,9 @@ computeErrorRate = function(x, fit, model = NULL,
     stopifnot( length(fit) == length(x) )
     
     ### Run the function:
-    #If all fit values are NA, set error to Inf so this model is not used.
-    if( all(is.na(fit)) )
-        return(NA)
     if(errorType == "mse")
         er = mean((x - fit)^2, na.rm = !all(is.na(fit)))    
-    if(errorType == "loocv"){
-        validObservationIndex = (1:length(x))[!is.na(x)]
-        error = sapply( validObservationIndex, function(i){
-            xTemporary = x
-            xTemporary[i] = NA
-            fitTemporary = model(xTemporary)
-            outOfBagPrediction = fitTemporary[i]
-            outOfBagError = (x[i] - outOfBagPrediction)^2
-            return(outOfBagError)
-        })
-        if( all(is.na(error)) )
-            er = Inf
-        else
-            er = mean(error, na.rm=T)
-    }
+    if(errorType == "loocv")
+        er = computeErrorLOOCV(x, model)
     er
 }
