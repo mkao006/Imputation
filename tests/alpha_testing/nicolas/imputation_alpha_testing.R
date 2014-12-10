@@ -9,8 +9,8 @@ library(splines)
 library(lme4)
 
 ## Set the commodity
-commodityFolder = "spices"
-commodityCode = "1743"
+commodityFolder = "nuts_primary"
+commodityCode = "1729"
 
 ## Get the raw data
 source("process_raw_data.R")
