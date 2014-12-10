@@ -2,8 +2,8 @@ Package: faoswsProductionImputation
 Type: Package
 Title: Package to perform the imputation of area harvested, production and
     yield for the FAO production domain.
-Version: 4.1
-Date: 2014-08-26
+Version: 0.4.2
+Date: 2014-11-28
 Authors@R: c(person("Micheal. C. J.", "Kao", role = c("aut", "cre"), email =
     "michael.kao@fao.org"))
 Author: Michael C. J. Kao <michael.kao@fao.org>
@@ -19,10 +19,11 @@ Imports:
     earth (>= 3.2-7),
     forecast (>= 5.5),
     zoo (>= 1.7-11),
-    RColorBrewer (>= 1.0-5)
-Depends:
-    faoswsFlag (>= 1.0),
+    RColorBrewer (>= 1.0-5),
     splines (>= 3.0.2)
+Depends:
+    faoswsUtil (>= 0.1.2),
+    faoswsFlag (>= 0.1.0)
 LazyData: yes
 ZipData: no
 VignetteBuilder: knitr
