@@ -10,6 +10,7 @@
 ##' between [0.5, 1].
 ##' @param ensembleModel A list of models to be used to build the
 ##' ensemble.
+##' @param modelExtrapolationRange See ?computeEnsembleWeight.
 ##' @param plot Whether the result of the ensemble should be plotted.
 ##' @param errorType See ?computeErrorRate.
 ##' @param errorFunction See ?computeEnsembleWeight.
@@ -21,8 +22,9 @@
 ensembleImpute = function(x, restrictWeights = TRUE,
     maximumWeights = 0.7,
     ensembleModel = allDefaultModels(),
+    modelExtrapolationRange = getDefaultRange(ensembleModel),
     plot = FALSE, errorType = "loocv",
-    errorFunction = function(x) mean(x^2) ){
+    errorFunction = function(x) mean(x^2)){
     
     T = length(x)
     n.model = length(ensembleModel)
@@ -39,7 +41,7 @@ ensembleImpute = function(x, restrictWeights = TRUE,
                 maximumWeights = maximumWeights,
                 ensembleModel = ensembleModel, errorType = errorType,
                 errorFunction = errorFunction,
-                modelExtrapolationRange = getDefaultRange(ensembleModel) )
+                modelExtrapolationRange = modelExtrapolationRange )
             ## print(modelWeights)
             ensembleFit = computeEnsemble(modelFits, modelWeights)
             ensemble[missIndex] = ensembleFit[missIndex]

@@ -39,6 +39,7 @@
 ##' is fitted.
 ##' @param ensembleModel A list of models to be used to build the
 ##' ensemble.
+##' @param modelExtrapolationRange See ?computeEnsembleWeight.
 ##' @param errorType See ?computeErrorRate.
 ##' @param errorFunction See ?computeEnsembleWeight.
 ##'
@@ -55,6 +56,7 @@ imputeProductionDomain = function(data, productionValue,
     naFlag = "M", maxdf = 5, 
     byKey = "areaCode", restrictWeights = TRUE, maximumWeights = 0.7,
     ensembleModel = allDefaultModels(),
+    modelExtrapolationRange = getDefaultRange(ensembleModel),
     yieldFormula,
     errorType = "loocv", errorFunction = function(x) mean(x^2) ){
 
@@ -153,6 +155,7 @@ imputeProductionDomain = function(data, productionValue,
                      newMethodFlag = newMethodFlag,
                      data = dataCopy,
                      ensembleModel = ensembleModel,
+                     modelExtrapolationRange = modelExtrapolationRange,
                      restrictWeights = restrictWeights,
                      maximumWeights = maximumWeights,
                      byKey = byKey,

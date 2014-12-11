@@ -20,6 +20,7 @@
 ##' @param byKey The unique key identifier.
 ##' @param ensembleModel A list of models to be used to build the
 ##' ensemble.
+##' @param modelExtrapolationRange See ?computeEnsembleWeight.
 ##' @param restrictWeights Whether a maximum weight restriction should
 ##' be imposed.
 ##' @param maximumWeights The maximum weight to be imposed, must be
@@ -37,6 +38,7 @@ imputeProduction = function(productionValue, productionObservationFlag,
     newMethodFlag, data,
     byKey, restrictWeights = TRUE, maximumWeights = 0.7,
     ensembleModel = allDefaultModels(),
+    modelExtrapolationRange = getDefaultRange(ensembleModel),
     flagTable = faoswsFlagTable,
     errorType = "loocv", errorFunction = function(x) mean(x^2) ){
 
@@ -67,6 +69,7 @@ imputeProduction = function(productionValue, productionObservationFlag,
     data[, productionValue :=
          ensembleImpute(productionValue,
                         ensembleModel = ensembleModel,
+                        modelExtrapolationRange = modelExtrapolationRange,
                         plot = FALSE, errorType = errorType,
                         errorFunction = errorFunction),
          by = byKey]
