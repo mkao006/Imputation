@@ -21,4 +21,5 @@ computeEnsembleWeight = function(x, ensembleModel){
     }
     stackingCoef = coef(nnls(modelFits, matrix(bahrainExample[obs], nc = 1)))
     weights = stackingCoef/sum(stackingCoef)
+    weights
 }
