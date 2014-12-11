@@ -63,9 +63,10 @@ ensembleImpute = function(x, restrictWeights = TRUE,
                 points((1:T)[missIndex], ensembleFit[missIndex],
                        col = "steelblue", cex = 1, pch = 19)
                 points(x, pch = 19)
+                modelWeightsToPlot = weightsMatrixToVector(modelWeights)
                 legend("topleft",
                        legend = c(paste0(modelNames, "(",
-                           round(modelWeights * 100, 2),
+                           round(modelWeightsToPlot * 100, 2),
                            "%)"), "Ensemble"),
                        col = c(colPal, "steelblue"),
                        lwd = c(rep(1, n.model), 3),
