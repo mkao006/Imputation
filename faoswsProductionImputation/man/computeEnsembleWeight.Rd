@@ -8,7 +8,7 @@ computeEnsembleWeight(x, ensembleModel)
 \arguments{
 \item{x}{A numeric vector to be imputed.}
 
-\item{fits}{The fitted value from the models.}
+\item{ensembleModel}{The list of ensemble models}
 
 \item{restrictWeights}{Whether a maximum weight restriction should
 be imposed.}

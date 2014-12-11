@@ -1,7 +1,7 @@
 ##' Function to compute the weights of the ensemble models
 ##'
 ##' @param  x A numeric vector to be imputed.
-##' @param fits The fitted value from the models.
+##' @param ensembleModel The list of ensemble models
 ##' @param restrictWeights Whether a maximum weight restriction should
 ##' be imposed.
 ##' @param maximumWeights The maximum weight to be imposed, must be
@@ -11,7 +11,7 @@
 
 computeEnsembleWeight = function(x, ensembleModel){
     obs = which(!is.na(x))
-    modelFits = matrix(NA, nr = length(obs), nc = length(fits))
+    modelFits = matrix(NA, nr = length(obs), nc = length(ensembleModel))
     for(i in 1:length(obs)){
         tmp = x
         tmp[obs[i]] = NA
