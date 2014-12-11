@@ -12,6 +12,7 @@
 ##' ensemble.
 ##' @param plot Whether the result of the ensemble should be plotted.
 ##' @param errorType See ?computeErrorRate.
+##' @param errorFunction See ?computeErrorRate.
 ##'
 ##' @export
 ##' 
@@ -20,7 +21,9 @@
 ensembleImpute = function(x, restrictWeights = TRUE,
     maximumWeights = 0.7,
     ensembleModel = allDefaultModels(),
-    plot = FALSE, errorType = "loocv"){
+    plot = FALSE, errorType = "loocv",
+    errorFunction = function(x) mean(x^2) ){
+    
     T = length(x)
     n.model = length(ensembleModel)
     ensemble = x
@@ -34,7 +37,8 @@ ensembleImpute = function(x, restrictWeights = TRUE,
             modelWeights = computeEnsembleWeight(x, modelFits,
                 restrictWeights = restrictWeights,
                 maximumWeights = maximumWeights,
-                ensembleModel = ensembleModel, errorType = errorType)
+                ensembleModel = ensembleModel, errorType = errorType,
+                errorFunction = errorFunction)
             ## print(modelWeights)
             ensembleFit = computeEnsemble(modelFits, modelWeights)
             ensemble[missIndex] = ensembleFit[missIndex]

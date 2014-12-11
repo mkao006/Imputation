@@ -40,6 +40,7 @@
 ##' @param ensembleModel A list of models to be used to build the
 ##' ensemble.
 ##' @param errorType See ?computeErrorRate.
+##' @param errorFunction See ?computeErrorRate.
 ##'
 ##' @export
 ##' 
@@ -54,7 +55,8 @@ imputeProductionDomain = function(data, productionValue,
     naFlag = "M", maxdf = 5, 
     byKey = "areaCode", restrictWeights = TRUE, maximumWeights = 0.7,
     ensembleModel = allDefaultModels(),
-    yieldFormula, errorType = "loocv"){
+    yieldFormula,
+    errorType = "loocv", errorFunction = function(x) mean(x^2) ){
 
     cat("Initializing ... \n")
     dataCopy = copy(data)
@@ -155,7 +157,8 @@ imputeProductionDomain = function(data, productionValue,
                      maximumWeights = maximumWeights,
                      byKey = byKey,
                      flagTable = flagTable,
-                     errorType = errorType)
+                     errorType = errorType,
+                     errorFunction = errorFunction)
 
     n.missProduction2 = length(which(is.na(dataCopy$productionValue)))
     cat("Number of values imputed: ",

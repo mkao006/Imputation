@@ -7,13 +7,15 @@
 ##' @param maximumWeights The maximum weight to be imposed, must be
 ##' between [0.5, 1].
 ##' @param errorType See ?computeErrorRate.
+##' @param errorFunction See ?computeErrorRate.
 ##' @param ensembleModel A list of the models fit.  This is only needed if
 ##' errorType = "loocv".
 ##' @export
 
 
 computeEnsembleWeight = function(x, fits, restrictWeights = TRUE,
-    maximumWeights = 0.7, errorType = "mse", ensembleModel = NULL){
+    maximumWeights = 0.7, errorType = "mse",
+    errorFunction = function(x) mean(x^2), ensembleModel = NULL){
     
     ### Verify inputs match assumptions:
     if( !all( lapply(fits, length) == length(x) ) )
@@ -29,8 +31,9 @@ computeEnsembleWeight = function(x, fits, restrictWeights = TRUE,
     benchmark = x
     error = sapply(1:length(fits),
         FUN = function(i){
-            computeErrorRate(x = benchmark, fit = fits[[i]], errorType = errorType
-                ,model = ensembleModel[[i]] )
+            computeErrorRate(x = benchmark, fit = fits[[i]],
+                model = ensembleModel[[i]], errorType = errorType,
+                errorFunction = errorFunction )
             }
         )
     ## NOTE (Michael): Maybe change this to uniform weight

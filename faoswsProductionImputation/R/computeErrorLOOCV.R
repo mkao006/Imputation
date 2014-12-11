@@ -22,13 +22,8 @@ computeErrorLOOCV = function(x, model){
         fitTemporary = model(xTemporary)
         outOfBagPrediction = fitTemporary[i]
         #Compare fitted value to observed (out of bag) value
-        outOfBagError = (x[i] - outOfBagPrediction)^2
+        outOfBagError = x[i] - outOfBagPrediction
         return(outOfBagError)
     })
-    
-    if( all(is.na(error)) )
-        er = Inf
-    else
-        er = mean(error, na.rm=T)
-    return(er)
+    return(error)
 }
