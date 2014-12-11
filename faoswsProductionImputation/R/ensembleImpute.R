@@ -12,7 +12,7 @@
 ##' ensemble.
 ##' @param plot Whether the result of the ensemble should be plotted.
 ##' @param errorType See ?computeErrorRate.
-##' @param errorFunction See ?computeErrorRate.
+##' @param errorFunction See ?computeEnsembleWeight.
 ##'
 ##' @export
 ##' 
@@ -38,7 +38,8 @@ ensembleImpute = function(x, restrictWeights = TRUE,
                 restrictWeights = restrictWeights,
                 maximumWeights = maximumWeights,
                 ensembleModel = ensembleModel, errorType = errorType,
-                errorFunction = errorFunction)
+                errorFunction = errorFunction,
+                modelExtrapolationRange = getDefaultRange(ensembleModel) )
             ## print(modelWeights)
             ensembleFit = computeEnsemble(modelFits, modelWeights)
             ensemble[missIndex] = ensembleFit[missIndex]

@@ -9,22 +9,18 @@
 ##' and "loocv" are implemented.  If "raw", then error is computed as the
 ##' difference between the model and observed data.  "loocv" performs
 ##' leave-one-out cross-validation to determine the predictive error of the
-##' model.  "loocv" is more rigorous but much slower.  After errors are
-##' computed for each observation, they are combined via errorFunction.
-##' @param errorFunction Function taking a vector of errors and returning a
-##' positive value.  Smaller values should indicate a better fit to the data.
-##' The default is the mean-squared error (so f(x)=mean(x^2)), but other
-##' functions (such as the median absolute deviation, or f(x)=median(abs(x)))
-##' can be used.  Note: NA values will be removed prior to calling this
-##' function.
+##' model.  "loocv" is more rigorous but much slower.
+##' 
+##' @return A vector of (the absolute value of the) errors corresponding to the
+##' non-missing entries in x.
+##' 
 ##' @note Currently, if a model fails in the cross-validation step, that error
 ##' is ignored when computing the mean error.  That could be improved by
 ##' adding a penalty when models fail to fit.
 ##' @export
 
 computeErrorRate = function(x, fit, model = NULL, 
-    errorType = ifelse( is.null(model), "raw", "loocv"),
-    errorFunction = function(x) mean(x^2) ){
+    errorType = ifelse( is.null(model), "raw", "loocv") ){
     
     ### Verify inputs match assumptions:
     if(is.null(model) & errorType == "loocv")
@@ -34,17 +30,12 @@ computeErrorRate = function(x, fit, model = NULL,
     
     ### Run the function:
     if(all(is.na(x-fit))){
-        er = NA
+        er = rep(NA, length.out = sum( !is.na(x) ) )
     } else {
         if(errorType == "raw")
-            er = errorFunction((x - fit)[!is.na(x-fit)])
-        if(errorType == "loocv"){
-            observationError = computeErrorLOOCV(x, model)
-            if( all(is.na(observationError)) )
-                er = NA
-            else
-                er = errorFunction(observationError[!is.na(observationError)])
-        }
+            er = (x - fit)[!is.na(x)]
+        if(errorType == "loocv")
+            er = computeErrorLOOCV(x, model)
     }
-    er
+    abs( er )
 }

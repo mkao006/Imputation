@@ -25,7 +25,7 @@
 ##' @param maximumWeights The maximum weight to be imposed, must be
 ##' between [0.5, 1].
 ##' @param errorType See ?computeErrorRate.
-##' @param errorFunction See ?computeErrorRate.
+##' @param errorFunction See ?computeEnsembleWeight.
 ##' 
 ##' @export
 ##' 

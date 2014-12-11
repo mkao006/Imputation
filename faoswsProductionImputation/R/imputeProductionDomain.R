@@ -40,7 +40,7 @@
 ##' @param ensembleModel A list of models to be used to build the
 ##' ensemble.
 ##' @param errorType See ?computeErrorRate.
-##' @param errorFunction See ?computeErrorRate.
+##' @param errorFunction See ?computeEnsembleWeight.
 ##'
 ##' @export
 ##' 
