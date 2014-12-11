@@ -4,29 +4,37 @@
 \title{Function to compute the error of different model fits}
 \usage{
 computeErrorRate(x, fit, model = NULL, errorType = ifelse(is.null(model),
-  "mse", "loocv"))
+  "raw", "loocv"), errorFunction = function(x) mean(x^2))
 }
 \arguments{
 \item{x}{A numeric vector to be imputed.}
 
 \item{fit}{The fitted value from the model.}
 
-\item{model}{The model fit to x.  If errorType="loocv" then this will be used
-to compute the leave-one-out cross-validation errors.  If errorType="mse", this
-is ignored.}
+\item{model}{The model fit to x.  If errorType="loocv" then this will be
+used to compute the leave-one-out cross-validation errors.  If
+errorType="mse", this is ignored.}
 
-\item{errorType}{Specifies what type of error to compute.  Currently, "mse"
-and "loocv" are implemented.  "mse" computes the mean squared error between
-the model and observed data.  "loocv" performs leave-one-out
-cross-validation to determine the predictive error of the model.  "loocv"
-is more rigorous but much slower.}
+\item{errorType}{Specifies what type of error to compute.  Currently, "raw"
+and "loocv" are implemented.  If "raw", then error is computed as the
+difference between the model and observed data.  "loocv" performs
+leave-one-out cross-validation to determine the predictive error of the
+model.  "loocv" is more rigorous but much slower.  After errors are
+computed for each observation, they are combined via errorFunction.}
+
+\item{errorFunction}{Function taking a vector of errors and returning a
+positive value.  Smaller values should indicate a better fit to the data.
+The default is the mean-squared error (so f(x)=mean(x^2)), but other
+functions (such as the median absolute deviation, or f(x)=median(abs(x)))
+can be used.  Note: NA values will be removed prior to calling this
+function.}
 }
 \description{
 Function to compute the error of different model fits
 }
 \note{
 Currently, if a model fails in the cross-validation step, that error
-is ignored when computing the mean error.  That could be improved by adding
-a penalty when models fail to fit.
+is ignored when computing the mean error.  That could be improved by
+adding a penalty when models fail to fit.
 }
 

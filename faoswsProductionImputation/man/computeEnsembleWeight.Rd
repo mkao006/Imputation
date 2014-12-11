@@ -4,7 +4,8 @@
 \title{Function to compute the weights of the ensemble models}
 \usage{
 computeEnsembleWeight(x, fits, restrictWeights = TRUE, maximumWeights = 0.7,
-  errorType = "mse", ensembleModel = NULL)
+  errorType = "mse", errorFunction = function(x) mean(x^2),
+  ensembleModel = NULL)
 }
 \arguments{
 \item{x}{A numeric vector to be imputed.}
@@ -18,6 +19,8 @@ be imposed.}
 between [0.5, 1].}
 
 \item{errorType}{See ?computeErrorRate.}
+
+\item{errorFunction}{See ?computeErrorRate.}
 
 \item{ensembleModel}{A list of the models fit.  This is only needed if
 errorType = "loocv".}

@@ -4,7 +4,8 @@
 \title{Function to perform ensemble imputation}
 \usage{
 ensembleImpute(x, restrictWeights = TRUE, maximumWeights = 0.7,
-  ensembleModel = allDefaultModels(), plot = FALSE, errorType = "loocv")
+  ensembleModel = allDefaultModels(), plot = FALSE, errorType = "loocv",
+  errorFunction = function(x) mean(x^2))
 }
 \arguments{
 \item{x}{A numeric vector}
@@ -21,6 +22,8 @@ ensemble.}
 \item{plot}{Whether the result of the ensemble should be plotted.}
 
 \item{errorType}{See ?computeErrorRate.}
+
+\item{errorFunction}{See ?computeErrorRate.}
 }
 \description{
 This is an implementation of the ensemble imputation methodology
