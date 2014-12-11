@@ -20,7 +20,7 @@ Imports:
     splines (>= 3.0.2)
 Depends:
     faoswsUtil (>= 0.1.2),
-    faoswsFlag (>= 0.1.0)
+    faoswsFlag (>= 0.1.1)
 LazyData: yes
 ZipData: no
 VignetteBuilder: knitr
