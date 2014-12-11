@@ -32,11 +32,9 @@ ensembleImpute = function(x, restrictWeights = TRUE,
         if(length(unique(na.omit(x))) == 1){
             ensemble = defaultMean(x)
         } else {
-            modelFits = computeEnsembleFit(x = x,
-                ensembleModel = ensembleModel)
-            modelWeights = computeEnsembleWeight(x, modelFits,
-                restrictWeights = restrictWeights,
-                maximumWeights = maximumWeights)
+            ## modelFits = computeEnsembleFit(x = x,
+            ##     ensembleModel = ensembleModel)
+            modelWeights = computeEnsembleWeight(x, ensembleModel)
             ## print(modelWeights)
             ensembleFit = computeEnsemble(modelFits, modelWeights)
             ensemble[missIndex] = ensembleFit[missIndex]

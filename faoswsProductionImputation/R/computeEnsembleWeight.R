@@ -9,24 +9,16 @@
 ##' @export
 
 
-computeEnsembleWeight = function(x, fits, restrictWeights = TRUE,
-    maximumWeights = 0.7){
-    benchmark = x
-    error = sapply(fits,
-        FUN = function(x){
-            computeErrorRate(x = benchmark, fit = x)
-            }
-        )
-    ## NOTE (Michael): Maybe change this to uniform weight
-    error[error < 1e-3] = mean(error[error >= 1e-3], na.rm = TRUE)
-    weights = (1/error^2)/sum(1/error^2, na.rm = TRUE)
-    weights[is.na(weights)] = 0
-    if(restrictWeights & any(weights > maximumWeights)){
-        weights[weights < maximumWeights] =
-            weights[weights < maximumWeights] *
-                ((1 - maximumWeights)/
-                 sum(weights[weights < maximumWeights]))
-        weights[weights > maximumWeights] = maximumWeights
+computeEnsembleWeight = function(x, ensembleModel){
+    obs = which(!is.na(x))
+    modelFits = matrix(NA, nr = length(obs), nc = length(fits))
+    for(i in 1:length(obs)){
+        tmp = x
+        tmp[obs[i]] = NA
+        modelFits[i, ] =
+            sapply(computeEnsembleFit(x = tmp, ensembleModel = ensembleModel),
+                   FUN = function(x) x[i])
     }
-    weights
-}    
+    stackingCoef = coef(nnls(modelFits, matrix(bahrainExample[obs], nc = 1)))
+    weights = stackingCoef/sum(stackingCoef)
+}

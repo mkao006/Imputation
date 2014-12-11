@@ -3,7 +3,7 @@
 \alias{computeEnsembleWeight}
 \title{Function to compute the weights of the ensemble models}
 \usage{
-computeEnsembleWeight(x, fits, restrictWeights = TRUE, maximumWeights = 0.7)
+computeEnsembleWeight(x, ensembleModel)
 }
 \arguments{
 \item{x}{A numeric vector to be imputed.}
