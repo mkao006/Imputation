@@ -16,6 +16,9 @@
 defaultLogistic = function(x){
     time = 1:length(x)
     xmax = max(x, na.rm = TRUE)
+    #If all values are 0 or NA's, then return no prediction
+    if(is.na(xmax) | xmax==0)
+        return( rep(NA, length(x)) )
     x.scaled = x/xmax
     logisticModel = try( nls(
         formula = log(x+1) ~ log(A) - log(1 + exp( -B*(time-C) )),
