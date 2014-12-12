@@ -34,7 +34,7 @@ computeEnsembleWeight = function(x, fits, restrictWeights = TRUE,
         stop("All elements of fits must have the same length as x!")
     if( !is.null(ensembleModel) )
         stopifnot( all( names(fits) == names(ensembleModel) ) )
-    stopifnot( errorType %in% c("mse", "loocv") )
+    stopifnot( errorType %in% c("raw", "loocv") )
     stopifnot( maximumWeights <= 1 & maximumWeights >= 0.5 )
     if(errorType=="loocv" & is.null(ensembleModel) )
         stop("ensembleModel must be provided if errorType='loocv'")
