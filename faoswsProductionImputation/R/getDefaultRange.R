@@ -11,6 +11,8 @@
 ##' @export
 
 getDefaultRange = function(ensembleModel){
+    if(is.null(names(ensembleModel)))
+        stop("ensembleModel must be a named list!")
     range = lapply( names(ensembleModel), switch,
         defaultMean = Inf,
         defaultLm = Inf,

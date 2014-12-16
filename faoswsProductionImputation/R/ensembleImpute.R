@@ -26,6 +26,9 @@ ensembleImpute = function(x, restrictWeights = TRUE,
     plot = FALSE, errorType = "loocv",
     errorFunction = function(x) mean(x^2)){
     
+    if(length(ensembleModel)<=1)
+        stop("ensembleModel must be a list with at least two elements!")
+    
     T = length(x)
     n.model = length(ensembleModel)
     ensemble = x
