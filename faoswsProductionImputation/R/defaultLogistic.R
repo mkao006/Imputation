@@ -15,29 +15,13 @@
 
 defaultLogistic = function(x){
     time = 1:length(x)
-    xmax = max(x, na.rm = TRUE)
-    #If all values are 0 or NA's, then return no prediction
-    if(is.na(xmax) | xmax<=0)
-        return( rep(NA, length(x)) )
-    x.scaled = x/xmax
-    logisticModel = try( nls(
-        formula = log(x+1) ~ log(A) - log(1 + exp( -B*(time-C) )),
-        start = list(A=xmax, B=1, C=mean(time)) ),
-        silent = TRUE
-        )
-    if(!inherits(logisticModel, "try-error")){
-        logisticFit = exp( predict(logisticModel, newdata = data.frame(time = time)) )
-        midpoint = coef(logisticModel)[3]
-    } else {
-        logisticModel = glm(formula = x.scaled ~ time, family = "binomial")
-        logisticFit =
-            predict(logisticModel, 
-                    newdata = data.frame(time = time),
-                    type = "response") * xmax
-        midpoint = - coef(logisticModel)[1]/coef(logisticModel)[2]
-    }
-    if(length(na.omit(x[time < midpoint])) < 1 |
-       length(na.omit(x[time > midpoint])) < 1 )
-        logisticFit = rep(NA, length(x))
+    #Try most complex model first:
+    logisticFit = try( logisticNlsIntercept(x), silent = TRUE )
+    #If most complex model failed, try simpler model (intercept=0)
+    if(inherits(logisticFit, "try-error"))
+        logisticFit = try( logisticNls(x), silent = TRUE )
+    #If both non-linear models fail, try simple logistic regression model
+    if(inherits(logisticFit, "try-error"))
+        logisticFit = try( logisticGlm(x), silent = TRUE )
     logisticFit
 }
