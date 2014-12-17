@@ -3,21 +3,10 @@
 ##' This is a wrapper of the ensemble imputation for the production
 ##' domain.
 ##'
-##' @param productionValue The column name corresponding to production
-##' value.
-##' @param productionObservationFlag The column name corresponding to the
-##' observation flag of production.
-##' @param areaHarvestedValue The column name corresponding to area
-##' harvested value.
-##' @param areaHarvestedObservationFlag The column name corresponding to the
-##' observation flag of area harvested.
-##' @param yieldValue The columne name corresponding to yield value.
-##' @param yieldObservationFlag The column name corresponding to the observation
-##' flag of yield.
+##' @param columnNames See the same argument at ?imputeProductionDomain
 ##' @param imputationFlag Flag value for new imputation values.
 ##' @param flagTable see data(faoswsFlagTable) in \pkg{faoswsFlag}
 ##' @param data The data.table object containing the data.
-##' @param byKey The unique key identifier.
 ##' @param ensembleModel A list of models to be used to build the
 ##' ensemble.
 ##' @param modelExtrapolationRange See ?computeEnsembleWeight.
@@ -31,30 +20,41 @@
 ##' @export
 ##' 
 
-imputeProduction = function(productionValue, productionObservationFlag,
-    productionMethodFlag, areaHarvestedValue,
-    areaHarvestedObservationFlag, areaHarvestedMethodFlag, yieldValue,
-    yieldObservationFlag, yieldMethodFlag, imputationFlag = "I",
+imputeProduction = function(columnNames, imputationFlag = "I",
     newMethodFlag, data,
-    byKey, restrictWeights = TRUE, maximumWeights = 0.7,
+    restrictWeights = TRUE, maximumWeights = 0.7,
     ensembleModel = allDefaultModels(),
     modelExtrapolationRange = getDefaultRange(ensembleModel),
     flagTable = faoswsFlagTable,
     errorType = "loocv", errorFunction = function(x) mean(x^2) ){
 
+    ### Ensure inputs are as expected:
+    stopifnot( is(data, "data.table") )
+    stopifnot( is.logical(restrictWeights) )
+    # Ensure all elements of ensembleModel are functions
+    stopifnot( all( sapply( ensembleModel, is.function ) ) )
+    stopifnot( maximumWeights <= 1 & maximumWeights >= 0 )
+    stopifnot( length(ensembleModel) == length(modelExtrapolationRange) )
+    stopifnot( errorType %in% c("loocv", "raw") )
+    stopifnot( is( errorFunction, "function" ) )
+    testColumnNames( columnNames = columnNames, data = data)
+
+    assignColumnNames( columnNames = columnNames, data = data,
+        environment = environment() )
+    # Check that all flags are in the flagTable:
+    flags = data[,get(productionObservationFlag)]
+    flags = c(flags, data[,get(areaHarvestedObservationFlag)])
+    flags = c(flags, data[,get(yieldObservationFlag)])
+    flags = unique(flags)
+    missingFlags = flags[!flags %in% flagTable$flagObservationStatus]
+    if( length(missingFlags) > 0 ){
+        stop(paste("Some observation flags are not in the flag table!  Missing:\n",
+            paste0("'", missingFlags, "'", collapse="\n ") ) )
+    }
 
     ## By balancing first
-    balanceProduction(productionValue = productionValue,
-                      productionObservationFlag =
-                          productionObservationFlag,
-                      productionMethodFlag =
-                          productionMethodFlag,
-                      areaHarvestedValue = areaHarvestedValue,
-                      areaHarvestedObservationFlag =
-                          areaHarvestedObservationFlag,
+    balanceProduction(columnNames,
                       newMethodFlag = newMethodFlag,
-                      yieldValue = yieldValue,
-                      yieldObservationFlag = yieldObservationFlag,
                       data = data,
                       flagTable = flagTable)
 

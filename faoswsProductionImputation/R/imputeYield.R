@@ -2,10 +2,7 @@
 ##'
 ##' This function imputes the yield through linear mixed model
 ##'
-##' @param yieldValue The column name of the yield variable.
-##' @param yieldObservationFlag The observation flag of yield.
-##' @param yieldMethodFlag The method flag of yield.
-##' @param yearValue The column name corresponding to year.
+##' @param columnNames See this argument at ?imputeProductionDomain.
 ##' @param imputationFlag Flag value for new imputation values.
 ##' @param newMethodFlag The new method flag to be assigned to imputed
 ##' value.
@@ -13,16 +10,29 @@
 ##' @param flagTable see data(faoswsFlagTable) in \pkg{faoswsFlag}
 ##' @param data The data
 ##' @param weights The weights for the observation
-##' @param byKey The unique key identifier.
 ##'
 ##' @export
 ##' 
 
 
-imputeYield = function(yieldValue, yieldObservationFlag, yieldMethodFlag,
-    yearValue, imputationFlag, newMethodFlag, maxdf = 5, 
-    flagTable = faoswsFlagTable, data, weights = NULL, byKey,
+imputeYield = function(columnNames, imputationFlag, newMethodFlag, maxdf = 5, 
+    flagTable = faoswsFlagTable, data, weights = NULL, 
     yieldFormula){
+    
+    ### Ensure inputs are as expected:
+    stopifnot( is(data, "data.table") )
+    testColumnNames( columnNames = columnNames, data = data)
+    # Check that all flags are in the flagTable:
+    flags = unique( data[,get(yieldObservationFlag)] )
+    flags = unique(flags)
+    missingFlags = flags[!flags %in% flagTable$flagObservationStatus]
+    if( length(missingFlags) > 0 ){
+        stop(paste("Some observation flags are not in the flag table!  Missing:\n",
+            paste0("'", missingFlags, "'", collapse="\n ") ) )
+    }
+    
+    assignColumnNames( columnNames = columnNames, data = data,
+        environment = environment() )
 
     setnames(x = data, old = c(yieldValue, yieldObservationFlag,
                            yieldMethodFlag, yearValue),

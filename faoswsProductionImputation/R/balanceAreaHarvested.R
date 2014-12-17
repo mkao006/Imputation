@@ -2,17 +2,7 @@
 ##' are given.
 ##'
 ##'
-##' @param productionValue The column name corresponding to production
-##' value.
-##' @param productionObservationFlag The column name corresponding to the
-##' observation flag of production.
-##' @param areaHarvestedValue The column name corresponding to area
-##' harvested value.
-##' @param areaHarvestedObservationFlag The column name corresponding
-##' to the observation flag of area harvested.
-##' @param yieldValue The columne name corresponding to yield value.
-##' @param yieldObservationFlag The column name corresponding to the
-##' observation flag of yield.
+##' @param columnNames See same argument at ?imputeProductionDomain.
 ##' @param flagTable see data(faoswsFlagTable) in \pkg{faoswsFlag}
 ##' @param data The data.table object containing the data.
 ##'
@@ -20,12 +10,15 @@
 ##' 
 
 
-balanceAreaHarvested = function(productionValue,
-    productionObservationFlag, 
-    areaHarvestedValue, areaHarvestedObservationFlag,
-    areaHarvestedMethodFlag, yieldValue, yieldObservationFlag,
+balanceAreaHarvested = function(columnNames,
     newMethodFlag, flagTable = faoswsFlagTable, data){
     
+    ### Ensure inputs are as expected:
+    stopifnot( is(data, "data.table") )
+    testColumnNames(columnNames = columnNames, data = data)
+
+    assignColumnNames(columnNames = columnNames, data = data,
+        envir = environment() )
     origName = c(productionValue, productionObservationFlag,
         areaHarvestedValue,
         areaHarvestedObservationFlag, areaHarvestedMethodFlag,

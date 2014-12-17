@@ -1,29 +1,32 @@
 ##' Function to compute production when new area harvested and yield
 ##' are given.
 ##'
-##'
-##' @param productionValue The column name corresponding to production
-##' value.
-##' @param productionObservationFlag The column name corresponding to
-##' the observation flag of production.
-##' @param areaHarvestedValue The column name corresponding to area
-##' harvested value.
-##' @param areaHarvestedObservationFlag The column name corresponding
-##' to the observation flag of area harvested.
-##' @param yieldValue The columne name corresponding to yield value.
-##' @param yieldObservationFlag The column name corresponding to the
-##' observation flag of yield.
+##' @param columnNames See this argument at ?imputeProductionDomain.
 ##' @param flagTable see data(faoswsFlagTable) in \pkg{faoswsFlag}
 ##' @param data The data.table object containing the data.
 ##'
 ##' @export
 ##' 
 
-balanceProduction = function(productionValue,
-    productionObservationFlag, productionMethodFlag,
-    areaHarvestedValue, areaHarvestedObservationFlag,
-    yieldValue, yieldObservationFlag,
+balanceProduction = function(columnNames,
     newMethodFlag, flagTable = faoswsFlagTable, data){
+
+    ### Ensure inputs are as expected:
+    stopifnot( is(data, "data.table") )
+    testColumnNames( columnNames = columnNames, data = data )
+
+    assignColumnNames( columnNames = columnNames, data = data,
+        environment = environment() )
+    # Check that all flags are in the flagTable:
+    flags = data[,get(productionObservationFlag)]
+    flags = c(flags, data[,get(areaHarvestedObservationFlag)])
+    flags = c(flags, data[,get(yieldObservationFlag)])
+    flags = unique(flags)
+    missingFlags = flags[!flags %in% flagTable$flagObservationStatus]
+    if( length(missingFlags) > 0 ){
+        stop(paste("Some observation flags are not in the flag table!  Missing:\n",
+            paste0("'", missingFlags, "'", collapse="\n ") ) )
+    }
     
     origName = c(productionValue, productionObservationFlag,
         productionMethodFlag, areaHarvestedValue,

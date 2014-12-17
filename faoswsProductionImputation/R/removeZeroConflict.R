@@ -1,21 +1,28 @@
 ##' The function removes conflicting zeroes between production and
 ##' area harvested.
 ##'
-##' @param productionValue The name of the production variable.
-##' @param areaHarvestedValue The name of the area harvested variable.
-##' @param yieldValue The name of the yield variable.
-##' @param productionObservationFlag The observation flag of production.
-##' @param areaHarvestedObservationFlag The observation flag of area
-##' harvested.
-##' @param yieldObservationFlag The observation flag of yield.
+##' @param columnNames See columnNames argument at ?imputeProductionDomain.
 ##' @param naFlag Flag value for missing values.
 ##' @param data The data table objest
 ##'
 ##' @export
 
-removeZeroConflict = function(productionValue, areaHarvestedValue,
-    yieldValue, productionObservationFlag, areaHarvestedObservationFlag,
-    yieldObservationFlag, naFlag = "M", data){
+removeZeroConflict = function(columnNames, naFlag = "M", data){
+    
+    ### Ensure inputs are as expected:
+    stopifnot( is(data, "data.table") )
+    testColumnNames( columnNames = columnNames, data = data )
+
+    assignColumnNames( columnNames = columnNames, data = data,
+        environment = environment() )
+    
+    ### Assign names
+    productionValue              = columnNames["productionValue"]
+    productionObservationFlag    = columnNames["productionObservationFlag"]
+    areaHarvestedValue           = columnNames["areaHarvestedValue"]
+    areaHarvestedObservationFlag = columnNames["areaHarvestedObservationFlag"]
+    yieldValue                   = columnNames["yieldValue"]
+    yieldObservationFlag         = columnNames["yieldObservationFlag"]
 
     setnames(x = data,
              old = c(productionValue,

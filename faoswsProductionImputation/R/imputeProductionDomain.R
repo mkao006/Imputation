@@ -7,18 +7,15 @@
 ##' taken into account.
 ##'
 ##' @param data The data
-##' @param productionValue The name of the production variable.
-##' @param areaHarvestedValue The name of the area harvested variable.
-##' @param yieldValue The column name of the yield variable.
-##' @param productionObservationFlag The observation flag of production.
-##' @param productionMethodFlag The method flag of production.
-##' @param areaHarvestedObservationFlag The observation flag of area
-##' harvested.
-##' @param areaHarvestedMethodFlag The method flag of area
-##' harvested.
-##' @param yieldObservationFlag The observation flag of yield.
-##' @param yieldMethodFlag The method flag of yield.
-##' @param yearValue The column name corresponding to year
+##' @param columnNames A named character vector.  This argument specifies what
+##' each of the relevant columns of data correspond to.  The values of this
+##' vector should correspond to column names of data, and the names of this
+##' vector should be productionValue, productionObservationFlag,
+##' productionMethodFlag, areaHarvestedValue, areaHarvestedObservationFlag,
+##' areaHarvestedMethodFlag, yieldValue, yieldObservationFlag, yieldMethodFlag,
+##' yearValue, and byKey.  Ordering of this vector is not important, and it may
+##' have additional elements, but it must have the elements listed above.  The
+##' defaultColumnNames function may be helpful in setting up a starting point.
 ##' @param flagTable see data(faoswsFlagTable) in \pkg{faoswsFlag}
 ##' @param removePriorImputation logical, whether prior imputation
 ##' should be removed.
@@ -29,7 +26,6 @@
 ##' @param imputationFlag Flag value for new imputation values.
 ##' @param naFlag Flag value for missing values.
 ##' @param maxdf The maximum degree of freedom for the spline. 
-##' @param byKey The unique key identifier.
 ##' @param restrictWeights Whether a maximum weight restriction should
 ##' be imposed.
 ##' @param maximumWeights The maximum weight to be imposed, must be
@@ -46,20 +42,43 @@
 ##' @export
 ##' 
 
-imputeProductionDomain = function(data, productionValue,
-    areaHarvestedValue, yieldValue, yearValue, productionObservationFlag,
-    areaHarvestedObservationFlag,
-    yieldObservationFlag, productionMethodFlag, areaHarvestedMethodFlag,
-    yieldMethodFlag, flagTable = faoswsFlagTable,
+imputeProductionDomain = function(data, columnNames,
+    flagTable = faoswsFlagTable,
     removePriorImputation = TRUE, removeConflictValues = TRUE,
     imputedFlag = "E", imputationFlag = "I", newMethodFlag = "",
     naFlag = "M", maxdf = 5, 
-    byKey = "areaCode", restrictWeights = TRUE, maximumWeights = 0.7,
+    restrictWeights = TRUE, maximumWeights = 0.7,
     ensembleModel = allDefaultModels(),
     modelExtrapolationRange = getDefaultRange(ensembleModel),
     yieldFormula,
     errorType = "loocv", errorFunction = function(x) mean(x^2) ){
 
+    ### Ensure inputs are as expected:
+    stopifnot( is(data, "data.table") )
+    testColumnNames( columnNames = columnNames, data = data)
+    stopifnot( is.logical( 
+        c(removePriorImputation, removeConflictValues, restrictWeights) ) )
+    # Ensure all elements of ensembleModel are functions
+    stopifnot( all( sapply( ensembleModel, is.function ) ) )
+    stopifnot( maximumWeights <= 1 & maximumWeights >= 0 )
+    stopifnot( length(ensembleModel) == length(modelExtrapolationRange) )
+    stopifnot( errorType %in% c("loocv", "raw") )
+    stopifnot( is( errorFunction, "function" ) )
+
+    assignColumnNames( columnNames = columnNames, data = data,
+        environment = environment() )
+    
+    # Check that all flags are in the flagTable:
+    flags = data[,get(productionObservationFlag)]
+    flags = c(flags, data[,get(areaHarvestedObservationFlag)])
+    flags = c(flags, data[,get(yieldObservationFlag)])
+    flags = unique(flags)
+    missingFlags = flags[!flags %in% flagTable$flagObservationStatus]
+    if( length(missingFlags) > 0 ){
+        stop(paste("Some observation flags are not in the flag table!  Missing:\n",
+            paste0("'", missingFlags, "'", collapse="\n ") ) )
+    }
+    
     cat("Initializing ... \n")
     dataCopy = copy(data)
     setkeyv(x = dataCopy, cols = c(byKey, yearValue))
@@ -95,25 +114,13 @@ imputeProductionDomain = function(data, productionValue,
 
     dataCopy =
         processProductionDomain(data = dataCopy,
-                                productionValue = "productionValue",
-                                productionObservationFlag =
-                                    "productionObservationFlag",
-                                productionMethodFlag =
-                                    "productionMethodFlag",
-                                areaHarvestedValue =
-                                    "areaHarvestedValue",
-                                areaHarvestedObservationFlag =
-                                    "areaHarvestedObservationFlag",
-                                yieldValue = "yieldValue",
-                                yieldObservationFlag =
-                                    "yieldObservationFlag",
+                                columnNames = columnNames,
                                 removePriorImputation =
                                     removePriorImputation,
                                 removeConflictValues =
                                     removeConflictValues,
                                 imputedFlag = imputedFlag,
-                                naFlag = naFlag,
-                                byKey = byKey)    
+                                naFlag = naFlag )    
 
     ## Step two: Impute Yield
     cat("Imputing Yield ...\n")
@@ -124,14 +131,10 @@ imputeProductionDomain = function(data, productionValue,
                             gsub(yieldValue, "yieldValue",
                                  deparse(yieldFormula))))
     
-    imputeYield(yieldValue = "yieldValue",
-                yieldObservationFlag = "yieldObservationFlag",
-                yieldMethodFlag = "yieldMethodFlag",
-                yearValue = "yearValue",
+    imputeYield(columnNames = columnNames,
                 imputationFlag = imputationFlag,
                 newMethodFlag = newMethodFlag,
                 maxdf = maxdf,
-                byKey = byKey,
                 data = dataCopy,
                 yieldFormula = yieldFormula)
     n.missYield2 = length(which(is.na(dataCopy$yieldValue)))
@@ -142,23 +145,13 @@ imputeProductionDomain = function(data, productionValue,
     cat("Imputing Production ...\n")
     n.missProduction = length(which(is.na(dataCopy$productionValue)))
 
-    imputeProduction(productionValue = "productionValue",
-                     productionObservationFlag =
-                         "productionObservationFlag",
-                     productionMethodFlag =
-                         "productionMethodFlag",
-                     areaHarvestedValue = "areaHarvestedValue",
-                     areaHarvestedObservationFlag =
-                         "areaHarvestedObservationFlag",
-                     yieldValue = "yieldValue",
-                     yieldObservationFlag = "yieldObservationFlag",
+    imputeProduction(columnNames = columnNames,
                      newMethodFlag = newMethodFlag,
                      data = dataCopy,
                      ensembleModel = ensembleModel,
                      modelExtrapolationRange = modelExtrapolationRange,
                      restrictWeights = restrictWeights,
                      maximumWeights = maximumWeights,
-                     byKey = byKey,
                      flagTable = flagTable,
                      errorType = errorType,
                      errorFunction = errorFunction)
@@ -173,16 +166,7 @@ imputeProductionDomain = function(data, productionValue,
     n.missAreaHarvested =
         length(which(is.na(dataCopy$areaHarvestedValue)))
 
-    balanceAreaHarvested(productionValue = "productionValue",
-                         productionObservationFlag =
-                             "productionObservationFlag",
-                         areaHarvestedValue = "areaHarvestedValue",
-                         areaHarvestedObservationFlag =
-                             "areaHarvestedObservationFlag",
-                         areaHarvestedMethodFlag =
-                             "areaHarvestedMethodFlag",
-                         yieldValue = "yieldValue",
-                         yieldObservationFlag = "yieldObservationFlag",
+    balanceAreaHarvested(columnNames, 
                          newMethodFlag = newMethodFlag,
                          data = dataCopy,
                          flagTable = flagTable)
