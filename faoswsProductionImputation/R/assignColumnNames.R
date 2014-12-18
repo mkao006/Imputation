@@ -36,7 +36,8 @@
 ##' @export
 ##' 
 
-assignColumnNames = function( columnNames, data, environment ){
+assignColumnNames = function( columnNames, data,
+    environment = parent.frame(1) ){
     for(variables in c("productionValue", "productionObservationFlag",
         "productionMethodFlag", "areaHarvestedValue",
         "areaHarvestedObservationFlag", "areaHarvestedMethodFlag",
