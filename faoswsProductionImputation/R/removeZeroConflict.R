@@ -9,21 +9,12 @@
 
 removeZeroConflict = function(columnNames, naFlag = "M", data){
     
-    ### Ensure inputs are as expected:
+    ### Ensure inputs are as expected
     stopifnot( is(data, "data.table") )
     testColumnNames( columnNames = columnNames, data = data )
-
     assignColumnNames( columnNames = columnNames, data = data,
         environment = environment() )
     
-    ### Assign names
-    productionValue              = columnNames["productionValue"]
-    productionObservationFlag    = columnNames["productionObservationFlag"]
-    areaHarvestedValue           = columnNames["areaHarvestedValue"]
-    areaHarvestedObservationFlag = columnNames["areaHarvestedObservationFlag"]
-    yieldValue                   = columnNames["yieldValue"]
-    yieldObservationFlag         = columnNames["yieldObservationFlag"]
-
     setnames(x = data,
              old = c(productionValue,
                      areaHarvestedValue,

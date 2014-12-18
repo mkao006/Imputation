@@ -19,21 +19,14 @@ imputeYield = function(columnNames, imputationFlag, newMethodFlag, maxdf = 5,
     flagTable = faoswsFlagTable, data, weights = NULL, 
     yieldFormula){
     
-    ### Ensure inputs are as expected:
+    ### Ensure inputs are as expected (and assign columnNames variables)
     stopifnot( is(data, "data.table") )
     testColumnNames( columnNames = columnNames, data = data)
-    # Check that all flags are in the flagTable:
-    flags = unique( data[,get(yieldObservationFlag)] )
-    flags = unique(flags)
-    missingFlags = flags[!flags %in% flagTable$flagObservationStatus]
-    if( length(missingFlags) > 0 ){
-        stop(paste("Some observation flags are not in the flag table!  Missing:\n",
-            paste0("'", missingFlags, "'", collapse="\n ") ) )
-    }
-    
     assignColumnNames( columnNames = columnNames, data = data,
         environment = environment() )
-
+	testFlagTable( flagTable = flagTable, data = data,
+        columnNames = columnNames )
+    
     setnames(x = data, old = c(yieldValue, yieldObservationFlag,
                            yieldMethodFlag, yearValue),
              new = c("yieldValue", "yieldObservationFlag",

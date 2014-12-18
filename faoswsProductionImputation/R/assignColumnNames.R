@@ -15,7 +15,7 @@
 ##' (the names) map to which columns of data (the values).
 ##' @param data The dataset being analysed.  This is used to ensure that all
 ##' elements of columnNames are in fact in data.
-##' @param env The environment where the column name variables should be 
+##' @param environment The environment where the column name variables should be 
 ##' assigned.  Typically, this will be the environment of the function which
 ##' called this function.  See examples.
 ##'
@@ -36,13 +36,13 @@
 ##' @export
 ##' 
 
-assignColumnNames = function( columnNames, data, envir ){
+assignColumnNames = function( columnNames, data, environment ){
     for(variables in c("productionValue", "productionObservationFlag",
         "productionMethodFlag", "areaHarvestedValue",
         "areaHarvestedObservationFlag", "areaHarvestedMethodFlag",
         "yieldValue", "yieldObservationFlag", "yieldMethodFlag", "yearValue",
         "byKey" ) ){
         assign( x = variables, value = columnNames[variables],
-            envir = envir )
+            envir = environment )
     }
 }

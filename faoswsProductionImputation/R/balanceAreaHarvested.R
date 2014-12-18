@@ -13,12 +13,14 @@
 balanceAreaHarvested = function(columnNames,
     newMethodFlag, flagTable = faoswsFlagTable, data){
     
-    ### Ensure inputs are as expected:
+    ### Ensure inputs are as expected (and assign columnNames variables)
     stopifnot( is(data, "data.table") )
     testColumnNames(columnNames = columnNames, data = data)
-
     assignColumnNames(columnNames = columnNames, data = data,
         envir = environment() )
+	testFlagTable( flagTable = flagTable, data = data,
+        columnNames = columnNames )
+
     origName = c(productionValue, productionObservationFlag,
         areaHarvestedValue,
         areaHarvestedObservationFlag, areaHarvestedMethodFlag,

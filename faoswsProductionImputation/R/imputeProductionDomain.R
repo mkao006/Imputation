@@ -53,7 +53,7 @@ imputeProductionDomain = function(data, columnNames,
     yieldFormula,
     errorType = "loocv", errorFunction = function(x) mean(x^2) ){
 
-    ### Ensure inputs are as expected:
+    ### Ensure inputs are as expected (and assign columnNames variables)
     stopifnot( is(data, "data.table") )
     testColumnNames( columnNames = columnNames, data = data)
     stopifnot( is.logical( 
@@ -64,26 +64,15 @@ imputeProductionDomain = function(data, columnNames,
     stopifnot( length(ensembleModel) == length(modelExtrapolationRange) )
     stopifnot( errorType %in% c("loocv", "raw") )
     stopifnot( is( errorFunction, "function" ) )
-
     assignColumnNames( columnNames = columnNames, data = data,
         environment = environment() )
-    
-    # Check that all flags are in the flagTable:
-    flags = data[,get(productionObservationFlag)]
-    flags = c(flags, data[,get(areaHarvestedObservationFlag)])
-    flags = c(flags, data[,get(yieldObservationFlag)])
-    flags = unique(flags)
-    missingFlags = flags[!flags %in% flagTable$flagObservationStatus]
-    if( length(missingFlags) > 0 ){
-        stop(paste("Some observation flags are not in the flag table!  Missing:\n",
-            paste0("'", missingFlags, "'", collapse="\n ") ) )
-    }
-    
+	testFlagTable( flagTable = flagTable, data = data,
+        columnNames = columnNames )
+        
     cat("Initializing ... \n")
     dataCopy = copy(data)
     setkeyv(x = dataCopy, cols = c(byKey, yearValue))
-    setnames(x = dataCopy,
-             old = c(productionValue,
+    oldColumnNames = c(productionValue,
                      areaHarvestedValue,
                      yieldValue,
                      yearValue,
@@ -92,9 +81,10 @@ imputeProductionDomain = function(data, columnNames,
                      yieldObservationFlag,
                      productionMethodFlag,
                      areaHarvestedMethodFlag,
-                     yieldMethodFlag
-                     ),
-             new = c("productionValue",
+                     yieldMethodFlag,
+                     byKey
+                     )
+    newColumnNames = c("productionValue",
                      "areaHarvestedValue",
                      "yieldValue",
                      "yearValue",
@@ -103,7 +93,13 @@ imputeProductionDomain = function(data, columnNames,
                      "yieldObservationFlag",
                      "productionMethodFlag",
                      "areaHarvestedMethodFlag",
-                     "yieldMethodFlag")
+                     "yieldMethodFlag",
+                     "byKey")
+    # Assign names to newColumnNames so it can be passed to columnNames later
+    names( newColumnNames ) = newColumnNames
+    setnames(x = dataCopy,
+             old = oldColumnNames,
+             new = newColumnNames
              )
 
     ## These should be documented and checked.  Make sure the types
@@ -114,7 +110,7 @@ imputeProductionDomain = function(data, columnNames,
 
     dataCopy =
         processProductionDomain(data = dataCopy,
-                                columnNames = columnNames,
+                                columnNames = newColumnNames,
                                 removePriorImputation =
                                     removePriorImputation,
                                 removeConflictValues =
@@ -131,12 +127,13 @@ imputeProductionDomain = function(data, columnNames,
                             gsub(yieldValue, "yieldValue",
                                  deparse(yieldFormula))))
     
-    imputeYield(columnNames = columnNames,
+    imputeYield(columnNames = newColumnNames,
                 imputationFlag = imputationFlag,
                 newMethodFlag = newMethodFlag,
                 maxdf = maxdf,
                 data = dataCopy,
-                yieldFormula = yieldFormula)
+                yieldFormula = yieldFormula,
+                flagTable = flagTable)
     n.missYield2 = length(which(is.na(dataCopy$yieldValue)))
     cat("Number of values imputed: ", n.missYield - n.missYield2, "\n")
     cat("Number of values still missing: ", n.missYield2, "\n")
@@ -145,7 +142,7 @@ imputeProductionDomain = function(data, columnNames,
     cat("Imputing Production ...\n")
     n.missProduction = length(which(is.na(dataCopy$productionValue)))
 
-    imputeProduction(columnNames = columnNames,
+    imputeProduction(columnNames = newColumnNames,
                      newMethodFlag = newMethodFlag,
                      data = dataCopy,
                      ensembleModel = ensembleModel,
@@ -166,7 +163,7 @@ imputeProductionDomain = function(data, columnNames,
     n.missAreaHarvested =
         length(which(is.na(dataCopy$areaHarvestedValue)))
 
-    balanceAreaHarvested(columnNames, 
+    balanceAreaHarvested(newColumnNames, 
                          newMethodFlag = newMethodFlag,
                          data = dataCopy,
                          flagTable = flagTable)
@@ -179,26 +176,8 @@ imputeProductionDomain = function(data, columnNames,
     
     ## Reset the names
     setnames(x = dataCopy,
-             old = c("productionValue",
-                     "areaHarvestedValue",
-                     "yieldValue",
-                     "yearValue",
-                     "productionObservationFlag",
-                     "areaHarvestedObservationFlag",
-                     "yieldObservationFlag",
-                     "productionMethodFlag",
-                     "areaHarvestedMethodFlag",
-                     "yieldMethodFlag"),
-             new = c(productionValue,
-                     areaHarvestedValue,
-                     yieldValue,
-                     yearValue,
-                     productionObservationFlag,
-                     areaHarvestedObservationFlag,
-                     yieldObservationFlag,
-                     productionMethodFlag,
-                     areaHarvestedMethodFlag,
-                     yieldMethodFlag)             
+             old = newColumnNames,
+             new = newColumnNames
              )
 
     dataCopy

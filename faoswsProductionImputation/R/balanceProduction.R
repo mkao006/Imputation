@@ -11,22 +11,13 @@
 balanceProduction = function(columnNames,
     newMethodFlag, flagTable = faoswsFlagTable, data){
 
-    ### Ensure inputs are as expected:
+    ### Ensure inputs are as expected (and assign columnNames variables)
     stopifnot( is(data, "data.table") )
     testColumnNames( columnNames = columnNames, data = data )
-
     assignColumnNames( columnNames = columnNames, data = data,
         environment = environment() )
-    # Check that all flags are in the flagTable:
-    flags = data[,get(productionObservationFlag)]
-    flags = c(flags, data[,get(areaHarvestedObservationFlag)])
-    flags = c(flags, data[,get(yieldObservationFlag)])
-    flags = unique(flags)
-    missingFlags = flags[!flags %in% flagTable$flagObservationStatus]
-    if( length(missingFlags) > 0 ){
-        stop(paste("Some observation flags are not in the flag table!  Missing:\n",
-            paste0("'", missingFlags, "'", collapse="\n ") ) )
-    }
+    testFlagTable( flagTable = flagTable, data = data,
+        columnNames = columnNames )
     
     origName = c(productionValue, productionObservationFlag,
         productionMethodFlag, areaHarvestedValue,

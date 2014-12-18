@@ -4,7 +4,7 @@
 \alias{assignColumnNames}
 \title{Assign Column Names}
 \usage{
-assignColumnNames(columnNames, data, envir)
+assignColumnNames(columnNames, data, environment)
 }
 \arguments{
 \item{columnNames}{A named character vector describing which variables
@@ -13,7 +13,7 @@ assignColumnNames(columnNames, data, envir)
 \item{data}{The dataset being analysed.  This is used to ensure that all
 elements of columnNames are in fact in data.}
 
-\item{env}{The environment where the column name variables should be
+\item{environment}{The environment where the column name variables should be
 assigned.  Typically, this will be the environment of the function which
 called this function.  See examples.}
 }
