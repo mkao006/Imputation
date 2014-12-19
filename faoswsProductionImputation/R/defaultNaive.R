@@ -10,15 +10,15 @@
 defaultNaive = function(x){
     require(zoo)
     nobserved = length(na.omit(x))
-    n = length(x)
+    yearCount = length(x)
     type = ifelse(nobserved == 0, "none",
         ifelse(nobserved ==  1, "repeat", "naive"))
     switch(type,
            none = {
-               tmp = rep(NA, n)
+               tmp = rep(NA, yearCount)
            },
            `repeat` = {
-               tmp = rep(na.omit(x), n)
+               tmp = rep(na.omit(x), yearCount)
            },
            naive = {
                tmp = na.locf(na.locf(na.approx(x, na.rm = FALSE),

@@ -5,7 +5,7 @@
 
 
 defaultMean = function(x){
-    T = length(x)
-    meanFit = rep(mean(x, na.rm = !all(is.na(x))), T)
+    yearCount = length(x)
+    meanFit = rep(mean(x, na.rm = !all(is.na(x))), yearCount)
     meanFit
 }

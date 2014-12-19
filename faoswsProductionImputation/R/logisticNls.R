@@ -27,7 +27,7 @@ logisticNls = function(x){
     midpoint = coef(model)[3]
     if(length(na.omit(x[time < midpoint])) < 1 |
        length(na.omit(x[time > midpoint])) < 1 )
-        return( rep(NA, length(x)) )
+        return( as.numeric( rep(NA, length(x)) ) )
     logisticFit = predict(model, newdata = data.frame(time = time))
     return( logisticFit )
 }

@@ -4,9 +4,9 @@
 ##' @export
 
 defaultSpline = function(x){
-    T = length(x)
+    yearCount = length(x)
     time = 1:length(x)
-    splineFit = spline(time, x, n = T * 5 - 4, xout = time,
+    splineFit = spline(time, x, n = yearCount * 5 - 4, xout = time,
         method = "natural")$y
     splineFit[splineFit < 0] = 0
     splineFit
