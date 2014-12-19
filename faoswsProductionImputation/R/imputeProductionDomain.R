@@ -64,8 +64,7 @@ imputeProductionDomain = function(data, columnNames,
     stopifnot( length(ensembleModel) == length(modelExtrapolationRange) )
     stopifnot( errorType %in% c("loocv", "raw") )
     stopifnot( is( errorFunction, "function" ) )
-    assignColumnNames( columnNames = columnNames, data = data,
-        environment = environment() )
+    assignColumnNames( columnNames = columnNames, environment = environment() )
 	testFlagTable( flagTable = flagTable, data = data,
         columnNames = columnNames )
         

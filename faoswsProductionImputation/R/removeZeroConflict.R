@@ -12,8 +12,7 @@ removeZeroConflict = function(columnNames, naFlag = "M", data){
     ### Ensure inputs are as expected
     stopifnot( is(data, "data.table") )
     testColumnNames( columnNames = columnNames, data = data )
-    assignColumnNames( columnNames = columnNames, data = data,
-        environment = environment() )
+    assignColumnNames( columnNames = columnNames, environment = environment() )
     
     setnames(x = data,
              old = c(productionValue,

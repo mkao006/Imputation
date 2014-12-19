@@ -16,8 +16,7 @@ balanceAreaHarvested = function(columnNames,
     ### Ensure inputs are as expected (and assign columnNames variables)
     stopifnot( is(data, "data.table") )
     testColumnNames(columnNames = columnNames, data = data)
-    assignColumnNames(columnNames = columnNames, data = data,
-        envir = environment() )
+    assignColumnNames(columnNames = columnNames, envir = environment() )
 	testFlagTable( flagTable = flagTable, data = data,
         columnNames = columnNames )
 

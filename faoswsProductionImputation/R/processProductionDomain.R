@@ -21,8 +21,7 @@ processProductionDomain = function(data, columnNames,
     stopifnot( is(data, "data.table") )
     stopifnot( is.logical( c(removePriorImputation, removeConflictValues) ) )
     testColumnNames( columnNames = columnNames, data = data )
-    assignColumnNames( columnNames = columnNames, data = data,
-        environment = environment() )
+    assignColumnNames( columnNames = columnNames, environment = environment() )
         
     if(removePriorImputation){
         removeImputation(data = data,

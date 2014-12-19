@@ -8,13 +8,11 @@
 ##'
 ##' This function is used in combination with the columnNames argument to load
 ##' variables into the environment of a particular function.  That function can
-##' then access all these variables (which describe the columns of data)
+##' then access all these variables (which describe the columns of the dataset)
 ##' without creating global variables.
 ##' 
 ##' @param columnNames A named character vector describing which variables
-##' (the names) map to which columns of data (the values).
-##' @param data The dataset being analysed.  This is used to ensure that all
-##' elements of columnNames are in fact in data.
+##' (the names) map to which columns of the dataset (the values).
 ##' @param environment The environment where the column name variables should be 
 ##' assigned.  Typically, this will be the environment of the function which
 ##' called this function.  See examples.
@@ -24,7 +22,7 @@
 ##'
 ##' @examples
 ##' f = function(){
-##'     assignColumnNames( defaultColumnNames, okrapd, environment() )
+##'     assignColumnNames( defaultColumnNames(), environment() )
 ##'     print(productionValue)
 ##' }
 ##' #productionValue gets assigned a character value from defaultColumnNames:
@@ -36,8 +34,7 @@
 ##' @export
 ##' 
 
-assignColumnNames = function( columnNames, data,
-    environment = parent.frame(1) ){
+assignColumnNames = function( columnNames, environment = parent.frame(1) ){
     for(variables in c("productionValue", "productionObservationFlag",
         "productionMethodFlag", "areaHarvestedValue",
         "areaHarvestedObservationFlag", "areaHarvestedMethodFlag",

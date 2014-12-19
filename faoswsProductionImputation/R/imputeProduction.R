@@ -38,8 +38,7 @@ imputeProduction = function(columnNames, imputationFlag = "I",
     stopifnot( errorType %in% c("loocv", "raw") )
     stopifnot( is( errorFunction, "function" ) )
     testColumnNames( columnNames = columnNames, data = data)
-    assignColumnNames( columnNames = columnNames, data = data,
-        environment = environment() )
+    assignColumnNames( columnNames = columnNames, environment = environment() )
 	testFlagTable( flagTable = flagTable, data = data,
         columnNames = columnNames )
 

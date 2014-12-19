@@ -16,7 +16,7 @@ defaultArima = function(x){
             arimaFit = rep(NA, yearCount)
         } else {
             ## kr = KalmanRun(x, arimaModel$model)
-            kr = KalmanSmooth(x, arimaModel$model)            
+            kr = KalmanSmooth(x, arimaModel$model)
             tmp = which(arimaModel$model$Z == 1)
             id = ifelse (length(tmp) == 1, tmp[1], tmp[2])
             ## arimaFit = kr$states[,id]

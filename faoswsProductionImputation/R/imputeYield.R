@@ -22,8 +22,7 @@ imputeYield = function(columnNames, imputationFlag, newMethodFlag, maxdf = 5,
     ### Ensure inputs are as expected (and assign columnNames variables)
     stopifnot( is(data, "data.table") )
     testColumnNames( columnNames = columnNames, data = data)
-    assignColumnNames( columnNames = columnNames, data = data,
-        environment = environment() )
+    assignColumnNames( columnNames = columnNames, environment = environment() )
 	testFlagTable( flagTable = flagTable, data = data,
         columnNames = columnNames )
     

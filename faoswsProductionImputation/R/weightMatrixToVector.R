@@ -20,8 +20,8 @@
 ##' 
 ##' @export
 
-weightsMatrixToVector = function(weightsMatrix){
-    zerosInRow = apply(weightsMatrix, 1, function(x) sum(x==0) )
+weightMatrixToVector = function(weightMatrix){
+    zerosInRow = apply(weightMatrix, 1, function(x) sum(x==0) )
     smallestZerosRow = which.min(zerosInRow)
-    weightsMatrix[smallestZerosRow,]
+    weightMatrix[smallestZerosRow,]
 }

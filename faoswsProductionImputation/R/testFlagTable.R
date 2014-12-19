@@ -18,8 +18,7 @@
 testFlagTable = function(flagTable, data, columnNames){
     stopifnot( all( colnames(flagTable) ==
         c("flagObservationStatus", "flagObservationWeights") ) )
-    assignColumnNames(columnNames = columnNames, data = data,
-        environment = environment() )
+    assignColumnNames(columnNames = columnNames, environment = environment() )
     # Check that all flags are in the flagTable:
     flags = data[[productionObservationFlag]]
     flags = c(flags, data[[areaHarvestedObservationFlag]])

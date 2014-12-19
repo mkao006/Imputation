@@ -14,8 +14,7 @@ balanceProduction = function(columnNames,
     ### Ensure inputs are as expected (and assign columnNames variables)
     stopifnot( is(data, "data.table") )
     testColumnNames( columnNames = columnNames, data = data )
-    assignColumnNames( columnNames = columnNames, data = data,
-        environment = environment() )
+    assignColumnNames( columnNames = columnNames, environment = environment() )
     testFlagTable( flagTable = flagTable, data = data,
         columnNames = columnNames )
     
@@ -31,7 +30,7 @@ balanceProduction = function(columnNames,
     # warning later but it's not really a problem.  To avoid confusion, 
     # coerce to a character here.
     if( is( data$pMetFlag, "logical" ) )
-        data$pMetFlag = as.character( data$pMetFlag )
+        data[,pMetFlag := as.character( data$pMetFlag )]
     data[!is.na(aValue) & is.na(pValue) & !is.na(yValue),
          c("pValue", "pObsFlag", "pMetFlag") :=
          list(aValue * yValue,

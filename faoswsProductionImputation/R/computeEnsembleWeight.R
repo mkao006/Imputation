@@ -70,7 +70,6 @@ computeEnsembleWeight = function(x, fits, restrictWeights = TRUE,
         weights[weights > maximumWeights] = maximumWeights
     }
     weights = weightVectorToMatrix( x = x, w = weights
-        ,ensembleModel = ensembleModel
         ,modelExtrapolationRange = modelExtrapolationRange )
     weights
 }    
