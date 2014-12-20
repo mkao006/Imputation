@@ -17,11 +17,23 @@
 ##' default of parent.frame(1) gives the calling environment and this should be
 ##' satisfactory for most, if not all, use cases.
 ##'
+##' @return No value is returned.  However, the object "data" which was passed
+##' to this function is modified.
+##'
+##' @example
+##'
 ##' @export
 ##' 
 
 removeNoInfo = function (data, value, flag, byKey,
     environment = parent.frame(1)){
+    
+    stopifnot(is(data, "data.table"))
+    stopifnot(value %in% colnames(data))
+    stopifnot(flag %in% colnames(data))
+    stopifnot(byKey %in% colnames(data))
+    stopifnot(is(environment, "environment"))
+    
     info = data[, rep(containInfo(get(value), get(flag)),
         NROW(.SD)), by = byKey]$V1
     

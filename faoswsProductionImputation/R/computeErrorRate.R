@@ -4,7 +4,7 @@
 ##' @param fit The fitted value from the model.
 ##' @param model The model fit to x.  If errorType="loocv" then this will be
 ##' used to compute the leave-one-out cross-validation errors.  If
-##' errorType="mse", this is ignored.
+##' errorType="raw", this is ignored.
 ##' @param errorType Specifies what type of error to compute.  Currently, "raw"
 ##' and "loocv" are implemented.  If "raw", then error is computed as the
 ##' difference between the model and observed data.  "loocv" performs

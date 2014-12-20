@@ -6,7 +6,7 @@
 ##'
 ##' @param x A numeric vector to be imputed.
 ##' @param model The model fit to x.  If errorType="loocv" then this will be used
-##' to compute the leave-one-out cross-validation errors.  If errorType="mse", this
+##' to compute the leave-one-out cross-validation errors.  If errorType="raw", this
 ##' is ignored.
 ##' @note Currently, if a model fails in the cross-validation step, that error
 ##' is ignored when computing the mean error.  That could be improved by adding

@@ -7,7 +7,7 @@
 ##' @export
 
 
-computeEnsembleFit = function(x, ensembleModel){
+computeEnsembleFit = function(x, ensembleModel = allDefaultModels()){
     lapply(ensembleModel,
            FUN = function(x, value) x(value), value = x)
 }

@@ -7,7 +7,7 @@
 ##' @param restrictWeights Whether a maximum weight restriction should
 ##' be imposed.
 ##' @param maximumWeights The maximum weight to be imposed, must be
-##' between [0.5, 1].
+##' between [0.5, 1].  See ?computeEnsembleWeight for more details.
 ##' @param ensembleModel A list of models to be used to build the
 ##' ensemble.
 ##' @param modelExtrapolationRange See ?computeEnsembleWeight.

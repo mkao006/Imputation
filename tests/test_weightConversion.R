@@ -1,4 +1,4 @@
-context("Ensemble Weight Conversion")
+context("Weight Conversion")
 weightVector = c(.2, .2, .3, .1, .2)
 range = c(Inf, 0, Inf, Inf, 1)
 x = c(NA, NA, NA, 1:10, NA, 12, NA, 13, NA)

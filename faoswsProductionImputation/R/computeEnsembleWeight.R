@@ -5,7 +5,12 @@
 ##' @param restrictWeights Whether a maximum weight restriction should
 ##' be imposed.
 ##' @param maximumWeights The maximum weight to be imposed, must be
-##' between [0.5, 1].
+##' between [0.5, 1].  Note that this is enforced when computing the weight
+##' vector (average performance for each model).  Once the weight vector is
+##' converted to a weight matrix, certain models may not be allowed to
+##' extrapolate.  Since a smaller subset of models is valid at that point, it's
+##' possible that a weight for one of these models may exceed the maximum
+##' weight.
 ##' @param errorType See ?computeErrorRate.
 ##' @param errorFunction Function taking a vector of errors and returning a
 ##' positive value.  Smaller values should indicate a better fit to the data.
@@ -25,9 +30,9 @@
 
 
 computeEnsembleWeight = function(x, fits, restrictWeights = TRUE,
-    maximumWeights = 0.7, errorType = "mse",
+    maximumWeights = 0.7, errorType = "raw",
     errorFunction = function(x) mean(x^2), ensembleModel = NULL,
-    modelExtrapolationRange = rep(Inf, length(ensembleModel)) ){
+    modelExtrapolationRange = rep(Inf, length(fits)) ){
     
     ### Verify inputs match assumptions:
     if( !all( lapply(fits, length) == length(x) ) )
@@ -38,13 +43,13 @@ computeEnsembleWeight = function(x, fits, restrictWeights = TRUE,
     stopifnot( maximumWeights <= 1 & maximumWeights >= 0.5 )
     if(errorType=="loocv" & is.null(ensembleModel) )
         stop("ensembleModel must be provided if errorType='loocv'")
-    stopifnot( length(modelExtrapolationRange)==length(ensembleModel) )
+    if(errorType=="loocv")
+        stopifnot( length(modelExtrapolationRange)==length(ensembleModel) )
     
     ### Run the function
-    benchmark = x
     error = sapply(1:length(fits),
         FUN = function(i){
-            computeErrorRate(x = benchmark, fit = fits[[i]],
+            computeErrorRate(x = x, fit = fits[[i]],
                 model = ensembleModel[[i]], errorType = errorType )
             }
         )
@@ -54,12 +59,21 @@ computeEnsembleWeight = function(x, fits, restrictWeights = TRUE,
     # that happens, we'll get a missing value (NA) for that error.  To work
     # around this, assign that NA to the highest value of that row.  In other
     # words, assumme the model that failed did as poor as possible.
-    error[,!NAcolumns] = apply(error[,!NAcolumns], 1, function(x){
+    error[,!NAcolumns] = t( apply(error[,!NAcolumns], 1, function(x){
         ifelse(is.na(x), max(x, na.rm=T), x)
-    })
+    }) )
     error = apply( error, 2, errorFunction )
-    ## NOTE (Michael): Maybe change this to uniform weight
-    error[error < 1e-3] = mean(error[error >= 1e-3], na.rm = TRUE)
+    if(errorType=="raw"){
+        # Perfect fits can give really small errors but actually be overfitting
+        # the data.  To prevent that, set small errors to the mean error.
+        ## NOTE (Michael): Maybe change this to uniform weight
+        error[error < 1e-3] = mean(error[error >= 1e-3], na.rm = TRUE)
+    } else if(errorType=="loocv"){
+        # Really small errors will cause 1/error^2 to be Inf, and this
+        # gives weights of all 0, NA, NaN.  Prevent that by limiting how
+        # small the errors can be:
+        error[error < 1e-16] = 1e-16  
+    }
     weights = (1/error^2)/sum(1/error^2, na.rm = TRUE)
     weights[is.na(weights)] = 0
     if(restrictWeights & any(weights > maximumWeights)){
