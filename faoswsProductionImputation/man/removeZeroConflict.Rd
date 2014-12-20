@@ -14,8 +14,20 @@ removeZeroConflict(columnNames, naFlag = "M", data)
 
 \item{data}{The data table objest}
 }
+\value{
+No value is returned.  However, the object "data" which was passed
+to this function is modified.
+}
 \description{
 The function removes conflicting zeroes between production and
 area harvested.
+}
+\examples{
+data = okrapd[1:10,]
+data[,areaHarvestedValue := c(rep(0,5), rep(100,5))]
+data[,productionValue := c(0,0,100,100,100,0,0,100,100,100)]
+removeZeroConflict(columnNames = defaultColumnNames(), data = data)
+data[,.(areaHarvestedValue, areaHarvestedFlag, productionValue,
+    productionFlag, yieldValue, yieldFlag)]
 }
 

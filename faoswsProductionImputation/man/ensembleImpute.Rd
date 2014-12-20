@@ -16,7 +16,7 @@ ensembleImpute(x, restrictWeights = TRUE, maximumWeights = 0.7,
 be imposed.}
 
 \item{maximumWeights}{The maximum weight to be imposed, must be
-between [0.5, 1].}
+between [0.5, 1].  See ?computeEnsembleWeight for more details.}
 
 \item{ensembleModel}{A list of models to be used to build the
 ensemble.}

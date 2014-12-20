@@ -5,9 +5,8 @@
 \title{Function to compute the weights of the ensemble models}
 \usage{
 computeEnsembleWeight(x, fits, restrictWeights = TRUE, maximumWeights = 0.7,
-  errorType = "mse", errorFunction = function(x) mean(x^2),
-  ensembleModel = NULL, modelExtrapolationRange = rep(Inf,
-  length(ensembleModel)))
+  errorType = "raw", errorFunction = function(x) mean(x^2),
+  ensembleModel = NULL, modelExtrapolationRange = rep(Inf, length(fits)))
 }
 \arguments{
 \item{x}{A numeric vector to be imputed.}
@@ -18,7 +17,12 @@ computeEnsembleWeight(x, fits, restrictWeights = TRUE, maximumWeights = 0.7,
 be imposed.}
 
 \item{maximumWeights}{The maximum weight to be imposed, must be
-between [0.5, 1].}
+between [0.5, 1].  Note that this is enforced when computing the weight
+vector (average performance for each model).  Once the weight vector is
+converted to a weight matrix, certain models may not be allowed to
+extrapolate.  Since a smaller subset of models is valid at that point, it's
+possible that a weight for one of these models may exceed the maximum
+weight.}
 
 \item{errorType}{See ?computeErrorRate.}
 

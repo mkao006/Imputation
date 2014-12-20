@@ -15,7 +15,18 @@ remove0M(data, value, flag, naFlag = "M")
 
 \item{naFlag}{The value of the flag which denotes missing value.}
 }
+\value{
+No value is returned.  However, the object "data" which was passed
+to this function is modified.
+}
 \description{
 Function to remove zero values which are missing.
+}
+\examples{
+data = okrapd[areaName == "Bahamas",]
+data[,.(productionValue, productionFlag)]
+remove0M(data = data, value = "productionValue", flag = "productionFlag",
+    naFlag = "M")
+data[,.(productionValue, productionFlag)]
 }
 

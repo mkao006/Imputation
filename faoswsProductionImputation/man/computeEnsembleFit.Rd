@@ -4,7 +4,7 @@
 \alias{computeEnsembleFit}
 \title{Function to compute the fits of all the component model}
 \usage{
-computeEnsembleFit(x, ensembleModel)
+computeEnsembleFit(x, ensembleModel = allDefaultModels())
 }
 \arguments{
 \item{x}{A numeric vector}

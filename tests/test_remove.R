@@ -58,5 +58,14 @@ test_that("removeNoInfo", {
 })
 
 test_that("removeZeroConflict", {
-    
+    data = okrapd[1:10,]
+    data[,areaHarvestedValue := c(rep(0,5), rep(100,5))]
+    data[,productionValue := c(0,0,100,100,100,0,0,100,100,100)]
+    removeZeroConflict(columnNames = defaultColumnNames(), data = data)
+    expect_true(all(is.na( data[6:7, areaHarvestedValue] ) ) )
+    expect_that( data[6:7, areaHarvestedFlag], equals(c("M","M")) )
+    expect_true(all(is.na( data[3:5, productionValue] ) ) )
+    expect_that( data[3:5, productionFlag], equals(c("M","M","M")) )
+    expect_true(all(is.na( data[3:7, yieldValue] ) ) )
+    expect_that( data[3:7, yieldFlag], equals(rep("M", 5)) )
 })

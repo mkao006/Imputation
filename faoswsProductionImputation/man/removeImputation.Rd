@@ -18,7 +18,18 @@ was imputed.}
 
 \item{naFlag}{The value of the flag which denotes missing value.}
 }
+\value{
+No value is returned.  However, the object "data" which was passed
+to this function is modified.
+}
 \description{
 Function to remove prior imputation.
+}
+\examples{
+data = copy(okrapd[areaName=="Sudan",])
+data[,.(yieldValue, yieldFlag)]
+removeImputation( data = data, value = "yieldValue", flag = "yieldFlag",
+    imputedFlag = "T", naFlag = "M" )
+data[,.(yieldValue, yieldFlag)]
 }
 

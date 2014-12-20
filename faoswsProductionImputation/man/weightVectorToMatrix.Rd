@@ -4,21 +4,19 @@
 \alias{weightVectorToMatrix}
 \title{Convert the weights vector to a matrix}
 \usage{
-weightVectorToMatrix(x, w, ensembleModel, modelExtrapolationRange)
+weightVectorToMatrix(x, w, modelExtrapolationRange)
 }
 \arguments{
 \item{x}{A numeric vector to be imputed.}
 
 \item{w}{The vector of weights, computed based on the errors of the models.}
 
-\item{ensembleModel}{A list of the different models used to construct the
-ensemble.  Each element of this list should be the function that was used
-to fit the model.}
-
 \item{modelExtrapolationRange}{A numeric vector specifying the valid range
 of extrapolation for each model.  This vector must be the same length as
-ensembleModel, as it's i-th element gives the extrapolation range for the
-i-th element of ensembleModel.}
+w, as it's i-th element gives the extrapolation range for the
+i-th weight.  Note: care should be taken to ensure the weight vector's i-th
+element and the modelExtrapolationRange vector's i-th element both
+correspond to the same model in the ensemble.}
 }
 \value{
 A matrix of weights of dimension Txm, where T=number of time steps
@@ -30,10 +28,7 @@ The default weights vector assumes that all models are valid for all
 imputation points.  However, some imputations may be extrapolations that
 are well outside the range of the data, and in this case not all models
 will be valid.  Thus, this function takes the weights vector and adjusts it
-for such observations.  This adjustment requires the ensembleModel to be a
-list of lists.  Each list element should have the model function as well as
-the "extrapolation range" of that function, i.e. how far it can be outside
-the range of the data to be valid.  Values of Inf are acceptable.
+for such observations.
 }
 \details{
 Note that the extrapolation range was not a parameter in previous versions

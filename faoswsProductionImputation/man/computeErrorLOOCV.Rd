@@ -10,7 +10,7 @@ computeErrorLOOCV(x, model)
 \item{x}{A numeric vector to be imputed.}
 
 \item{model}{The model fit to x.  If errorType="loocv" then this will be used
-to compute the leave-one-out cross-validation errors.  If errorType="mse", this
+to compute the leave-one-out cross-validation errors.  If errorType="raw", this
 is ignored.}
 }
 \description{

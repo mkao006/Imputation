@@ -4,14 +4,11 @@
 \alias{assignColumnNames}
 \title{Assign Column Names}
 \usage{
-assignColumnNames(columnNames, data, environment)
+assignColumnNames(columnNames, environment = parent.frame(1))
 }
 \arguments{
 \item{columnNames}{A named character vector describing which variables
-(the names) map to which columns of data (the values).}
-
-\item{data}{The dataset being analysed.  This is used to ensure that all
-elements of columnNames are in fact in data.}
+(the names) map to which columns of the dataset (the values).}
 
 \item{environment}{The environment where the column name variables should be
 assigned.  Typically, this will be the environment of the function which
@@ -31,12 +28,12 @@ functions of this package (execute defaultColumnNames() to see this list).
 \details{
 This function is used in combination with the columnNames argument to load
 variables into the environment of a particular function.  That function can
-then access all these variables (which describe the columns of data)
+then access all these variables (which describe the columns of the dataset)
 without creating global variables.
 }
 \examples{
 f = function(){
-    assignColumnNames( defaultColumnNames, okrapd, environment() )
+    assignColumnNames( defaultColumnNames(), environment() )
     print(productionValue)
 }
 #productionValue gets assigned a character value from defaultColumnNames:

@@ -14,7 +14,7 @@ computeErrorRate(x, fit, model = NULL, errorType = ifelse(is.null(model),
 
 \item{model}{The model fit to x.  If errorType="loocv" then this will be
 used to compute the leave-one-out cross-validation errors.  If
-errorType="mse", this is ignored.}
+errorType="raw", this is ignored.}
 
 \item{errorType}{Specifies what type of error to compute.  Currently, "raw"
 and "loocv" are implemented.  If "raw", then error is computed as the

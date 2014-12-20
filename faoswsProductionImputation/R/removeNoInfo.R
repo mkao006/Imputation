@@ -20,8 +20,6 @@
 ##' @return No value is returned.  However, the object "data" which was passed
 ##' to this function is modified.
 ##'
-##' @example
-##'
 ##' @export
 ##' 
 

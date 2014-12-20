@@ -8,7 +8,7 @@
 ##' @return No value is returned.  However, the object "data" which was passed
 ##' to this function is modified.
 ##' 
-##' @example data = okrapd[areaName == "Bahamas",]
+##' @examples data = okrapd[areaName == "Bahamas",]
 ##' data[,.(productionValue, productionFlag)]
 ##' remove0M(data = data, value = "productionValue", flag = "productionFlag",
 ##'     naFlag = "M")
