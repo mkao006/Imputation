@@ -15,7 +15,7 @@ defaultNaive = function(x){
         ifelse(nobserved ==  1, "repeat", "naive"))
     switch(type,
            none = {
-               tmp = rep(NA, yearCount)
+               tmp = as.numeric( rep(NA, yearCount) )
            },
            `repeat` = {
                tmp = rep(na.omit(x), yearCount)

@@ -13,7 +13,7 @@ defaultArima = function(x){
         name.coef = ifelse(length(name.coef) == 0, "", name.coef)
         if(n.coef == 1 &
            name.coef == "intercept"){
-            arimaFit = rep(NA, yearCount)
+            arimaFit = as.numeric( rep(NA, yearCount) )
         } else {
             ## kr = KalmanRun(x, arimaModel$model)
             kr = KalmanSmooth(x, arimaModel$model)
