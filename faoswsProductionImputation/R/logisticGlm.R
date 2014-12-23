@@ -19,7 +19,7 @@
 ##' @export
 
 logisticGlm = function(x){
-    time = 1:length(x)    
+    time = 1:length(x)
     xmax = max(x, na.rm = TRUE)
     #If all values are 0 or NA's, then return no prediction
     if(is.na(xmax) | xmax<=0)

@@ -11,6 +11,8 @@ defaultNaive = function(x){
     require(zoo)
     nobserved = length(na.omit(x))
     yearCount = length(x)
+    if(all(is.na(x)))
+        return(as.numeric(rep(NA, yearCount)))
     type = ifelse(nobserved == 0, "none",
         ifelse(nobserved ==  1, "repeat", "naive"))
     switch(type,

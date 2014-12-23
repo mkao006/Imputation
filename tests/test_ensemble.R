@@ -47,3 +47,15 @@ test_that("Maximum weight argument respected", {
         ensembleModel = allDefaultModels(), maximumWeights = .5)
     expect_true( max(weights) <= .50001)  #.00001 for numerical tol.
 })
+
+# test_that("extendSimpleModel is the same as running models individually", {
+#     data = copy(okrapd)
+#     remove0M(data = data, value = "productionValue", flag = "productionFlag")
+#     extendSimpleModel( data = data, columnNames = defaultColumnNames(),
+#         model = defaultLoess, variable = "production", newColumnName = "test" )
+#     for(aCode in unique(data$areaCode) ){
+#         simpleOutput = defaultLoess( data[areaCode==aCode, productionValue] )
+#         names(simpleOutput) = NULL
+#         expect_that( simpleOutput, equals( data[areaCode==aCode, test] ) )
+#     }
+# })

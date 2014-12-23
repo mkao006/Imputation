@@ -7,6 +7,8 @@
 defaultMars = function(x){
     time = 1:length(x)
     yearCount = length(x)
+    if(all(is.na(x)))
+        return(as.numeric(rep(NA, yearCount)))
     obs.x = na.omit(x)
     if( any(is.na(x)) )
         obs.time = time[-attr(obs.x, "na.action")]

@@ -6,6 +6,8 @@
 
 defaultLm = function(x){
     time = 1:length(x)
+    if(all(is.na(x)))
+        return(as.numeric(rep(NA, length(x))))
     lmFit = predict(lm(formula = x ~ time),
         newdata = data.frame(time = time))
     lmFit[lmFit < 0] = 0

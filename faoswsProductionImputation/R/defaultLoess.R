@@ -6,6 +6,8 @@
 defaultLoess = function(x){
     time = 1:length(x)
     yearCount = length(x)
+    if(all(is.na(x)))
+        return(as.numeric(rep(NA, yearCount)))
     n.obs = length(na.omit(x))
     if( n.obs < 5)
         return( as.numeric( rep(NA, length.out=yearCount) ) )

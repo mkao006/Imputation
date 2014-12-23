@@ -30,11 +30,7 @@ weightVectorToMatrix = function( x, w, modelExtrapolationRange){
     stopifnot( length(w) == length(modelExtrapolationRange) )
     
     ### Run the function:
-    firstNaCount = min( which( !is.na(x) ) ) - 1
-    lastNaCount = length(x) - max( which( !is.na(x) ) )
-    #Vector of the distance to the nearest observed point (for extrapolations)
-    observedExtrapolationRange = c(firstNaCount:0
-        ,rep(0, length(x)-firstNaCount-lastNaCount-2), 0:lastNaCount )
+    observedExtrapolationRange = getObservedExtrapolationRange(x)
     validRangeMatrix = sapply( modelExtrapolationRange,
         function(x) observedExtrapolationRange <= x)
     weightMatrix = matrix(w, nrow=length(x), ncol=length(w), byrow = TRUE)

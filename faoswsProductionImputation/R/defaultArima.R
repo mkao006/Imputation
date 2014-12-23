@@ -5,6 +5,8 @@
 
 defaultArima = function(x){
     yearCount = length(x)
+    if(all(is.na(x)))
+        return(as.numeric(rep(NA, yearCount)))
     arimaModel = try(auto.arima(x), silent = TRUE)
     if(!inherits(arimaModel, "try-error")){
         n.coef = length(coef(arimaModel))

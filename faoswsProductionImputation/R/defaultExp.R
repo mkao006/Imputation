@@ -7,6 +7,8 @@
 defaultExp = function(x){
     time = 1:length(x)
     yearCount = length(x)
+    if(all(is.na(x)))
+        return(as.numeric(rep(NA, yearCount)))
     expFit = exp(predict(lm(formula = log(x + 1) ~ time),
         newdata = data.frame(time = time)))
     if(max(expFit, na.rm = TRUE) > 5 * max(x, na.rm = TRUE) |
