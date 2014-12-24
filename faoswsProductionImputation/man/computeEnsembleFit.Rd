@@ -2,17 +2,32 @@
 % Please edit documentation in R/computeEnsembleFit.R
 \name{computeEnsembleFit}
 \alias{computeEnsembleFit}
-\title{Function to compute the fits of all the component model}
+\title{Function to compute the fits of all the component models}
 \usage{
-computeEnsembleFit(x, ensembleModel = allDefaultModels())
+computeEnsembleFit(data, ensembleModels = allDefaultModels(), columnNames,
+  value, flag)
 }
 \arguments{
-\item{x}{A numeric vector}
+\item{data}{The data.table object containing the data.}
 
-\item{ensembleModel}{A list of component models to be used to
-build the ensemble.}
+\item{columnNames}{See the same argument at ?imputeProductionDomain}
+
+\item{value}{Which variable should be imputed?  This should be one of the
+column names of data, typically corresponding to productionValue,
+yieldValue, or areaHarvestedValue.}
+
+\item{flag}{Column name (of data) of the flag variable corresponding to the
+value argument, i.e. "productionObservationFlag", "yieldObservationFlag",
+or "areaHarvestedObservationFlag".}
+
+\item{commodityCountryModels}{A list of models that should be applied to
+each individual country/commodity time series separately.   Defaults to
+allDefaultModels().}
+
+\item{commodityModels}{A list of models to be applied to all countries at
+once.}
 }
 \description{
-Function to compute the fits of all the component model
+Function to compute the fits of all the component models
 }
 

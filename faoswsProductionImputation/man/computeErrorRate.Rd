@@ -4,17 +4,28 @@
 \alias{computeErrorRate}
 \title{Function to compute the error of different model fits}
 \usage{
-computeErrorRate(x, fit, model = NULL, errorType = ifelse(is.null(model),
-  "raw", "loocv"))
+computeErrorRate(data, columnNames, value, flag, model = NULL, cvGroup, fit,
+  errorType = ifelse(is.null(model), "raw", "loocv"))
 }
 \arguments{
-\item{x}{A numeric vector to be imputed.}
+\item{data}{A data.table containing the data.}
+
+\item{columnNames}{See the same argument at ?imputeProductionDomain.}
+
+\item{value}{The column name of data which contains the values to be
+imputed.}
+
+\item{flag}{The column name of data which contains the flag describing the
+status of value.}
+
+\item{model}{The model fit to x, should be of class ensembleModel.}
+
+\item{cvGroup}{A vector of the same length as nrow(data).  Entries of the
+vector should be integers from 1 to the number of cross-validation groups
+(typically 10).  This should be randomly assigned, and is usually created
+by ensembleImpute.}
 
 \item{fit}{The fitted value from the model.}
-
-\item{model}{The model fit to x.  If errorType="loocv" then this will be
-used to compute the leave-one-out cross-validation errors.  If
-errorType="raw", this is ignored.}
 
 \item{errorType}{Specifies what type of error to compute.  Currently, "raw"
 and "loocv" are implemented.  If "raw", then error is computed as the
@@ -24,14 +35,9 @@ model.  "loocv" is more rigorous but much slower.}
 }
 \value{
 A vector of (the absolute value of the) errors corresponding to the
-non-missing entries in x.
+non-missing entries in data's "value" column.
 }
 \description{
 Function to compute the error of different model fits
-}
-\note{
-Currently, if a model fails in the cross-validation step, that error
-is ignored when computing the mean error.  That could be improved by
-adding a penalty when models fail to fit.
 }
 

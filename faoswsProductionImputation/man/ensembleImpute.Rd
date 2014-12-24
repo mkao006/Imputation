@@ -4,13 +4,24 @@
 \alias{ensembleImpute}
 \title{Function to perform ensemble imputation}
 \usage{
-ensembleImpute(x, restrictWeights = TRUE, maximumWeights = 0.7,
-  ensembleModel = allDefaultModels(),
-  modelExtrapolationRange = getDefaultRange(ensembleModel), plot = FALSE,
-  errorType = "loocv", errorFunction = function(x) mean(x^2))
+ensembleImpute(data, columnNames, value, flag,
+  ensembleModels = allDefaultModels(), restrictWeights = TRUE,
+  maximumWeights = 0.7, plot = FALSE, errorType = "loocv",
+  errorFunction = function(x) mean(x^2), missingFlag = "M")
 }
 \arguments{
-\item{x}{A numeric vector}
+\item{data}{A data.table containing the data.}
+
+\item{columnNames}{See the same argument at ?imputeProductionDomain.}
+
+\item{value}{The column name of data which contains the values to be
+imputed.}
+
+\item{flag}{The column name of data which contains the flag describing the
+status of value.}
+
+\item{ensembleModels}{A list of the models fit to data.  Each element
+should be of class ensembleModel.}
 
 \item{restrictWeights}{Whether a maximum weight restriction should
 be imposed.}
@@ -18,16 +29,14 @@ be imposed.}
 \item{maximumWeights}{The maximum weight to be imposed, must be
 between [0.5, 1].  See ?computeEnsembleWeight for more details.}
 
-\item{ensembleModel}{A list of models to be used to build the
-ensemble.}
-
-\item{modelExtrapolationRange}{See ?computeEnsembleWeight.}
-
 \item{plot}{Whether the result of the ensemble should be plotted.}
 
 \item{errorType}{See ?computeErrorRate.}
 
-\item{errorFunction}{See ?computeEnsembleWeight.}
+\item{errorFunction}{See ?computeEnsembleWeight.  Defaults to MSE.}
+
+\item{missingFlag}{What value of the flag variable represents a missing
+value?  Defaults to "M".}
 }
 \description{
 This is an implementation of the ensemble imputation methodology

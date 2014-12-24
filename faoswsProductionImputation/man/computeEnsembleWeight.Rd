@@ -4,14 +4,30 @@
 \alias{computeEnsembleWeight}
 \title{Function to compute the weights of the ensemble models}
 \usage{
-computeEnsembleWeight(x, fits, restrictWeights = TRUE, maximumWeights = 0.7,
-  errorType = "raw", errorFunction = function(x) mean(x^2),
-  ensembleModel = NULL, modelExtrapolationRange = rep(Inf, length(fits)))
+computeEnsembleWeight(data, columnNames, value, flag, ensembleModels, cvGroup,
+  fits, restrictWeights = TRUE, maximumWeights = 0.7, errorType = "raw",
+  errorFunction = function(x) mean(x^2))
 }
 \arguments{
-\item{x}{A numeric vector to be imputed.}
+\item{data}{A data.table containing the data.}
 
-\item{fits}{The fitted value from the models.}
+\item{columnNames}{See the same argument at ?imputeProductionDomain.}
+
+\item{value}{The column name of data which contains the values to be
+imputed.}
+
+\item{flag}{The column name of data which contains the flag describing the
+status of value.}
+
+\item{ensembleModels}{A list of the models fit to data.  Each element
+should be of class ensembleModel.}
+
+\item{cvGroup}{A vector of the same length as nrow(data).  Entries of the
+vector should be integers from 1 to the number of cross-validation groups
+(typically 10).  This should be randomly assigned, and is usually created
+by ensembleImpute.}
+
+\item{fits}{The fitted values from the models.}
 
 \item{restrictWeights}{Whether a maximum weight restriction should
 be imposed.}
@@ -24,7 +40,11 @@ extrapolate.  Since a smaller subset of models is valid at that point, it's
 possible that a weight for one of these models may exceed the maximum
 weight.}
 
-\item{errorType}{See ?computeErrorRate.}
+\item{errorType}{Specifies what type of error to compute.  Currently, "raw"
+and "loocv" are implemented.  If "raw", then error is computed as the
+difference between the model and observed data.  "loocv" performs
+leave-one-out cross-validation to determine the predictive error of the
+model.  "loocv" is more rigorous but much slower.}
 
 \item{errorFunction}{Function taking a vector of errors and returning a
 positive value.  Smaller values should indicate a better fit to the data.
@@ -33,14 +53,6 @@ functions (such as the median absolute deviation, or f(x)=median(abs(x)))
 can be used.  Note: NA values will be removed prior to calling this
 function.  Also, the errors are all positive, so the median absolute
 deviation can also be computed with f(x)=median(x).}
-
-\item{ensembleModel}{A list of the models fit.  This is only needed if
-errorType = "loocv".}
-
-\item{modelExtrapolationRange}{A numeric vector specifying the valid range
-of extrapolation for each model.  This vector must be the same length as
-ensembleModel, as it's i-th element gives the extrapolation range for the
-i-th element of ensembleModel.}
 }
 \description{
 Function to compute the weights of the ensemble models
