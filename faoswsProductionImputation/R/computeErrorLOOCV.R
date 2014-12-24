@@ -36,7 +36,8 @@ computeErrorLOOCV = function(data, columnNames, value, flag, model, cvGroup){
                 model = model@model, value = "value", flag = "flag",
                 columnNames = columnNamesTemporary )
         }
-        error[cvGroup==i] = (data[,value] - fitTemporary)[cvGroup==i]
+        filter = !is.na(cvGroup) & cvGroup==i
+        error[filter] = (data[,value] - fitTemporary)[filter]
     }
     setnames(data, old = c("value", "flag"), new = c(value, flag) )
     return(error)
