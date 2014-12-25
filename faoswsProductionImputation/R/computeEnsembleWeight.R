@@ -51,6 +51,7 @@ computeEnsembleWeight = function(data, columnNames, value, flag,
     stopifnot( maximumWeights <= 1 & maximumWeights >= 0.5 )
     if(errorType=="loocv" & is.null(ensembleModel) )
         stop("ensembleModel must be provided if errorType='loocv'")
+    assignColumnNames(columnNames = columnNames)
     # Add something here to ensure removeNoInfo() has been applied.  We must
     # make sure all country time series have at least one non-missing value, or
     # later models break down.

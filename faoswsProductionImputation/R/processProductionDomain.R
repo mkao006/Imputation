@@ -62,10 +62,16 @@ processProductionDomain = function(data, columnNames,
         removeZeroConflict(columnNames, data = data)
     }
 
-    dataProcessed =
-        removeNoInfo(data = data,
-                     value = yieldValue,
-                     flag = yieldObservationFlag,
-                     byKey = byKey)
-    dataProcessed
+    removeNoInfo(data = data,
+                 value = yieldValue,
+                 flag = yieldObservationFlag,
+                 byKey = byKey)
+    # removeNoInfo assigns the new data.table to the variable "data" in the
+    # environment of this function.  Thus, to ensure "data" is returned to the
+    # caller of this function, assign the data.table to the calling environment.
+    # This should be removed/fixed once row deletion by reference is
+    # implemented for data.table, see
+    # http://stackoverflow.com/questions/10790204/how-to-delete-a-row-by-reference-in-r-data-table
+    dataTableName = as.character(match.call()$data)
+    assign(x = dataTableName, value = data, envir = parent.frame(1))
 }   
