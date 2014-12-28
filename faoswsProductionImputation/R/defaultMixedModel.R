@@ -25,14 +25,20 @@
 defaultMixedModel = function(data, value, flag, columnNames, maxdf = 5,
     weights = NULL, modelFormula){
     
-    ### Ensure inputs are as expected (and assign columnNames variables)
-    stopifnot( is(data, "data.table") )
-    testColumnNames( columnNames = columnNames, data = data)
-    stopifnot( c(value, flag) %in% colnames(data) )
-    assignColumnNames( columnNames = columnNames, environment = environment() )
+    ### Data Quality Checks
+    stopifnot(is(data, "data.table"))
+    stopifnot(c(value, flag) %in% colnames(data))
+    testColumnNames(columnNames = columnNames, data = data)
+    assignColumnNames(columnNames = columnNames, environment = environment())
+    if(!is.null(weights)){
+        stopifnot(length(weights) == nrow(data))
+        stopifnot(min(weights) >= 0)
+    }
+    if(!missing(modelFormula))
+        stopifnot(is(modelFormula, "formula"))
     
     setnames(x = data, old = c(value, flag, yearValue),
-             new = c("value", "flag", "year"))    
+             new = c("value", "flag", "year"))
     if(missing(modelFormula)){
         modelFormula =
             as.formula(paste0("value ~ -1 + (1 + year|",

@@ -4,6 +4,11 @@
 ##' @export
 
 defaultArima = function(x){
+    
+    ### Data Quality Checks
+    stopifnot(is.numeric(x))
+    stopifnot(length(x) <= 1)
+    
     yearCount = length(x)
     if(all(is.na(x)))
         return(as.numeric(rep(NA, yearCount)))
@@ -15,7 +20,7 @@ defaultArima = function(x){
         name.coef = ifelse(length(name.coef) == 0, "", name.coef)
         if(n.coef == 1 &
            name.coef == "intercept"){
-            arimaFit = as.numeric( rep(NA, yearCount) )
+            arimaFit = as.numeric(rep(NA, yearCount))
         } else {
             ## kr = KalmanRun(x, arimaModel$model)
             kr = KalmanSmooth(x, arimaModel$model)
@@ -26,7 +31,7 @@ defaultArima = function(x){
             arimaFit[arimaFit < 0] = 0
         }
     } else {
-        arimaFit = as.numeric( rep(NA, yearCount) )
+        arimaFit = as.numeric(rep(NA, yearCount))
     }
     arimaFit
 }

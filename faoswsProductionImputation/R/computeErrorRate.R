@@ -27,15 +27,23 @@
 computeErrorRate = function(data, columnNames, value, flag, model = NULL,
     cvGroup, fit, errorType = ifelse( is.null(model), "raw", "loocv") ){
     
-    ### Verify inputs match assumptions:
-    if(is.null(model) & errorType == "loocv")
-        stop("Cannot perform leave-one-out cross-validation without a model!")
-    stopifnot( errorType %in% c("raw", "loocv") )
-    stopifnot( length(fit) == nrow(data) )
+    ### Data Quality Checks
+    if(errorType == "loocv"){
+        stopifnot(is(model, "ensembleModel"))
+        stopifnot(length(cvGroup) == nrow(data))
+        if(length(unique(cvGroup)) <= 1)
+            stop("cvGroup must have at least two unique values!")
+    } else if(errorType == "raw"){
+        stopifnot(length(fit) == nrow(data))
+    }
+    stopifnot(errorType %in% c("raw", "loocv"))
+    stopifnot(c(value, flag) %in% colnames(data))
+    testColumnNames(columnNames = columnNames, data = data)
+    assignColumnNames(columnNames = columnNames)
     
     ### Run the function:
     x = data[[value]]
-    if(all(is.na(x-fit))){
+    if(all(is.na(x - fit))){
         er = rep(NA, length.out = nrow(data) )
     } else {
         if(errorType == "raw")

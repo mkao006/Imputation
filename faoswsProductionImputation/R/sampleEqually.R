@@ -13,6 +13,14 @@
 ##' 
 
 sampleEqually = function(n, k){
+
+    ### Data Quality Checks
+    stopifnot(n > 0)
+    stopifnot(k > 0)
+    # n and k should be integers:
+    stopifnot(floor(n) == n)
+    stopifnot(floor(k) == k)
+
     values = rep(1:k, times = floor(n / k))
     values = c(values, sample(k, size = n %% k))
     sample(values, size=length(values))

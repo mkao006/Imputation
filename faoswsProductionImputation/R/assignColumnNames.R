@@ -1,4 +1,4 @@
-##' Assign Column Names
+##' Assign Column Names 
 ##'
 ##' This function takes the values of columnNames and assigns them to the 
 ##' variables defined by names(columnNames), respectively.  This assignment is
@@ -35,12 +35,14 @@
 ##' 
 
 assignColumnNames = function( columnNames, environment = parent.frame(1) ){
-    for(variables in c("productionValue", "productionObservationFlag",
-        "productionMethodFlag", "areaHarvestedValue",
-        "areaHarvestedObservationFlag", "areaHarvestedMethodFlag",
-        "yieldValue", "yieldObservationFlag", "yieldMethodFlag", "yearValue",
-        "byKey" ) ){
-        assign( x = variables, value = columnNames[variables],
-            envir = environment )
+    
+    ### Data Quality Checks
+    stopifnot(is(columnNames, "character"))
+    stopifnot(is(names(columnNames), "character"))
+    stopifnot(is(environment, "environment"))
+    
+    for(variables in names(columnNames)){
+        assign(x = variables, value = columnNames[variables],
+            envir = environment)
     }
 }

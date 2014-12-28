@@ -1,9 +1,14 @@
 ##' Function to combine the ensembles
 ##'
 ##' @param fits A list of fitted values from models.
-##' @param weights A vector for the weights of each model.
+##' @param weights A weight matrix giving the weights of each model for each
+##' observation.
+##' 
+##' @return A vector of length nrow(weights), where each value represents the
+##' ensemble estimate for that observation.
+##' 
 ##' @export
-
+##' 
 
 computeEnsemble = function(fits, weights){
     
@@ -14,6 +19,7 @@ computeEnsemble = function(fits, weights){
     stopifnot(length(fits) == ncol(weights))
     if(!all(sapply(fits, length) == nrow(weights)))
         stop("Length of fits do not match nrow(weights)!")
+    
     
     fitsMatrix = matrix(unlist(fits), ncol = length(fits))
     fitsMatrix[is.na(fitsMatrix)] = 0

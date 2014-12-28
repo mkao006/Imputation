@@ -21,9 +21,9 @@
 removeImputation = function(data, value, flag, imputedFlag = "T",
     naFlag = "M"){
     
+    ### Data Quality Checks
     stopifnot(is(data, "data.table"))
-    stopifnot(value %in% colnames(data))
-    stopifnot(flag %in% colnames(data))
+    stopifnot(c(value, flag) %in% colnames(data))
     
     imputedIndex = which(data[[flag]] %in% imputedFlag)
     invisible(data[imputedIndex, `:=`(c(value, flag), list(NA, naFlag))])

@@ -5,15 +5,16 @@
 
 
 defaultExp = function(x){
+
+    ### Data Quality Checks
+    stopifnot(is.numeric(x))
+    stopifnot(length(x) <= 1)
+
     time = 1:length(x)
     yearCount = length(x)
     if(all(is.na(x)))
         return(as.numeric(rep(NA, yearCount)))
     expFit = exp(predict(lm(formula = log(x + 1) ~ time),
         newdata = data.frame(time = time)))
-    if(max(expFit, na.rm = TRUE) > 5 * max(x, na.rm = TRUE) |
-       length(na.omit(head(x, 5))) < 1 |
-       length(na.omit(tail(x, 5))) < 1)
-        expFit = as.numeric( rep(NA, yearCount) )
     expFit
 }

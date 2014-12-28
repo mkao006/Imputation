@@ -21,7 +21,7 @@ returned value is the "distance" (in terms of number of observations) to
 the closest non-missing value.  See examples.
 }
 \examples{
-x = c(NA, NA, NA, 1:7, NA, NA, NA)
+x = c(NA, NA, NA, 1:7, NA, NA)
 getObservedExtrapolationRange(x)
 }
 

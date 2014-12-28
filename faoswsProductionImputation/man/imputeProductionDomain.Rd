@@ -4,12 +4,11 @@
 \alias{imputeProductionDomain}
 \title{This function imputes the whole production domain.}
 \usage{
-imputeProductionDomain(data, columnNames, flagTable = faoswsFlagTable,
-  removePriorImputation = TRUE, removeConflictValues = TRUE,
-  imputedFlag = "E", imputationFlag = "I", newMethodFlag = "",
-  naFlag = "M", maxdf = 5, restrictWeights = TRUE, maximumWeights = 0.7,
-  ensembleModel = allDefaultModels(),
-  modelExtrapolationRange = getDefaultRange(ensembleModel), yieldFormula,
+imputeProductionDomain(data, columnNames = defaultColumnNames(),
+  flagTable = faoswsFlagTable, removePriorImputation = TRUE,
+  removeConflictValues = TRUE, imputedFlag = "E", imputationFlag = "I",
+  newMethodFlag = "", naFlag = "M", restrictWeights = TRUE,
+  maximumWeights = 0.7, ensembleModels = allDefaultModels(),
   errorType = "loocv", errorFunction = function(x) mean(x^2))
 }
 \arguments{
@@ -40,22 +39,14 @@ imputation, ignored if removePriorImputation is FALSE.}
 
 \item{naFlag}{Flag value for missing values.}
 
-\item{maxdf}{The maximum degree of freedom for the spline.}
-
 \item{restrictWeights}{Whether a maximum weight restriction should
 be imposed.}
 
 \item{maximumWeights}{The maximum weight to be imposed, must be
 between [0.5, 1].}
 
-\item{ensembleModel}{A list of models to be used to build the
+\item{ensembleModels}{A list of models to be used to build the
 ensemble.}
-
-\item{modelExtrapolationRange}{See ?computeEnsembleWeight.}
-
-\item{yieldFormula}{The formula to be passed to the linear mixed
-model for the imputation of yield, if missing default spline model
-is fitted.}
 
 \item{errorType}{See ?computeErrorRate.}
 

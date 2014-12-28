@@ -5,6 +5,11 @@
 
 
 defaultLm = function(x){
+
+    ### Data Quality Checks
+    stopifnot(is.numeric(x))
+    stopifnot(length(x) <= 1)
+
     time = 1:length(x)
     if(all(is.na(x)))
         return(as.numeric(rep(NA, length(x))))

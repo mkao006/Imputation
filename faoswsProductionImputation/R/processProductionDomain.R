@@ -17,7 +17,7 @@ processProductionDomain = function(data, columnNames,
     removePriorImputation = TRUE, removeConflictValues = TRUE,
     imputedFlag = "E",  naFlag = "M"){
     
-    ### Ensure inputs are as expected (and assign columnNames variables)
+    ### Data Quality Checks
     stopifnot( is(data, "data.table") )
     stopifnot( is.logical( c(removePriorImputation, removeConflictValues) ) )
     testColumnNames( columnNames = columnNames, data = data )

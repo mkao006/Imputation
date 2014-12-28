@@ -19,7 +19,7 @@
 
 removeZeroConflict = function(columnNames, naFlag = "M", data){
     
-    ### Ensure inputs are as expected
+    ### Data Quality Checks
     stopifnot( is(data, "data.table") )
     testColumnNames( columnNames = columnNames, data = data )
     assignColumnNames( columnNames = columnNames, environment = environment() )

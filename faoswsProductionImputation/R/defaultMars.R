@@ -5,6 +5,11 @@
 
 
 defaultMars = function(x){
+
+    ### Data Quality Checks
+    stopifnot(is.numeric(x))
+    stopifnot(length(x) <= 1)
+
     time = 1:length(x)
     yearCount = length(x)
     if(all(is.na(x)))
@@ -20,7 +25,7 @@ defaultMars = function(x){
         marsFit = c(marsFit)
         marsFit[marsFit < 0] = 0
     } else {
-        marsFit = as.numeric( rep(NA, yearCount) )
+        marsFit = as.numeric(rep(NA, yearCount))
     }
     marsFit
 }

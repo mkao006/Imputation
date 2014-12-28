@@ -17,9 +17,10 @@
 ##' @export
 
 remove0M = function(data, value, flag, naFlag = "M"){
+
+    ### Data Quality Checks
     stopifnot(is(data, "data.table"))
-    stopifnot(value %in% colnames(data) )
-    stopifnot(flag %in% colnames(data) )
+    stopifnot(c(value, flag) %in% colnames(data) )
     
     missingIndex = which(data[[flag]] == naFlag)
     missingValues = data[missingIndex,][[value]]

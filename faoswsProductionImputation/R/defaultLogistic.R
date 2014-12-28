@@ -14,16 +14,21 @@
 ##' @export
 
 defaultLogistic = function(x){
+
+    ### Data Quality Checks
+    stopifnot(is.numeric(x))
+    stopifnot(length(x) <= 1)
+
     time = 1:length(x)
     if(all(is.na(x)))
         return(as.numeric(rep(NA, length(x))))
     #Try most complex model first:
-    logisticFit = try( logisticNlsIntercept(x), silent = TRUE )
+    logisticFit = try(logisticNlsIntercept(x), silent = TRUE)
     #If most complex model failed, try simpler model (intercept=0)
     if(inherits(logisticFit, "try-error"))
-        logisticFit = try( logisticNls(x), silent = TRUE )
+        logisticFit = try(logisticNls(x), silent = TRUE)
     #If both non-linear models fail, try simple logistic regression model
     if(inherits(logisticFit, "try-error"))
-        logisticFit = try( logisticGlm(x), silent = TRUE )
+        logisticFit = try(logisticGlm(x), silent = TRUE)
     logisticFit
 }

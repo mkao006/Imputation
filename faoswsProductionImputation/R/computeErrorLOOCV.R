@@ -19,25 +19,34 @@
 ##' @export
 
 computeErrorLOOCV = function(data, columnNames, value, flag, model, cvGroup){
-    setnames(data, old = c(value, flag), new = c("value", "flag") )
+
+    ### Data Quality Checks
+    stopifnot(c(value, flag) %in% colnames(data))
+    stopifnot(is(model, "ensembleModel"))
+    stopifnot(is.numeric(cvGroup))
+    stopifnot(length(cvGroup)==nrow(data))
+    testColumnNames(columnNames = columnNames, data = data)
+    assignColumnNames(columnNames = columnNames)
+
+    setnames(data, old = c(value, flag), new = c("value", "flag"))
     error = rep(0, nrow(data))
     for(i in 1:length(unique(cvGroup))){
         #Copy x and remove the ith observation to fit the model
         dataTemporary = copy(data)
-        dataTemporary[cvGroup==i,value:= NA]
+        dataTemporary[cvGroup == i, value := NA]
         columnNamesTemporary = columnNames
-        columnNamesTemporary[columnNames==value] = "value"
-        columnNamesTemporary[columnNames==flag] = "flag"        
-        if(model@level=="commodity"){
+        columnNamesTemporary[columnNames == value] = "value"
+        columnNamesTemporary[columnNames == flag] = "flag"        
+        if(model@level == "commodity"){
             fitTemporary = model@model(data = dataTemporary, value = "value",
-                flag = "flag", columnNames = columnNamesTemporary )
-        } else if (model@level=="countryCommodity"){
+                flag = "flag", columnNames = columnNamesTemporary)
+        } else if(model@level == "countryCommodity"){
             fitTemporary = extendSimpleModel(data = dataTemporary,
                 model = model@model, value = "value", flag = "flag",
-                columnNames = columnNamesTemporary )
+                columnNames = columnNamesTemporary)
         }
-        filter = !is.na(cvGroup) & cvGroup==i
-        error[filter] = (data[,value] - fitTemporary)[filter]
+        filter = !is.na(cvGroup) & cvGroup == i
+        error[filter] = (data[, value] - fitTemporary)[filter]
     }
     setnames(data, old = c("value", "flag"), new = c(value, flag) )
     return(error)

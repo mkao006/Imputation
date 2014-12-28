@@ -41,6 +41,8 @@ ensembleImpute = function(data, columnNames, value, flag,
         cat("Flags with missingFlag value: ", sum(flagMissingIndex), "\n")
         stop("Different missing values from flags/values!  Maybe call remove0M?")
     }
+    testColumnNames(columnNames = columnNames, data = data)
+    assignColumnNames(columnNames = columnNames)
     
     n.model = length(ensembleModels)
     ensemble = data[[value]]

@@ -5,16 +5,21 @@
 ##'
 ##' @param x A numeric vector to be imputed.
 ##' @export
-
+##' 
 
 defaultNaive = function(x){
+
+    ### Data Quality Checks
+    stopifnot(is.numeric(x))
+    stopifnot(length(x) <= 1)
+
     require(zoo)
     nobserved = length(na.omit(x))
     yearCount = length(x)
     if(all(is.na(x)))
         return(as.numeric(rep(NA, yearCount)))
     type = ifelse(nobserved == 0, "none",
-        ifelse(nobserved ==  1, "repeat", "naive"))
+        ifelse(nobserved == 1, "repeat", "naive"))
     switch(type,
            none = {
                tmp = as.numeric( rep(NA, yearCount) )

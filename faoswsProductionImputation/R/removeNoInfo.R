@@ -26,6 +26,7 @@
 removeNoInfo = function (data, value, flag, byKey,
     environment = parent.frame(1)){
     
+    ### Data Quality Checks
     stopifnot(is(data, "data.table"))
     stopifnot(value %in% colnames(data))
     stopifnot(flag %in% colnames(data))

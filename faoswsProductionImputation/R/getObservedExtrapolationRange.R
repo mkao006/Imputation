@@ -12,7 +12,7 @@
 ##' @return A vector of the same length as x.
 ##' 
 ##' @examples
-##' x = c(NA, NA, NA, 1:7, NA, NA, NA)
+##' x = c(NA, NA, NA, 1:7, NA, NA)
 ##' getObservedExtrapolationRange(x)
 ##' 
 

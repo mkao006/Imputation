@@ -34,4 +34,10 @@ testColumnNames = function(columnNames, data){
     if( any(missingNames) )
         stop(paste0("The following elements do not exist in columnNames (and are required):\n",
             paste(requiredColumns[missingNames], collapse="\n")))
+    
+    ### Check that names(columnNames) has no more than required names
+    invalidNames = !names(columnNames) %in% requiredColumns
+    if( any(invalidNames) )
+        stop(paste0("The following elements of columnNames are invalid:\n",
+            paste(names(columnNames)[invalidNames], collapse="\n")))
 }

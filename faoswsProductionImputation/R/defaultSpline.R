@@ -2,8 +2,14 @@
 ##'
 ##' @param x A numeric vector to be imputed.
 ##' @export
+##' 
 
 defaultSpline = function(x){
+
+    ### Data Quality Checks
+    stopifnot(is.numeric(x))
+    stopifnot(length(x) <= 1)
+
     yearCount = length(x)
     time = 1:length(x)
     if(all(is.na(x)))

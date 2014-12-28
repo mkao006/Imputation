@@ -3,6 +3,8 @@
 ##'
 ##'
 ##' @param columnNames See same argument at ?imputeProductionDomain.
+##' @param newMethodFlag The character value that should be assigned to
+##' areaHarvestedObservationFlag when it is imputed.
 ##' @param flagTable see data(faoswsFlagTable) in \pkg{faoswsFlag}
 ##' @param data The data.table object containing the data.
 ##'
@@ -13,12 +15,12 @@
 balanceAreaHarvested = function(columnNames,
     newMethodFlag, flagTable = faoswsFlagTable, data){
     
-    ### Ensure inputs are as expected (and assign columnNames variables)
-    stopifnot( is(data, "data.table") )
+    ### Data Quality Checks
+    stopifnot(is(data, "data.table"))
     testColumnNames(columnNames = columnNames, data = data)
-    assignColumnNames(columnNames = columnNames, envir = environment() )
-	testFlagTable( flagTable = flagTable, data = data,
-        columnNames = columnNames )
+    assignColumnNames(columnNames = columnNames)
+	testFlagTable(flagTable = flagTable, data = data, columnNames = columnNames)
+    stopifnot(is(newMethodFlag, "character"))
 
     origName = c(productionValue, productionObservationFlag,
         areaHarvestedValue,

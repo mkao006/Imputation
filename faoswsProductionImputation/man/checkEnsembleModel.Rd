@@ -8,8 +8,8 @@ checkEnsembleModel(object)
 }
 \arguments{
 \item{model}{The function defining how the model is fit to the data.  The
-function should take arguments data, value, flag, columnNames, and
-missingIndex (see ?extendSimpleModel).}
+function should take arguments data, value, flag, and columnNames (see
+extendSimpleModel).}
 
 \item{extrapolationRange}{How many time steps outside of the data is this
 model valid for?  Should be a positive integer (or Inf).}
@@ -19,9 +19,9 @@ one of "countryCommodity" or "commodity".}
 }
 \description{
 Ensemble models contain a definition (function) of the algorithm used to
-fit the model as well as additional parameters:\n
+fit the model as well as additional parameters:
 Extrapolation range: defines how far outside the range of the data this
-model is valid.\n
+model is valid.
 Level: defines if this model operates on each country-commodity pair
 individually ("countryCommodity" level) or all countries for a fixed
 commodity ("commodity" level) at once.

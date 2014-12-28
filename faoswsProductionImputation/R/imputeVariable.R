@@ -5,6 +5,8 @@
 ##'
 ##' @param columnNames See the same argument at ?imputeProductionDomain
 ##' @param imputationFlag Flag value for new imputation values.
+##' @param newMethodFlag The character value that should be assigned to
+##' *ObservationFlag when it is imputed (where *=variable).
 ##' @param flagTable see data(faoswsFlagTable) in \pkg{faoswsFlag}
 ##' @param data The data.table object containing the data.
 ##' @param ensembleModels A list of models to be used to build the
@@ -26,7 +28,7 @@ imputeVariable = function(columnNames, imputationFlag = "I",
     ensembleModels = allDefaultModels(), flagTable = faoswsFlagTable,
     errorType = "loocv", errorFunction = function(x) mean(x^2), variable){
 
-    ### Ensure inputs are as expected (and assign columnNames variables)
+    ### Data Quality Checks
     stopifnot(is(data, "data.table"))
     stopifnot(is.logical(restrictWeights))
     # Ensure all elements of ensembleModel are functions

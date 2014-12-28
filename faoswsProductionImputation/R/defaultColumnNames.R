@@ -12,15 +12,15 @@
 ##' 
 
 defaultColumnNames = function(){
-    c( productionValue = "productionValue",
-       productionObservationFlag = "productionFlag",
-       productionMethodFlag = "productionFlag2",
-       areaHarvestedValue = "areaHarvestedValue",
-       areaHarvestedObservationFlag = "areaHarvestedFlag",
-       areaHarvestedMethodFlag = "areaHarvestedFlag2",
-       yieldValue = "yieldValue",
-       yieldObservationFlag = "yieldFlag",
-       yieldMethodFlag = "yieldFlag2",
-       yearValue = "year",
-       byKey = "areaCode" )
+    c(productionValue = "productionValue",
+      productionObservationFlag = "productionFlag",
+      productionMethodFlag = "productionFlag2",
+      areaHarvestedValue = "areaHarvestedValue",
+      areaHarvestedObservationFlag = "areaHarvestedFlag",
+      areaHarvestedMethodFlag = "areaHarvestedFlag2",
+      yieldValue = "yieldValue",
+      yieldObservationFlag = "yieldFlag",
+      yieldMethodFlag = "yieldFlag2",
+      yearValue = "year",
+      byKey = "areaCode")
 }

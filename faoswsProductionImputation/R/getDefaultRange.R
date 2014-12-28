@@ -22,7 +22,8 @@ getDefaultRange = function(ensembleModel){
         defaultSpline = 1,
         defaultArima = Inf,
         defaultMars = Inf,
-        defaultNaive = 1
+        defaultNaive = 1,
+        defaultMixedModel = Inf
     )
     if( do.call("any", lapply(range, is.null) ) )
         stop("A model in ensembleModel has no default range in getDefaultRange()")

@@ -11,6 +11,9 @@ balanceProduction(columnNames, newMethodFlag, flagTable = faoswsFlagTable,
 \arguments{
 \item{columnNames}{See this argument at ?imputeProductionDomain.}
 
+\item{newMethodFlag}{The character value that should be assigned to
+productionObservationFlag when it is imputed.}
+
 \item{flagTable}{see data(faoswsFlagTable) in \pkg{faoswsFlag}}
 
 \item{data}{The data.table object containing the data.}

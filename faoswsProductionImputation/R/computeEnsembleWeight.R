@@ -43,25 +43,34 @@ computeEnsembleWeight = function(data, columnNames, value, flag,
     errorFunction = function(x) mean(x^2)){
     
     ### Data quality checks
-    if( !all( lapply(fits, length) == nrow(data) ) )
+    if(!all(lapply(fits, length) == nrow(data)))
         stop("All elements of fits must have the same length as nrow(x)!")
-    if( !is.null(ensembleModel) )
-        stopifnot( all( names(fits) == names(ensembleModel) ) )
-    stopifnot( errorType %in% c("raw", "loocv") )
-    stopifnot( maximumWeights <= 1 & maximumWeights >= 0.5 )
-    if(errorType=="loocv" & is.null(ensembleModel) )
-        stop("ensembleModel must be provided if errorType='loocv'")
+    if(!is.null(ensembleModels))
+        stopifnot(all(names(fits) == names(ensembleModels)))
+    stopifnot(errorType %in% c("raw", "loocv"))
+    stopifnot(maximumWeights <= 1 & maximumWeights >= 0.5)
+    if(errorType=="loocv" & is.null(ensembleModel))
+        stop("ensembleModels must be provided if errorType='loocv'")
+    testColumnNames(columnNames = columnNames)
     assignColumnNames(columnNames = columnNames)
-    # Add something here to ensure removeNoInfo() has been applied.  We must
-    # make sure all country time series have at least one non-missing value, or
-    # later models break down.
+    # Ensure all time series have at least one valid observation
+    # Using yieldValue directly in next line causes an error if yieldValue is a
+    # column name of data, so create variable y.
+    y = yieldValue
+    counts = data[, sum(!is.na(get(y))), by = byKey]
+    if(min(counts[, V1]) == 0)
+        stop("Some countries have no data.  Have you ran removeNoInfo?")
+    # Verify errorFunction
+    stopifnot(is(errorFunction, "function"))
+    stopifnot(length(errorFunction(1:10))==1)
+    stopifnot(is.numeric(errorFunction(1:10)))
     
     ### Run the function
     error = lapply(1:length(fits),
         FUN = function(i){
             out = computeErrorRate(data = data, columnNames = columnNames,
                 value = value, flag = flag, model = ensembleModels[[i]],
-                cvGroup = cvGroup, fit = fits[[i]], errorType = errorType )
+                cvGroup = cvGroup, fit = fits[[i]], errorType = errorType)
             out = data.table( model = names(fits)[i],
                               byKey = data[[byKey]],
                               missingValue = is.na(data[[value]]),
@@ -74,9 +83,9 @@ computeEnsembleWeight = function(data, columnNames, value, flag,
     # that happens, we'll get a missing value (NA) for that error.  To work
     # around this, assign that NA to the highest error for that observation.
     # In other words, assumme the model that failed did as poor as possible.
-    error[, error:=ifelse(is.na(error), max(error, na.rm=TRUE), error),
+    error[, error := ifelse(is.na(error), max(error, na.rm = TRUE), error),
           by = list(byKey, year)]
-    if( error[!(missingValue), max(abs(error))]==Inf )
+    if( error[!(missingValue), max(abs(error))] == Inf )
         stop("Infinite error observed!  This may have been created because of
         no valid models for some time/country.  Is defaultMean() included in
         the ensembleModels?  That may fix this error.")
@@ -88,14 +97,14 @@ computeEnsembleWeight = function(data, columnNames, value, flag,
     weights = error[!(missingValue), errorFunction(error),
                     by = list(byKey, model)]
     setnames(weights, old = "V1", new = "averageError")
-    if(errorType=="raw"){
+    if(errorType == "raw"){
         # Perfect fits can give really small errors but actually be overfitting
         # the data.  To prevent that, set small errors to the mean error.
         ## NOTE (Michael): Maybe change this to uniform weight
         weights[, averageError := ifelse(averageError < 1e-3,
             mean(averageError[averageError > 1e-3], na.rm = TRUE),
             averageError), by = byKey]
-    } else if(errorType=="loocv"){
+    } else if(errorType == "loocv"){
         # Really small errors will cause 1/error^2 to be Inf, and this
         # gives weights of all 0, NA, NaN.  Prevent that by limiting how
         # small the errors can be:
@@ -106,7 +115,7 @@ computeEnsembleWeight = function(data, columnNames, value, flag,
     weights[, weight := (1/averageError^2) /
                 sum(1/averageError^2, na.rm = TRUE),
             by = byKey]
-    weights[is.na(weight),weight:=0]
+    weights[is.na(weight),weight := 0]
     if(restrictWeights & any(weights > maximumWeights)){
         # Assign weights exceeding the threshold a new value.  We want this new
         # value to be maximumWeights, but after reassigning this weight we have

@@ -24,18 +24,16 @@
 ##' @param imputedFlag Flag value corresponding to values from prior
 ##' imputation, ignored if removePriorImputation is FALSE.
 ##' @param imputationFlag Flag value for new imputation values.
+##' @param newMethodFlag The character value that should be assigned to
+##' *ObservationFlag when *Value is imputed (*=production, yield, or
+##' areaHarvested).
 ##' @param naFlag Flag value for missing values.
-##' @param maxdf The maximum degree of freedom for the spline. 
 ##' @param restrictWeights Whether a maximum weight restriction should
 ##' be imposed.
 ##' @param maximumWeights The maximum weight to be imposed, must be
 ##' between [0.5, 1].
-##' @param yieldFormula The formula to be passed to the linear mixed
-##' model for the imputation of yield, if missing default spline model
-##' is fitted.
 ##' @param ensembleModels A list of models to be used to build the
 ##' ensemble.
-##' @param modelExtrapolationRange See ?computeEnsembleWeight.
 ##' @param errorType See ?computeErrorRate.
 ##' @param errorFunction See ?computeEnsembleWeight.
 ##'
@@ -50,7 +48,7 @@ imputeProductionDomain = function(data, columnNames = defaultColumnNames(),
     ensembleModels = allDefaultModels(),
     errorType = "loocv", errorFunction = function(x) mean(x^2) ){
 
-    ### Ensure inputs are as expected (and assign columnNames variables)
+    ### Data Quality Checks
     stopifnot( is(data, "data.table") )
     testColumnNames( columnNames = columnNames, data = data)
     stopifnot( is.logical( 

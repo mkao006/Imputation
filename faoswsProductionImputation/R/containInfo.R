@@ -11,6 +11,12 @@
 ##' @export
 
 containInfo = function (value, flag, naFlag = "M"){
+    
+    ### Data Quality Checks
+    stopifnot(length(value) == length(flag))
+    stopifnot(is(value, "numeric"))
+    stopifnot(is(flag, "character"))
+    
     ifelse(all(flag == naFlag) | sum(value, na.rm = TRUE) == 0,
            FALSE, TRUE)
 }

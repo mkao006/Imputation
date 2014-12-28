@@ -26,7 +26,8 @@
 ##' @export
 
 weightVectorToMatrix = function( x, w, modelExtrapolationRange){
-    ### Verify inputs match assumptions:
+
+    ### Data Quality Checks
     stopifnot( length(w) == length(modelExtrapolationRange) )
     
     ### Run the function:
