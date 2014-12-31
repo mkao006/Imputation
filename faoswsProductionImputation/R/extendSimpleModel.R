@@ -24,15 +24,20 @@
 extendSimpleModel = function(data, model, value, flag, columnNames){
     
     ### Data quality checks
-    stopifnot( is(data, "data.table") )
-    stopifnot( is(model, "function") )
-    stopifnot( c(value, flag) %in% colnames(data) )
-    testColumnNames( columnNames = columnNames, data = data)
-    assignColumnNames( columnNames = columnNames, environment = environment() )
+    ensureData(data = data, columnNames = columnNames)
+    stopifnot(is(model, "function"))
+    stopifnot(c(value, flag) %in% colnames(data))
+    assignColumnNames(columnNames = columnNames, environment = environment())
     
-    setnames( data, old=value, new="value")
-    missingIndex = is.na(data[,value])
-    modelFit = data[,model(value), by=byKey]
-    setnames( data, old="value", new=value)
+    setnames(data, old = value, new = "value")
+    missingIndex = is.na(data[, value])
+    modelFit = data[,
+        # Apply the model if there is a missing value.  Else, return the data
+        if(anyNA(value)){
+            model(value)
+        } else {
+            value
+        }, by = byKey]
+    setnames(data, old = "value", new = value)
     return(modelFit$V1)
 }

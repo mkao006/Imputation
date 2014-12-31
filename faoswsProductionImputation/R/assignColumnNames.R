@@ -34,7 +34,7 @@
 ##' @export
 ##' 
 
-assignColumnNames = function( columnNames, environment = parent.frame(1) ){
+assignColumnNames = function(columnNames, environment = parent.frame(1)){
     
     ### Data Quality Checks
     stopifnot(is(columnNames, "character"))

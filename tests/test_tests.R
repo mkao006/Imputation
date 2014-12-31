@@ -31,34 +31,37 @@ data = data.table(productionValue              = 1:10,
                   yearValue                    = 2000+1:10,
                   byKey                        = rep(1,10))
 
-### testColumnNames()
-test_that("testColumnNames works", {
-    expect_that( testColumnNames(columnNames = columnNames, data = data),
-        is_a("NULL") )
+### ensureColumnNames()
+test_that("ensureColumnNames works", {
+    expect_that(ensureColumnNames(columnNames = columnNames, data = data),
+        is_a("NULL"))
 })
 
-test_that("testColumnNames fails when expected", {
-    setnames(data, old = "productionValue", new = "prodValue" )
-    expect_that( testColumnNames(columnNames = columnNames, data = data),
-        throws_error("The following columns do not exist in data") )
+test_that("ensureColumnNames fails when expected", {
+    setnames(data, old = "productionValue", new = "prodValue")
+    expect_that(ensureColumnNames(columnNames = columnNames, data = data),
+        throws_error("The following columns do not exist in data"))
     columnNames[1] = "prodValue"
-    expect_that( testColumnNames(columnNames = columnNames, data = data),
-        is_a("NULL") )
+    expect_that(ensureColumnNames(columnNames = columnNames, data = data),
+        is_a("NULL"))
     names(columnNames)[1] = "prodValue"
-    expect_that( testColumnNames(columnNames = columnNames, data = data),
-        throws_error("The following elements do not exist in columnNames") )
+    expect_that(ensureColumnNames(columnNames = columnNames, data = data),
+        throws_error("The following elements do not exist in columnNames"))
+    names(columnNames)[1] = "productionValue"
+    setnames(data, old = "prodValue", new = "productionValue")
+    columnNames[1] = "productionValue"
 })
 
-### testFlagTable()
-test_that("testFlagTable works when expected", {
-    expect_that( testFlagTable(flagTable = faoswsFlagTable,
+### ensureFlagTable()
+test_that("ensureFlagTable works when expected", {
+    expect_that(ensureFlagTable(flagTable = faoswsFlagTable,
         data = data, columnNames = columnNames),
-        is_a("NULL") )
+        is_a("NULL"))
 })
 
-test_that("testFlagTable fails when expected", {
+test_that("ensureFlagTable fails when expected", {
     data[10,productionObservationFlag:="Invalid Value"]
-    expect_that( testFlagTable(flagTable = faoswsFlagTable,
+    expect_that(ensureFlagTable(flagTable = faoswsFlagTable,
         data = data, columnNames = columnNames),
-        throws_error("Some observation flags are not in the flag table!") )
+        throws_error("Some observation flags are not in the flag table!"))
 })

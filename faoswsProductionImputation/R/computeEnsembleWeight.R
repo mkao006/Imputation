@@ -36,6 +36,7 @@
 ##' deviation can also be computed with f(x)=median(x).
 ##' 
 ##' @export
+##' 
 
 computeEnsembleWeight = function(data, columnNames, value, flag,
     ensembleModels, cvGroup, fits, restrictWeights = TRUE,
@@ -43,15 +44,17 @@ computeEnsembleWeight = function(data, columnNames, value, flag,
     errorFunction = function(x) mean(x^2)){
     
     ### Data quality checks
+    ensureData(data = data, columnNames = columnNames)
     if(!all(lapply(fits, length) == nrow(data)))
         stop("All elements of fits must have the same length as nrow(x)!")
     if(!is.null(ensembleModels))
         stopifnot(all(names(fits) == names(ensembleModels)))
+    if(is.null(names(fits)))
+        names(fits) = paste("Model", 1:length(fits), sep="_")
     stopifnot(errorType %in% c("raw", "loocv"))
     stopifnot(maximumWeights <= 1 & maximumWeights >= 0.5)
     if(errorType=="loocv" & is.null(ensembleModel))
         stop("ensembleModels must be provided if errorType='loocv'")
-    testColumnNames(columnNames = columnNames)
     assignColumnNames(columnNames = columnNames)
     # Ensure all time series have at least one valid observation
     # Using yieldValue directly in next line causes an error if yieldValue is a
@@ -85,12 +88,12 @@ computeEnsembleWeight = function(data, columnNames, value, flag,
     # In other words, assumme the model that failed did as poor as possible.
     error[, error := ifelse(is.na(error), max(error, na.rm = TRUE), error),
           by = list(byKey, year)]
-    if( error[!(missingValue), max(abs(error))] == Inf )
+    if(error[!(missingValue), max(abs(error))] == Inf)
         stop("Infinite error observed!  This may have been created because of
-        no valid models for some time/country.  Is defaultMean() included in
-        the ensembleModels?  That may fix this error.")
+        no valid models for some time/country.  Is defaultMean() included
+        in the ensembleModels?  That may fix this error.")
     # If the fit failed, we can't use this model.  Assign error of Inf.
-    error[, modelFailed := anyNA(fit), by=list(byKey, model)]
+    error[, modelFailed := anyNA(fit), by = list(byKey, model)]
     error[(modelFailed), error := NA]
     # Aggregate the errors using the provided error function, applying to each
     # byKey group and model individually.
@@ -99,10 +102,15 @@ computeEnsembleWeight = function(data, columnNames, value, flag,
     setnames(weights, old = "V1", new = "averageError")
     if(errorType == "raw"){
         # Perfect fits can give really small errors but actually be overfitting
-        # the data.  To prevent that, set small errors to the mean error.
+        # the data.  To prevent that, set small errors to the mean error.  But,
+        # if all errors are less than 1e-3, don't change any (in this case,
+        # averageErrorByKey will be NA).
         ## NOTE (Michael): Maybe change this to uniform weight
-        weights[, averageError := ifelse(averageError < 1e-3,
+        weights[, averageErrorByKey :=
             mean(averageError[averageError > 1e-3], na.rm = TRUE),
+            by = byKey]
+        weights[, averageError := ifelse(averageError < 1e-3 &
+                !is.na(averageErrorByKey), averageErrorByKey,
             averageError), by = byKey]
     } else if(errorType == "loocv"){
         # Really small errors will cause 1/error^2 to be Inf, and this
@@ -115,7 +123,7 @@ computeEnsembleWeight = function(data, columnNames, value, flag,
     weights[, weight := (1/averageError^2) /
                 sum(1/averageError^2, na.rm = TRUE),
             by = byKey]
-    weights[is.na(weight),weight := 0]
+    weights[is.na(weight), weight := 0]
     if(restrictWeights & any(weights > maximumWeights)){
         # Assign weights exceeding the threshold a new value.  We want this new
         # value to be maximumWeights, but after reassigning this weight we have
@@ -130,4 +138,4 @@ computeEnsembleWeight = function(data, columnNames, value, flag,
     weights = getWeightMatrix( data = data, value = value, byKey = byKey,
         yearValue = yearValue, w = weights, ensembleModels = ensembleModels )
     weights
-}    
+}

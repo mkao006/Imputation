@@ -20,14 +20,14 @@
 
 logisticNlsIntercept = function(x){
     time = 1:length(x)
-    model = nls( formula = x ~ A + B / (1 + exp( -C*(time-D) )),
-        start = list(A=min(x, na.rm=T), B=max(x, na.rm=T), C=1, D=mean(time)))
+    model = nls(formula = x ~ A + B / (1 + exp(-C*(time-D))),
+        start = list(A = min(x, na.rm = T), B = max(x, na.rm = T), C = 1, D = mean(time)))
     midpoint = coef(model)[4]
-    if( coef(model)[1] < 0 | coef(model)[2] < 0 )
+    if(coef(model)[1] < 0 | coef(model)[2] < 0)
         stop("A and B must be non-negative, bad model found.")
     if(length(na.omit(x[time < midpoint])) < 1 |
-       length(na.omit(x[time > midpoint])) < 1 )
-        return( as.numeric( rep(NA, length(x)) ) )
+       length(na.omit(x[time > midpoint])) < 1)
+        return(as.numeric(rep(NA, length(x))))
     logisticFit = predict(model, newdata = data.frame(time = time))
-    return( logisticFit )
+    return(logisticFit)
 }

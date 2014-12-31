@@ -37,7 +37,7 @@ removeNoInfo = function (data, value, flag, byKey,
         NROW(.SD)), by = byKey]$V1
     
     #Assign the new data.table to environment
-    dataTableName = as.character( match.call()$data )
-    assign( x = dataTableName, value = data[info,],
-        envir = environment )
+    dataTableName = as.character(match.call()$data)
+    assign(x = dataTableName, value = data[info,],
+        envir = environment)
 }

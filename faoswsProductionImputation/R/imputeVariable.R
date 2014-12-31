@@ -29,16 +29,15 @@ imputeVariable = function(columnNames, imputationFlag = "I",
     errorType = "loocv", errorFunction = function(x) mean(x^2), variable){
 
     ### Data Quality Checks
-    stopifnot(is(data, "data.table"))
+    ensureData(data = data, columnNames = columnNames)
     stopifnot(is.logical(restrictWeights))
     # Ensure all elements of ensembleModel are functions
     stopifnot(all(sapply(ensembleModels, is, "ensembleModel")))
     stopifnot(maximumWeights <= 1 & maximumWeights >= .5)
     stopifnot(errorType %in% c("loocv", "raw"))
     stopifnot(is(errorFunction, "function"))
-    testColumnNames(columnNames = columnNames, data = data)
     assignColumnNames(columnNames = columnNames, environment = environment())
-	testFlagTable(flagTable = flagTable, data = data,
+	ensureFlagTable(flagTable = flagTable, data = data,
         columnNames = columnNames)
     stopifnot(variable %in% c("production", "yield"))
 

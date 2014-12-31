@@ -32,8 +32,10 @@
 ##' be imposed.
 ##' @param maximumWeights The maximum weight to be imposed, must be
 ##' between [0.5, 1].
-##' @param ensembleModels A list of models to be used to build the
-##' ensemble.
+##' @param ensembleModelsYield A list of models to be used to build the
+##' ensemble for the yield variable.
+##' @param ensembleModelsProduction A list of models to be used to build the
+##' ensemble for the production variable.
 ##' @param errorType See ?computeErrorRate.
 ##' @param errorFunction See ?computeEnsembleWeight.
 ##'
@@ -45,22 +47,22 @@ imputeProductionDomain = function(data, columnNames = defaultColumnNames(),
     removePriorImputation = TRUE, removeConflictValues = TRUE,
     imputedFlag = "E", imputationFlag = "I", newMethodFlag = "",
     naFlag = "M", restrictWeights = TRUE, maximumWeights = 0.7,
-    ensembleModels = allDefaultModels(),
-    errorType = "loocv", errorFunction = function(x) mean(x^2) ){
+    ensembleModelsYield = allDefaultModels(),
+    ensembleModelsProduction = allDefaultModels(),
+    errorType = "loocv", errorFunction = function(x) mean(x^2)){
 
     ### Data Quality Checks
-    stopifnot( is(data, "data.table") )
-    testColumnNames( columnNames = columnNames, data = data)
-    stopifnot( is.logical( 
-        c(removePriorImputation, removeConflictValues, restrictWeights) ) )
+    ensureData(data = data, columnNames = columnNames)
+    stopifnot(is.logical(
+        c(removePriorImputation, removeConflictValues, restrictWeights)))
     # Ensure all elements of ensembleModels are of type ensembleModel
-    stopifnot( all( sapply( ensembleModels, is, ensembleModel ) ) )
-    stopifnot( maximumWeights <= 1 & maximumWeights >= 0 )
-    stopifnot( errorType %in% c("loocv", "raw") )
-    stopifnot( is( errorFunction, "function" ) )
-    assignColumnNames( columnNames = columnNames, environment = environment() )
-	testFlagTable( flagTable = flagTable, data = data,
-        columnNames = columnNames )
+    stopifnot(all(sapply(ensembleModels, is, ensembleModel)))
+    stopifnot(maximumWeights <= 1 & maximumWeights >= 0)
+    stopifnot(errorType %in% c("loocv", "raw"))
+    stopifnot(is(errorFunction, "function"))
+    assignColumnNames(columnNames = columnNames, environment = environment())
+	ensureFlagTable(flagTable = flagTable, data = data,
+        columnNames = columnNames)
         
     cat("Initializing ... \n")
     dataCopy = copy(data)
@@ -89,7 +91,7 @@ imputeProductionDomain = function(data, columnNames = defaultColumnNames(),
                      "yieldMethodFlag",
                      "byKey")
     # Assign names to newColumnNames so it can be passed to columnNames later
-    names( newColumnNames ) = newColumnNames
+    names(newColumnNames) = newColumnNames
     setnames(x = dataCopy,
              old = oldColumnNames,
              new = newColumnNames
@@ -120,7 +122,7 @@ imputeProductionDomain = function(data, columnNames = defaultColumnNames(),
                             removeConflictValues =
                                 removeConflictValues,
                             imputedFlag = imputedFlag,
-                            naFlag = naFlag )
+                            naFlag = naFlag)
 
     ## Step two: Impute Yield
     cat("Imputing Yield ...\n")
@@ -137,7 +139,7 @@ imputeProductionDomain = function(data, columnNames = defaultColumnNames(),
                    data = dataCopy,
                    restrictWeights = restrictWeights,
                    maximumWeights = maximumWeights,
-                   ensembleModels = ensembleModels,
+                   ensembleModels = ensembleModelsYield,
                    flagTable = flagTable,
                    errorType = errorType,
                    errorFunction = errorFunction,
@@ -157,7 +159,7 @@ imputeProductionDomain = function(data, columnNames = defaultColumnNames(),
                    data = dataCopy,
                    restrictWeights = restrictWeights,
                    maximumWeights = maximumWeights,
-                   ensembleModels = ensembleModels,
+                   ensembleModels = ensembleModelsProduction,
                    flagTable = flagTable,
                    errorType = errorType,
                    errorFunction = errorFunction,
@@ -187,7 +189,7 @@ imputeProductionDomain = function(data, columnNames = defaultColumnNames(),
     ## Reset the names
     setnames(x = dataCopy,
              old = newColumnNames,
-             new = newColumnNames
+             new = oldColumnNames
              )
 
     dataCopy

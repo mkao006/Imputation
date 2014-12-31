@@ -11,7 +11,7 @@
 ##' ensemble.  If F is a nxk matrix (n = number of observations, k = number of
 ##' models) containing the fitted models, then this function constructs W,
 ##' another nxk matrix of weights.  The final ensemble estimate for observation
-##' i can be computed by sum( F[i,]*W[i,] ).
+##' i can be computed by sum(F[i,]*W[i,]).
 ##'
 ##' @param data The data.table containing the data.
 ##' @param value The column name of data which contains the variable being
@@ -34,32 +34,40 @@
 ##' @export
 ##' 
 
-getWeightMatrix = function( data, value, byKey, yearValue, w,
+getWeightMatrix = function(data, value, byKey, yearValue, w,
     ensembleModels){
 
     ### Data quality checks
+    stopifnot(is(data, "data.table"))
+    stopifnot(is(w, "data.table"))
+    stopifnot(c(value, byKey, yearValue) %in% colnames(data))
+    stopifnot(is(ensembleModels, "list"))
+    stopifnot(all(sapply(ensembleModels, is) == "ensembleModel"))
+    # w should have one row for each model at each byKey level
+    stopifnot(nrow(w) == length(unique(data[[byKey]])) *
+                  length(ensembleModels))
     
     ### Run the function:
-    setnames(data, old=c(value, byKey, yearValue),
-             new=c("value", "byKey", "yearValue") )
+    setnames(data, old = c(value, byKey, yearValue),
+             new = c("value", "byKey", "yearValue"))
     data[, extrapolationRange := 
              getObservedExtrapolationRange(value), by = byKey]
-    weightMatrix = merge( data[,.(byKey, value, yearValue, extrapolationRange)],
+    weightMatrix = merge(data[,.(byKey, value, yearValue, extrapolationRange)],
                           w, by = "byKey", all = TRUE, allow.cartesian = TRUE)
     # Set data back to it's original state
     data[, extrapolationRange := NULL]
-    setnames(data, old=c("value", "byKey", "yearValue"),
-             new=c(value, byKey, yearValue) )
+    setnames(data, old = c("value", "byKey", "yearValue"),
+             new = c(value, byKey, yearValue))
     # Set weights to 0 that are outside of extrapolationRange
-    range = sapply( ensembleModels, function(model){
+    range = sapply(ensembleModels, function(model){
         model@extrapolationRange
     })
     weightMatrix[, allowedRange := range[model]]
     weightMatrix[allowedRange < extrapolationRange, weight := 0]
     # Renormalize weights so all columns add to 1
     weightMatrix[, weight := weight / sum(weight), by = list(byKey, yearValue)]
-    weightMatrix = dcast.data.table( weightMatrix, byKey + yearValue ~ model,
-                                     value.var = "weight" )
+    weightMatrix = dcast.data.table(weightMatrix, byKey + yearValue ~ model,
+                                     value.var = "weight")
     weightMatrix[, c("byKey", "yearValue") := list(NULL, NULL)]
     weightMatrix[!is.na(data[[value]])] = NA
     return(weightMatrix)

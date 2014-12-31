@@ -9,8 +9,8 @@
 ##' to this function is modified.
 ##' 
 ##' @examples data = okrapd[1:10,]
-##' data[,areaHarvestedValue := c(rep(0,5), rep(100,5))]
-##' data[,productionValue := c(0,0,100,100,100,0,0,100,100,100)]
+##' data[,areaHarvestedValue := c(rep(0, 5), rep(100, 5))]
+##' data[,productionValue := c(0, 0, 100, 100, 100, 0, 0, 100, 100, 100)]
 ##' removeZeroConflict(columnNames = defaultColumnNames(), data = data)
 ##' data[,.(areaHarvestedValue, areaHarvestedFlag, productionValue,
 ##'     productionFlag, yieldValue, yieldFlag)]
@@ -20,9 +20,9 @@
 removeZeroConflict = function(columnNames, naFlag = "M", data){
     
     ### Data Quality Checks
-    stopifnot( is(data, "data.table") )
-    testColumnNames( columnNames = columnNames, data = data )
-    assignColumnNames( columnNames = columnNames, environment = environment() )
+    ensureData(data = data, columnNames = columnNames)
+    ensureColumnNames(columnNames = columnNames, data = data)
+    assignColumnNames(columnNames = columnNames, environment = environment())
     
     setnames(x = data,
              old = c(productionValue,

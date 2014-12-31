@@ -11,7 +11,7 @@ defaultNaive = function(x){
 
     ### Data Quality Checks
     stopifnot(is.numeric(x))
-    stopifnot(length(x) <= 1)
+    stopifnot(length(x) > 1)
 
     require(zoo)
     nobserved = length(na.omit(x))
@@ -22,14 +22,14 @@ defaultNaive = function(x){
         ifelse(nobserved == 1, "repeat", "naive"))
     switch(type,
            none = {
-               tmp = as.numeric( rep(NA, yearCount) )
+               tmp = as.numeric(rep(NA, yearCount))
            },
            `repeat` = {
                tmp = rep(na.omit(x), yearCount)
            },
            naive = {
                tmp = na.locf(na.locf(na.approx(x, na.rm = FALSE),
-                   na.rm = FALSE),  na.rm = FALSE, fromLast = TRUE)
+                   na.rm = FALSE), na.rm = FALSE, fromLast = TRUE)
            }
            )
     as.numeric(tmp)

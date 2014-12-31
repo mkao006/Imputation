@@ -1,4 +1,4 @@
-##' Test Flag Table
+##' Ensure Flag Table
 ##' 
 ##' This function performs several checks to ensure that the provided flagTable
 ##' is valid.  First, it verifies that the column names are
@@ -15,18 +15,19 @@
 ##' @export
 ##' 
 
-testFlagTable = function(flagTable, data, columnNames){
-    stopifnot( all( colnames(flagTable) ==
-        c("flagObservationStatus", "flagObservationWeights") ) )
-    assignColumnNames(columnNames = columnNames, environment = environment() )
+ensureFlagTable = function(flagTable, data, columnNames){
+    ensureData(data = data, columnNames = columnNames)
+    stopifnot(all(colnames(flagTable) ==
+        c("flagObservationStatus", "flagObservationWeights")))
+    assignColumnNames(columnNames = columnNames, environment = environment())
     # Check that all flags are in the flagTable:
     flags = data[[productionObservationFlag]]
     flags = c(flags, data[[areaHarvestedObservationFlag]])
     flags = c(flags, data[[yieldObservationFlag]])
     flags = unique(flags)
     missingFlags = flags[!flags %in% flagTable$flagObservationStatus]
-    if( length(missingFlags) > 0 ){
+    if(length(missingFlags) > 0){
         stop(paste("Some observation flags are not in the flag table!  Missing:\n",
-            paste0("'", missingFlags, "'", collapse="\n ") ) )
+            paste0("'", missingFlags, "'", collapse="\n")))
     }
 }

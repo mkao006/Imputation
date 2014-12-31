@@ -25,16 +25,16 @@
 ##' 
 ##' @export
 
-weightVectorToMatrix = function( x, w, modelExtrapolationRange){
+weightVectorToMatrix = function(x, w, modelExtrapolationRange){
 
     ### Data Quality Checks
-    stopifnot( length(w) == length(modelExtrapolationRange) )
+    stopifnot(length(w) == length(modelExtrapolationRange))
     
     ### Run the function:
     observedExtrapolationRange = getObservedExtrapolationRange(x)
-    validRangeMatrix = sapply( modelExtrapolationRange,
+    validRangeMatrix = sapply(modelExtrapolationRange,
         function(x) observedExtrapolationRange <= x)
-    weightMatrix = matrix(w, nrow=length(x), ncol=length(w), byrow = TRUE)
+    weightMatrix = matrix(w, nrow = length(x), ncol = length(w), byrow = TRUE)
     weightMatrix = weightMatrix * validRangeMatrix
     rowTotals = apply(weightMatrix, 1, sum)
     weightMatrix = weightMatrix * 1/rowTotals

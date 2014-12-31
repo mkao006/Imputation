@@ -15,13 +15,13 @@
 ##' each individual timeseries (defined by byKey) when possible.
 ##' 
 
-makeCvGroup = function( data, value, byKey, groupCount = 10){
+makeCvGroup = function(data, value, byKey, groupCount = 10){
     cvGroup = rep(NA, nrow(data))
-    setnames( data, old = value, new = "value")
+    setnames(data, old = value, new = "value")
     cvGroup[!is.na(data[,value])] =
         data[!is.na(value),
              sampleEqually(n = .N, k = groupCount),
              by = byKey]$V1
-    setnames( data, old = "value", new = value)
+    setnames(data, old = "value", new = value)
     return(cvGroup)
 }

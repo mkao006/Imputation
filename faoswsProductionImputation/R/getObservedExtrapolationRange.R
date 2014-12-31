@@ -17,12 +17,17 @@
 ##' 
 
 getObservedExtrapolationRange = function(x){
+
+    ### Data Quality Checks
+    stopifnot(is.numeric(x))
+
     if(all(is.na(x)))
        return(as.numeric(rep(NA, length(x))))
-    firstNaCount = min( which( !is.na(x) ) ) - 1
-    lastNaCount = length(x) - max( which( !is.na(x) ) )
+    
+    firstNaCount = min(which(!is.na(x))) - 1
+    lastNaCount = length(x) - max(which(!is.na(x)))
     #Vector of the distance to the nearest observed point (for extrapolations)
-    c(firstNaCount:0,
-      rep(0, length(x)-firstNaCount-lastNaCount-2),
-      0:lastNaCount )
+    c(seq(firstNaCount, 1, length.out = firstNaCount),
+      rep(0, length(x)-firstNaCount-lastNaCount),
+      seq(1, lastNaCount, length.out = lastNaCount))
 }

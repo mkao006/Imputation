@@ -25,9 +25,10 @@
 ##' 
 
 computeErrorRate = function(data, columnNames, value, flag, model = NULL,
-    cvGroup, fit, errorType = ifelse( is.null(model), "raw", "loocv") ){
+    cvGroup, fit, errorType = ifelse(is.null(model), "raw", "loocv")){
     
     ### Data Quality Checks
+    ensureData(data = data, columnNames = columnNames)
     if(errorType == "loocv"){
         stopifnot(is(model, "ensembleModel"))
         stopifnot(length(cvGroup) == nrow(data))
@@ -38,13 +39,12 @@ computeErrorRate = function(data, columnNames, value, flag, model = NULL,
     }
     stopifnot(errorType %in% c("raw", "loocv"))
     stopifnot(c(value, flag) %in% colnames(data))
-    testColumnNames(columnNames = columnNames, data = data)
     assignColumnNames(columnNames = columnNames)
     
     ### Run the function:
     x = data[[value]]
     if(all(is.na(x - fit))){
-        er = rep(NA, length.out = nrow(data) )
+        er = rep(NA, length.out = nrow(data))
     } else {
         if(errorType == "raw")
             er = (x - fit)
@@ -52,5 +52,5 @@ computeErrorRate = function(data, columnNames, value, flag, model = NULL,
             er = computeErrorLOOCV(data = data, columnNames = columnNames,
                 value = value, flag = flag, model = model, cvGroup = cvGroup)
     }
-    abs( er )
+    abs(er)
 }

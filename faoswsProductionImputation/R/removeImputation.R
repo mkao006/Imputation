@@ -12,8 +12,8 @@
 ##'
 ##' @examples data = copy(okrapd[areaName=="Sudan",])
 ##' data[,.(yieldValue, yieldFlag)]
-##' removeImputation( data = data, value = "yieldValue", flag = "yieldFlag",
-##'     imputedFlag = "T", naFlag = "M" )
+##' removeImputation(data = data, value = "yieldValue", flag = "yieldFlag",
+##'     imputedFlag = "T", naFlag = "M")
 ##' data[,.(yieldValue, yieldFlag)]
 ##'
 ##' @export

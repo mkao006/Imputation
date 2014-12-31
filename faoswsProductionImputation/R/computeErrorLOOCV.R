@@ -21,11 +21,11 @@
 computeErrorLOOCV = function(data, columnNames, value, flag, model, cvGroup){
 
     ### Data Quality Checks
+    ensureData(data = data, columnNames = columnNames)
     stopifnot(c(value, flag) %in% colnames(data))
     stopifnot(is(model, "ensembleModel"))
     stopifnot(is.numeric(cvGroup))
     stopifnot(length(cvGroup)==nrow(data))
-    testColumnNames(columnNames = columnNames, data = data)
     assignColumnNames(columnNames = columnNames)
 
     setnames(data, old = c(value, flag), new = c("value", "flag"))
@@ -48,6 +48,6 @@ computeErrorLOOCV = function(data, columnNames, value, flag, model, cvGroup){
         filter = !is.na(cvGroup) & cvGroup == i
         error[filter] = (data[, value] - fitTemporary)[filter]
     }
-    setnames(data, old = c("value", "flag"), new = c(value, flag) )
+    setnames(data, old = c("value", "flag"), new = c(value, flag))
     return(error)
 }

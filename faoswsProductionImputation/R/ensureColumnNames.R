@@ -1,4 +1,4 @@
-##' Assign Column Names
+##' Ensure Column Names
 ##'
 ##' In addition, this function ensures that the columnNames argument is valid.
 ##' In particular, that means that all elements of columnNames are valid column
@@ -17,7 +17,7 @@
 ##' @export
 ##' 
 
-testColumnNames = function(columnNames, data){
+ensureColumnNames = function(columnNames, data){
     ### Check that all values of columnNames are in colnames(data)
     missingColumns = ! columnNames %in% colnames(data)
     if( any(missingColumns) )

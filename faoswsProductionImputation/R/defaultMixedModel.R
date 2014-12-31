@@ -26,9 +26,8 @@ defaultMixedModel = function(data, value, flag, columnNames, maxdf = 5,
     weights = NULL, modelFormula){
     
     ### Data Quality Checks
-    stopifnot(is(data, "data.table"))
+    ensureData(data = data, columnNames = columnNames)
     stopifnot(c(value, flag) %in% colnames(data))
-    testColumnNames(columnNames = columnNames, data = data)
     assignColumnNames(columnNames = columnNames, environment = environment())
     if(!is.null(weights)){
         stopifnot(length(weights) == nrow(data))
@@ -52,8 +51,8 @@ defaultMixedModel = function(data, value, flag, columnNames, maxdf = 5,
             )
                     
         predictError = function(x, y, newdata){
-            yhat = predict(x, newdata = newdata)
-            amse = sum((yhat - y)^2,na.rm = TRUE)/
+            yhat = predict(x, newdata = newdata, allow.new.levels = TRUE)
+            amse = sum((yhat - y)^2, na.rm = TRUE)/
                 length(na.omit(y))
             amse
         }
@@ -64,7 +63,7 @@ defaultMixedModel = function(data, value, flag, columnNames, maxdf = 5,
                              newdata = data)
             }, nsim = 100)
         
-        if(!inherits(model, "try-error")){
+        if(!inherits(model, "try-error") & maxdf > 1){
             for(i in 2:maxdf){
                 ## cat("proposing df:", i, "\n")
                 newModelFormula =

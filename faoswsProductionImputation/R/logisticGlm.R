@@ -22,17 +22,17 @@ logisticGlm = function(x){
     time = 1:length(x)
     xmax = max(x, na.rm = TRUE)
     #If all values are 0 or NA's, then return no prediction
-    if(is.na(xmax) | xmax<=0)
-        return( rep(NA, length(x)) )
+    if(is.na(xmax) | xmax <= 0)
+        return(as.numeric(rep(NA, length(x))))
     x.scaled = x/xmax    
-    model = glm( formula = x.scaled ~ time, family="binomial")
+    model = glm(formula = x.scaled ~ time, family="binomial")
     midpoint = - coef(model)[1]/coef(model)[2]
     if(length(na.omit(x[time < midpoint])) < 1 |
-       length(na.omit(x[time > midpoint])) < 1 )
-        return( as.numeric( rep(NA, length(x)) ) )
+       length(na.omit(x[time > midpoint])) < 1)
+        return(as.numeric(rep(NA, length(x))))
     logisticFit =
         predict(model, 
                 newdata = data.frame(time = time),
                 type = "response") * xmax
-    return( logisticFit )
+    return(logisticFit)
 }

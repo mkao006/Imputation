@@ -21,20 +21,19 @@ computeEnsembleFit = function(data, ensembleModels = allDefaultModels(),
     columnNames, value, flag){
     
     ### Data quality checks
-    stopifnot(is(data, "data.table"))
+    ensureData(data = data, columnNames = columnNames)
     stopifnot(c(value, flag) %in% colnames(data))
     stopifnot(is(ensembleModels, "list"))
     stopifnot(all(sapply(ensembleModels, is) == "ensembleModel"))
-    testColumnNames(columnNames = columnNames, data = data)
     assignColumnNames(columnNames = columnNames, environment = environment())
     
     ### Fit Models
     fits = lapply(ensembleModels,
         FUN = function(model){
-            if(model@level=="commodity"){
+            if(model@level == "commodity"){
                 model@model(data = data, value = value, flag = flag,
                     columnNames = columnNames)
-            } else if(model@level=="countryCommodity"){
+            } else if(model@level == "countryCommodity"){
                 extendSimpleModel(data = data, model = model@model,
                     value = value, flag = flag, columnNames = columnNames)
             }

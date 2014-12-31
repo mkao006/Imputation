@@ -11,9 +11,14 @@
 ##' @export
 
 getDefaultRange = function(ensembleModel){
+
+    ### Data Quality Checks
     if(is.null(names(ensembleModel)))
         stop("ensembleModel must be a named list!")
-    range = lapply( names(ensembleModel), switch,
+    stopifnot(is(ensembleModel, "list"))
+    stopifnot(all(sapply(ensembleModel, is) == "ensembleModel"))
+        
+    range = lapply(names(ensembleModel), switch,
         defaultMean = Inf,
         defaultLm = Inf,
         defaultExp = 0,
@@ -25,7 +30,7 @@ getDefaultRange = function(ensembleModel){
         defaultNaive = 1,
         defaultMixedModel = Inf
     )
-    if( do.call("any", lapply(range, is.null) ) )
+    if(do.call("any", lapply(range, is.null)))
         stop("A model in ensembleModel has no default range in getDefaultRange()")
-    return( unlist(range) )
+    return(unlist(range))
 }

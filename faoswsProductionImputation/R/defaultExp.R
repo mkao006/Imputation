@@ -8,7 +8,7 @@ defaultExp = function(x){
 
     ### Data Quality Checks
     stopifnot(is.numeric(x))
-    stopifnot(length(x) <= 1)
+    stopifnot(length(x) > 1)
 
     time = 1:length(x)
     yearCount = length(x)

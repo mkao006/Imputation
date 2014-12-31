@@ -23,5 +23,5 @@ sampleEqually = function(n, k){
 
     values = rep(1:k, times = floor(n / k))
     values = c(values, sample(k, size = n %% k))
-    sample(values, size=length(values))
+    sample(values, size = length(values))
 }

@@ -16,10 +16,9 @@ balanceAreaHarvested = function(columnNames,
     newMethodFlag, flagTable = faoswsFlagTable, data){
     
     ### Data Quality Checks
-    stopifnot(is(data, "data.table"))
-    testColumnNames(columnNames = columnNames, data = data)
+    ensureData(data = data, columnNames = columnNames)
     assignColumnNames(columnNames = columnNames)
-	testFlagTable(flagTable = flagTable, data = data, columnNames = columnNames)
+	ensureFlagTable(flagTable = flagTable, data = data, columnNames = columnNames)
     stopifnot(is(newMethodFlag, "character"))
 
     origName = c(productionValue, productionObservationFlag,

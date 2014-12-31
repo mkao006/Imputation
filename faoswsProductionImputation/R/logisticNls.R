@@ -20,14 +20,14 @@
 
 logisticNls = function(x){
     time = 1:length(x)
-    model = nls( formula = x ~ B / (1 + exp( -C*(time-D) )),
-        start = list(B=max(x, na.rm=T), C=1, D=mean(time)) )
-    if( coef(model)[1] < 0 )
+    model = nls(formula = x ~ B / (1 + exp(-C*(time-D))),
+        start = list(B = max(x, na.rm = T), C = 1, D = mean(time)))
+    if(coef(model)[1] < 0)
         stop("B must be non-negative, bad model found.")
     midpoint = coef(model)[3]
     if(length(na.omit(x[time < midpoint])) < 1 |
-       length(na.omit(x[time > midpoint])) < 1 )
-        return( as.numeric( rep(NA, length(x)) ) )
+       length(na.omit(x[time > midpoint])) < 1)
+        return(as.numeric(rep(NA, length(x))))
     logisticFit = predict(model, newdata = data.frame(time = time))
-    return( logisticFit )
+    return(logisticFit)
 }

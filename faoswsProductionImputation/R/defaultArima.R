@@ -7,7 +7,7 @@ defaultArima = function(x){
     
     ### Data Quality Checks
     stopifnot(is.numeric(x))
-    stopifnot(length(x) <= 1)
+    stopifnot(length(x) > 1)
     
     yearCount = length(x)
     if(all(is.na(x)))

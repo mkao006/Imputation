@@ -24,25 +24,27 @@
 ##' @export
 ##' 
 
-
 ensembleImpute = function(data, columnNames, value, flag,
     ensembleModels = allDefaultModels(), restrictWeights = TRUE,
     maximumWeights = 0.7, plot = FALSE, errorType = "loocv",
     errorFunction = function(x) mean(x^2), missingFlag = "M"){
 
     ### Data quality checks
-    if(length(ensembleModels)<=1)
-        stop("ensembleModels must be a list with at least two elements!")
+    ensureData(data = data, columnNames = columnNames)
+    if(length(ensembleModels) <= 1)
+        restrictWeights = FALSE
     valueMissingIndex = is.na(data[[value]])
     flagMissingIndex = (data[[flag]] == missingFlag)
     # Ensure missing values agree with missing flags
-    if( !all(valueMissingIndex == flagMissingIndex) ){
+    if(!all(valueMissingIndex == flagMissingIndex)){
         cat("Values that are NA: ", sum(valueMissingIndex), "\n")
         cat("Flags with missingFlag value: ", sum(flagMissingIndex), "\n")
         stop("Different missing values from flags/values!  Maybe call remove0M?")
     }
-    testColumnNames(columnNames = columnNames, data = data)
     assignColumnNames(columnNames = columnNames)
+    if(is.null(names(ensembleModels)))
+        names(ensembleModels) = paste("Model", 1:length(ensembleModels),
+                                      sep = "_")
     
     n.model = length(ensembleModels)
     ensemble = data[[value]]
@@ -63,6 +65,14 @@ ensembleImpute = function(data, columnNames, value, flag,
         ensemble[missIndex] = ensembleFit[missIndex]
         if(plot){
             modelNames = names(modelFits)
+            # Use par(mfrow=...) to plot all ensemble imputations
+            plotCount = data[, anyNA(yieldValue), by = "areaCode"]
+            plotCount = sum(plotCount$V1)
+            if(plotCount <= ceiling(sqrt(plotCount))*floor(sqrt(plotCount)))
+                grid = c(ceiling(sqrt(plotCount)), floor(sqrt(plotCount)))
+            else
+                grid = c(ceiling(sqrt(plotCount)), ceiling(sqrt(plotCount)))
+            par(mfrow = grid)
             for(aCode in unique(data[[byKey]])){
                 filter = data[[byKey]] == aCode
                 # Don't plot this value of byKey if no imputation was done
@@ -73,7 +83,7 @@ ensembleImpute = function(data, columnNames, value, flag,
                 })
                 plot(ensemble[filter],
                      ylim = c(0, 1.1 * max(plotMax, na.rm = TRUE)),
-                     type = "n", xlab = "", ylab = "")
+                     type = "n", xlab = "", ylab = "", main = data[[byKey]][1])
                 colPal = brewer.pal(n.model, "Paired")
                 for(i in 1:n.model){
                     lines(modelFits[[modelNames[i]]][filter], col = colPal[i])
@@ -97,7 +107,6 @@ ensembleImpute = function(data, columnNames, value, flag,
                        col = c(colPal, "steelblue"),
                        lwd = c(rep(1, n.model), 3),
                        bty = "n")
-                readline("Next?")
             }
         }
     } else {
