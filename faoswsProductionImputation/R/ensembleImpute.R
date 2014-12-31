@@ -45,72 +45,31 @@ ensembleImpute = function(data, columnNames, value, flag,
     if(is.null(names(ensembleModels)))
         names(ensembleModels) = paste("Model", 1:length(ensembleModels),
                                       sep = "_")
+    if(!anyNA(data[[value]])){
+        warning("No missing values in data[[value]].  Returning data[[value]]")
+        return(data[[value]])
+    }
     
-    n.model = length(ensembleModels)
     ensemble = data[[value]]
     missIndex = is.na(ensemble)
-    if(anyNA(ensemble)){
-        cvGroup = makeCvGroup(data = data, value = value, byKey = byKey,
-            groupCount = 10)
-        modelFits = computeEnsembleFit(data = data, value = value, flag = flag,
-            ensembleModels = ensembleModels, columnNames = columnNames)
-        modelWeights = computeEnsembleWeight(data = data,
-            columnNames = columnNames, value = value, flag = flag,
-            ensembleModels = ensembleModels, cvGroup = cvGroup,
-            fits = modelFits, restrictWeights = restrictWeights,
-            maximumWeights = maximumWeights, errorType = errorType,
-            errorFunction = errorFunction)
-        ## print(modelWeights)
-        ensembleFit = computeEnsemble(modelFits, modelWeights)
-        ensemble[missIndex] = ensembleFit[missIndex]
-        if(plot){
-            modelNames = names(modelFits)
-            # Use par(mfrow=...) to plot all ensemble imputations
-            plotCount = data[, anyNA(yieldValue), by = "areaCode"]
-            plotCount = sum(plotCount$V1)
-            if(plotCount <= ceiling(sqrt(plotCount))*floor(sqrt(plotCount)))
-                grid = c(ceiling(sqrt(plotCount)), floor(sqrt(plotCount)))
-            else
-                grid = c(ceiling(sqrt(plotCount)), ceiling(sqrt(plotCount)))
-            par(mfrow = grid)
-            for(aCode in unique(data[[byKey]])){
-                filter = data[[byKey]] == aCode
-                # Don't plot this value of byKey if no imputation was done
-                if(!anyNA(data[[value]][filter]))
-                    next
-                plotMax = sapply(modelFits, function(x){
-                    max(x[filter])
-                })
-                plot(ensemble[filter],
-                     ylim = c(0, 1.1 * max(plotMax, na.rm = TRUE)),
-                     type = "n", xlab = "", ylab = "", main = data[[byKey]][1])
-                colPal = brewer.pal(n.model, "Paired")
-                for(i in 1:n.model){
-                    lines(modelFits[[modelNames[i]]][filter], col = colPal[i])
-                }
-                yearCount = sum(filter)
-                lines(1:yearCount, ensemble[filter],
-                      col = "steelblue", lwd = 3)
-                points(ensemble[filter], pch = 19)
-                points((1:yearCount)[missIndex[filter]],
-                       ensemble[filter][missIndex[filter]],
-                       col = "steelblue", cex = 1, pch = 19)
-                modelWeightsToPlot =
-                    weightMatrixToVector(modelWeights[filter,])
-                # Reorder so sequence matches modelNames:
-                modelWeightsToPlot =
-                    as.data.frame(modelWeightsToPlot)[modelNames]
-                legend("topleft",
-                       legend = c(paste0(modelNames, "(",
-                           round(modelWeightsToPlot * 100, 2),
-                           "%)"), "Ensemble"),
-                       col = c(colPal, "steelblue"),
-                       lwd = c(rep(1, n.model), 3),
-                       bty = "n")
-            }
-        }
-    } else {
-        ensemble = data[[value]]
+    cvGroup = makeCvGroup(data = data, value = value, byKey = byKey,
+        groupCount = 10)
+    modelFits = computeEnsembleFit(data = data, value = value, flag = flag,
+        ensembleModels = ensembleModels, columnNames = columnNames)
+    modelWeights = computeEnsembleWeight(data = data,
+        columnNames = columnNames, value = value, flag = flag,
+        ensembleModels = ensembleModels, cvGroup = cvGroup,
+        fits = modelFits, restrictWeights = restrictWeights,
+        maximumWeights = maximumWeights, errorType = errorType,
+        errorFunction = errorFunction)
+    ## print(modelWeights)
+    ensembleFit = computeEnsemble(modelFits, modelWeights)
+    ensemble[missIndex] = ensembleFit[missIndex]
+    if(plot){
+        plotEnsemble(data, modelFits, modelWeights, ensemble, value,
+                     byKey, yearValue)
+        plotEnsembleOld(data, modelFits, modelWeights, ensemble, value,
+                     byKey)
     }
     ensemble
 }
