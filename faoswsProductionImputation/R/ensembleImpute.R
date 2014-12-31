@@ -66,10 +66,11 @@ ensembleImpute = function(data, columnNames, value, flag,
     ensembleFit = computeEnsemble(modelFits, modelWeights)
     ensemble[missIndex] = ensembleFit[missIndex]
     if(plot){
-        plotEnsemble(data, modelFits, modelWeights, ensemble, value,
-                     byKey, yearValue)
-        plotEnsembleOld(data, modelFits, modelWeights, ensemble, value,
-                     byKey)
+        plotEnsemble(data = data, modelFits = modelFits,
+                     modelWeights = modelWeights, ensemble = ensemble,
+                     value = value, byKey = byKey, yearValue = yearValue)
+#         plotEnsembleOld(data, modelFits, modelWeights, ensemble, value,
+#                      byKey)
     }
     ensemble
 }

@@ -28,6 +28,7 @@
 plotEnsembleOld = function(data, modelFits, modelWeights, ensemble, value,
                            byKey){
     modelNames = names(modelFits)
+    nModels = length(modelNames)
     # Use par(mfrow=...) to plot all ensemble imputations
     plotCount = data[, anyNA(get(value)), by = byKey]
     plotCount = sum(plotCount$V1)
@@ -51,8 +52,8 @@ plotEnsembleOld = function(data, modelFits, modelWeights, ensemble, value,
                  ylim = c(0, 1.1 * max(plotMax, na.rm = TRUE)),
                  type = "n", xlab = "", ylab = "",
                  main = data[get(byKey) == aCode, get(byKey)][1])
-            colPal = brewer.pal(n.model, "Paired")
-            for(i in 1:n.model){
+            colPal = brewer.pal(nModels, "Paired")
+            for(i in 1:nModels){
                 lines(modelFits[[modelNames[i]]][filter],
                       col = colPal[i])
             }
@@ -73,7 +74,7 @@ plotEnsembleOld = function(data, modelFits, modelWeights, ensemble, value,
                        round(modelWeightsToPlot * 100, 2),
                        "%)"), "Ensemble"),
                    col = c(colPal, "steelblue"),
-                   lwd = c(rep(1, n.model), 3),
+                   lwd = c(rep(1, nModels), 3),
                    bty = "n")
         }
     }

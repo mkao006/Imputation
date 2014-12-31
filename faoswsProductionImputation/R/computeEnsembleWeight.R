@@ -68,7 +68,7 @@ computeEnsembleWeight = function(data, columnNames, value, flag,
     stopifnot(length(errorFunction(1:10))==1)
     stopifnot(is.numeric(errorFunction(1:10)))
     
-    ### Run the function
+    ### Compute errors from each model
     error = lapply(1:length(fits),
         FUN = function(i){
             out = computeErrorRate(data = data, columnNames = columnNames,
@@ -95,6 +95,8 @@ computeEnsembleWeight = function(data, columnNames, value, flag,
     # If the fit failed, we can't use this model.  Assign error of Inf.
     error[, modelFailed := anyNA(fit), by = list(byKey, model)]
     error[(modelFailed), error := NA]
+    
+    ### Create the weights data.table using the errors
     # Aggregate the errors using the provided error function, applying to each
     # byKey group and model individually.
     weights = error[!(missingValue), errorFunction(error),
@@ -103,8 +105,8 @@ computeEnsembleWeight = function(data, columnNames, value, flag,
     if(errorType == "raw"){
         # Perfect fits can give really small errors but actually be overfitting
         # the data.  To prevent that, set small errors to the mean error.  But,
-        # if all errors are less than 1e-3, don't change any (in this case,
-        # averageErrorByKey will be NA).
+        # if all errors are less than 1e-3, change weights to uniform (in this
+        # case, averageErrorByKey will be NA).
         ## NOTE (Michael): Maybe change this to uniform weight
         weights[, averageErrorByKey :=
             mean(averageError[averageError > 1e-3], na.rm = TRUE),
@@ -112,6 +114,8 @@ computeEnsembleWeight = function(data, columnNames, value, flag,
         weights[, averageError := ifelse(averageError < 1e-3 &
                 !is.na(averageErrorByKey), averageErrorByKey,
             averageError), by = byKey]
+        weights[, averageError := ifelse(averageError < 1e-3,
+            1, averageError), by = byKey]
     } else if(errorType == "loocv"){
         # Really small errors will cause 1/error^2 to be Inf, and this
         # gives weights of all 0, NA, NaN.  Prevent that by limiting how
@@ -123,6 +127,8 @@ computeEnsembleWeight = function(data, columnNames, value, flag,
     weights[, weight := (1/averageError^2) /
                 sum(1/averageError^2, na.rm = TRUE),
             by = byKey]
+    
+    ### Apply adjustments to weights (NA->0, reduce below maximumWeights)
     weights[is.na(weight), weight := 0]
     if(restrictWeights & any(weights > maximumWeights)){
         # Assign weights exceeding the threshold a new value.  We want this new
@@ -135,6 +141,8 @@ computeEnsembleWeight = function(data, columnNames, value, flag,
         # Re-normalize the weights so they sum to 1:
         weights[, weight := weight / sum(weight), by = byKey]
     }
+    
+    ### Convert weights to a matrix
     weights = getWeightMatrix( data = data, value = value, byKey = byKey,
         yearValue = yearValue, w = weights, ensembleModels = ensembleModels )
     weights

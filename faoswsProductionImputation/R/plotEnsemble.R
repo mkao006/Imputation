@@ -61,9 +61,9 @@ plotEnsemble = function(data, modelFits, modelWeights, ensemble, value, byKey,
     ### Set up toPlotWeights data.table and append to toPlotModels
     toPlotWeights = modelWeights[filter, ]
     # If all weights are 0 (i.e. no imputation) set all weights to
-    # 1/(# of models) so they all get equal weight on the plot
+    # a really small value so the plot shows only a line
     toPlotWeights[apply(toPlotWeights, 1, sum, na.rm = T) == 0,
-                  colnames(toPlotWeights) := 1/ncol(toPlotWeights)]
+                  colnames(toPlotWeights) := 1e-8]
     toPlotWeights$year = toPlot$year
     toPlotWeights$byKey = toPlot$byKey
     toPlotWeights = data.table:::melt.data.table(data = toPlotWeights,
@@ -86,24 +86,32 @@ plotEnsemble = function(data, modelFits, modelWeights, ensemble, value, byKey,
     }
     
     ### Plotting call
+    toPlotModels[, maxY := max(modelFit, na.rm = TRUE), by = "byKey"]
+    toPlotModels[, ribbonWidth := maxY * modelWeight * .03]
     print(ggplot2::ggplot(toPlotModels,
                     # year - .5 to center the lines on each year
-                    ggplot2::aes(x = year - .5, y = modelFit,
-                                 color = variable, shape = variable)) +
-        ggplot2::geom_line(ggplot2::aes(size = modelWeight,
-                                        shape = "none")) +
+                    ggplot2::aes(x = year, color = variable,
+                                 shape = variable)) +
+        ggplot2::geom_ribbon(ggplot2::aes(ymax = modelFit + ribbonWidth,
+                                          ymin = modelFit - ribbonWidth,
+                                          shape = "none", fill = variable)) +
         ggplot2::geom_point(data = toPlot,
             ggplot2::aes(x = year, y = ensemble,
                          color = ifelse(is.na(value), "Ensemble", "Data"),
-                         shape = ifelse(is.na(value), "Ensemble", "Data"))) +
+                         shape = ifelse(is.na(value), "Ensemble", "Data"),
+                         fill = ifelse(is.na(value), "Ensemble", "Data"))) +
         ggplot2::facet_wrap( ~ byKey, scale = "free") +
         ggplot2::scale_size_continuous(range = c(.5, 2)) +
         ggplot2::scale_color_manual(
             values = c("black", "black", plotColors),
             limits = c("Data", "Ensemble", modelNames)) +
+        ggplot2::scale_fill_manual(
+            values = c(NA, NA, plotColors),
+            limits = c("Data", "Ensemble", modelNames)) +
         ggplot2::labs(x = "Year", y = value, size = "Model Weight",
-                      color = "", shape = "") +
+                      color = "", shape = "", fill = "") +
         ggplot2::scale_shape_manual(values = c(16, 4, rep(NA, nModels)),
-                                    limits=c("Data", "Ensemble", modelNames))
+                                    limits=c("Data", "Ensemble", modelNames)) +
+        ggplot2::expand_limits(y = 0)
     )
 }
