@@ -24,17 +24,19 @@
 ##' @export
 ##' 
 
-ensembleImpute = function(data, columnNames, value, flag,
-    ensembleModels = allDefaultModels(), restrictWeights = TRUE,
-    maximumWeights = 0.7, plot = FALSE, errorType = "loocv",
-    errorFunction = function(x) mean(x^2), missingFlag = "M"){
+ensembleImpute = function(data, imputationParameters = NULL){
 
-    ### Data quality checks
-    ensureData(data = data, columnNames = columnNames)
-    if(length(ensembleModels) <= 1)
-        restrictWeights = FALSE
-    valueMissingIndex = is.na(data[[value]])
-    flagMissingIndex = (data[[flag]] == missingFlag)
+    ### Data Quality Checks
+    if(!exists("parametersAssigned") || !parametersAssigned){
+        stopifnot(!is.null(imputationParameters))
+        assignParameters(imputationParameters)
+    }
+    if(!ensuredData)
+        ensureData(data = data)
+    if(!ensuredFlagTable)
+        ensureFlagTable(flagTable = flagTable, data = data)
+    valueMissingIndex = is.na(data[[imputationValueColumn]])
+    flagMissingIndex = (data[[imputationFlagColumn]] == missingFlag)
     # Ensure missing values agree with missing flags
     if(!all(valueMissingIndex == flagMissingIndex)){
         cat("Values that are NA: ", sum(valueMissingIndex), "\n")
@@ -45,32 +47,25 @@ ensembleImpute = function(data, columnNames, value, flag,
     if(is.null(names(ensembleModels)))
         names(ensembleModels) = paste("Model", 1:length(ensembleModels),
                                       sep = "_")
-    if(!anyNA(data[[value]])){
-        warning("No missing values in data[[value]].  Returning data[[value]]")
-        return(data[[value]])
+    if(!anyNA(data[[imputationValueColumn]])){
+        warning("No missing values in data[[imputationValueColumn]].",
+        "Returning data[[imputationValueColumn]]")
+        return(data[[imputationValueColumn]])
     }
     
-    ensemble = data[[value]]
+    ensemble = data[[imputationValueColumn]]
     missIndex = is.na(ensemble)
-    cvGroup = makeCvGroup(data = data, value = value, byKey = byKey,
-        groupCount = 10)
-    modelFits = computeEnsembleFit(data = data, value = value, flag = flag,
-        ensembleModels = ensembleModels, columnNames = columnNames)
+    cvGroup = makeCvGroup(data = data)
+    modelFits = computeEnsembleFit(data = data)
     modelWeights = computeEnsembleWeight(data = data,
-        columnNames = columnNames, value = value, flag = flag,
-        ensembleModels = ensembleModels, cvGroup = cvGroup,
-        fits = modelFits, restrictWeights = restrictWeights,
-        maximumWeights = maximumWeights, errorType = errorType,
-        errorFunction = errorFunction)
+        cvGroup = cvGroup, fits = modelFits)
     ## print(modelWeights)
     ensembleFit = computeEnsemble(modelFits, modelWeights)
     ensemble[missIndex] = ensembleFit[missIndex]
-    if(plot){
+    if(plotImputation){
         plotEnsemble(data = data, modelFits = modelFits,
-                     modelWeights = modelWeights, ensemble = ensemble,
-                     value = value, byKey = byKey, yearValue = yearValue)
-#         plotEnsembleOld(data, modelFits, modelWeights, ensemble, value,
-#                      byKey)
+                     modelWeights = modelWeights, ensemble = ensemble)
+#         plotEnsembleOld(data, modelFits, modelWeights, ensemble)
     }
     ensemble
 }

@@ -1,5 +1,5 @@
 ##' Function to remove zero values which are missing.
-##'
+##' 
 ##' @param data The data.table object containing the values.
 ##' @param value The value of the observation.
 ##' @param flag The flag of the observation.
@@ -16,10 +16,15 @@
 ##' 
 ##' @export
 
-remove0M = function(data, value, flag, naFlag = "M"){
+remove0M = function(data, value, flag, processingParameters = NULL){
 
     ### Data Quality Checks
-    stopifnot(is(data, "data.table"))
+    if(!exists("parametersAssigned") || !parametersAssigned){
+        stopifnot(!is.null(processingParameters))
+        assignParameters(processingParameters)
+    }
+    if(!ensuredData)
+        ensureData(data = data)
     stopifnot(c(value, flag) %in% colnames(data))
     
     missingIndex = which(data[[flag]] == naFlag)

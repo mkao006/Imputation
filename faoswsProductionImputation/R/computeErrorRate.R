@@ -1,7 +1,6 @@
 ##' Function to compute the error of different model fits
 ##'
 ##' @param data A data.table containing the data.
-##' @param columnNames See the same argument at ?imputeProductionDomain.
 ##' @param value The column name of data which contains the values to be
 ##' imputed.
 ##' @param flag The column name of data which contains the flag describing the
@@ -24,33 +23,28 @@
 ##' @export
 ##' 
 
-computeErrorRate = function(data, columnNames, value, flag, model = NULL,
-    cvGroup, fit, errorType = ifelse(is.null(model), "raw", "loocv")){
+computeErrorRate = function(data, model = NULL, cvGroup, fit,
+                            imputationParameters = NULL){
     
     ### Data Quality Checks
-    ensureData(data = data, columnNames = columnNames)
-    if(errorType == "loocv"){
-        stopifnot(is(model, "ensembleModel"))
-        stopifnot(length(cvGroup) == nrow(data))
-        if(length(unique(cvGroup)) <= 1)
-            stop("cvGroup must have at least two unique values!")
-    } else if(errorType == "raw"){
-        stopifnot(length(fit) == nrow(data))
+    if(!exists("parametersAssigned") || !parametersAssigned){
+        stopifnot(!is.null(imputationParameters))
+        assignParameters(imputationParameters)
     }
-    stopifnot(errorType %in% c("raw", "loocv"))
-    stopifnot(c(value, flag) %in% colnames(data))
-    assignColumnNames(columnNames = columnNames)
+    if(!ensuredData)
+        ensureData(data = data)
+    if(!ensuredFlagTable)
+        ensureFlagTable(flagTable = flagTable, data = data)
     
     ### Run the function:
-    x = data[[value]]
+    x = data[[imputationValueColumn]]
     if(all(is.na(x - fit))){
         er = rep(NA, length.out = nrow(data))
     } else {
         if(errorType == "raw")
             er = (x - fit)
         if(errorType == "loocv")
-            er = computeErrorLOOCV(data = data, columnNames = columnNames,
-                value = value, flag = flag, model = model, cvGroup = cvGroup)
+            er = computeErrorLOOCV(data = data, model = model, cvGroup = cvGroup)
     }
     abs(er)
 }

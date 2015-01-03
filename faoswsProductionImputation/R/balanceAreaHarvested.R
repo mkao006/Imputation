@@ -1,25 +1,27 @@
 ##' Function to compute area harvested when new production and yield
 ##' are given.
 ##'
-##'
-##' @param columnNames See same argument at ?imputeProductionDomain.
-##' @param newMethodFlag The character value that should be assigned to
-##' areaHarvestedObservationFlag when it is imputed.
-##' @param flagTable see data(faoswsFlagTable) in \pkg{faoswsFlag}
 ##' @param data The data.table object containing the data.
+##' @param imputationParameters A list of the parameters for the imputation
+##' algorithms.  See defaultImputationParameters() for a starting point. If
+##' NULL, the parameters should have already been assigned (otherwise an error
+##' will occur).
 ##'
 ##' @export
 ##' 
 
 
-balanceAreaHarvested = function(columnNames,
-    newMethodFlag, flagTable = faoswsFlagTable, data){
+balanceAreaHarvested = function(data, imputationParameters = NULL){
     
     ### Data Quality Checks
-    ensureData(data = data, columnNames = columnNames)
-    assignColumnNames(columnNames = columnNames)
-	ensureFlagTable(flagTable = flagTable, data = data, columnNames = columnNames)
-    stopifnot(is(newMethodFlag, "character"))
+    if(!exists("parametersAssigned") || !parametersAssigned){
+        stopifnot(!is.null(imputationParameters))
+        assignParameters(imputationParameters)
+    }
+    if(!ensuredData)
+        ensureData(data = data)
+    if(!ensuredFlagTable)
+	    ensureFlagTable(flagTable = flagTable, data = data)
 
     origName = c(productionValue, productionObservationFlag,
         areaHarvestedValue,

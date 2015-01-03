@@ -42,130 +42,49 @@
 ##' @export
 ##' 
 
-imputeProductionDomain = function(data, columnNames = defaultColumnNames(),
-    flagTable = faoswsFlagTable,
-    removePriorImputation = TRUE, removeConflictValues = TRUE,
-    imputedFlag = "E", imputationFlag = "I", newMethodFlag = "",
-    naFlag = "M", restrictWeights = TRUE, maximumWeights = 0.7,
-    ensembleModelsYield = allDefaultModels(),
-    ensembleModelsProduction = allDefaultModels(),
-    errorType = "loocv", errorFunction = function(x) mean(x^2)){
+imputeProductionDomain = function(data, processingParameters,
+                                  yieldImputationParameters,
+                                  productionImputationParameters){
 
     ### Data Quality Checks
-    ensureData(data = data, columnNames = columnNames)
-    stopifnot(is.logical(
-        c(removePriorImputation, removeConflictValues, restrictWeights)))
-    # Ensure all elements of ensembleModels are of type ensembleModel
-    stopifnot(all(sapply(ensembleModels, is, ensembleModel)))
-    stopifnot(maximumWeights <= 1 & maximumWeights >= 0)
-    stopifnot(errorType %in% c("loocv", "raw"))
-    stopifnot(is(errorFunction, "function"))
-    assignColumnNames(columnNames = columnNames, environment = environment())
-	ensureFlagTable(flagTable = flagTable, data = data,
-        columnNames = columnNames)
+    assignParameters(processingParameters)
+    ensureData(data = data)
+    assignParameters(yieldImputationParameters)
+    ensureData(data = data)
+    ensureFlagTable(flagTable = flagTable, data = data)
+    assignParameters(productionImputationParameters)
+    ensureData(data = data)
+    ensureFlagTable(flagTable = flagTable, data = data)   
         
     cat("Initializing ... \n")
+    assignParameters(processingParameters)
     dataCopy = copy(data)
     setkeyv(x = dataCopy, cols = c(byKey, yearValue))
-    oldColumnNames = c(productionValue,
-                     areaHarvestedValue,
-                     yieldValue,
-                     yearValue,
-                     productionObservationFlag,
-                     areaHarvestedObservationFlag,
-                     yieldObservationFlag,
-                     productionMethodFlag,
-                     areaHarvestedMethodFlag,
-                     yieldMethodFlag,
-                     byKey
-                     )
-    newColumnNames = c("productionValue",
-                     "areaHarvestedValue",
-                     "yieldValue",
-                     "yearValue",
-                     "productionObservationFlag",
-                     "areaHarvestedObservationFlag",
-                     "yieldObservationFlag",
-                     "productionMethodFlag",
-                     "areaHarvestedMethodFlag",
-                     "yieldMethodFlag",
-                     "byKey")
-    # Assign names to newColumnNames so it can be passed to columnNames later
-    names(newColumnNames) = newColumnNames
-    setnames(x = dataCopy,
-             old = oldColumnNames,
-             new = newColumnNames
-             )
-
-    ## These should be documented and checked.  Make sure the types
-    ## are correct
-    dataCopy[, productionValue := as.numeric(productionValue)]
-    dataCopy[, areaHarvestedValue := as.numeric(areaHarvestedValue)]
-    dataCopy[, yieldValue := as.numeric(yieldValue)]
-    dataCopy[, productionObservationFlag :=
-                 as.character(productionObservationFlag)]
-    dataCopy[, areaHarvestedObservationFlag :=
-                 as.character(areaHarvestedObservationFlag)]
-    dataCopy[, yieldObservationFlag :=
-                 as.character(yieldObservationFlag)]
-    dataCopy[, productionMethodFlag :=
-                 as.character(productionMethodFlag)]
-    dataCopy[, areaHarvestedMethodFlag :=
-                 as.character(areaHarvestedMethodFlag)]
-    dataCopy[, yieldMethodFlag :=
-                 as.character(yieldMethodFlag)]
-
-    processProductionDomain(data = dataCopy,
-                            columnNames = newColumnNames,
-                            removePriorImputation =
-                                removePriorImputation,
-                            removeConflictValues =
-                                removeConflictValues,
-                            imputedFlag = imputedFlag,
-                            naFlag = naFlag)
+    processProductionDomain(data = dataCopy)
 
     ## Step two: Impute Yield
     cat("Imputing Yield ...\n")
-    n.missYield = length(which(is.na(dataCopy$yieldValue)))
+    n.missYield = length(which(is.na(dataCopy[[yieldValue]])))
 #     if(!missing(yieldFormula))
 #         yieldFormula =
 #             as.formula(gsub(yearValue, "yearValue",
 #                             gsub(yieldValue, "yieldValue",
 #                                  deparse(yieldFormula))))
     
-    imputeVariable(columnNames = newColumnNames,
-                   imputationFlag = imputationFlag,
-                   newMethodFlag = newMethodFlag,
-                   data = dataCopy,
-                   restrictWeights = restrictWeights,
-                   maximumWeights = maximumWeights,
-                   ensembleModels = ensembleModelsYield,
-                   flagTable = flagTable,
-                   errorType = errorType,
-                   errorFunction = errorFunction,
-#                    yieldFormula = yieldFormula,
-                   variable = "yield")
-    n.missYield2 = length(which(is.na(dataCopy$yieldValue)))
+    assignParameters(yieldImputationParameters)
+    imputeVariable(data = dataCopy)
+    n.missYield2 = length(which(is.na(dataCopy[[yieldValue]])))
     cat("Number of values imputed: ", n.missYield - n.missYield2, "\n")
     cat("Number of values still missing: ", n.missYield2, "\n")
 
     ## step three: Impute production
     cat("Imputing Production ...\n")
-    n.missProduction = length(which(is.na(dataCopy$productionValue)))
+    n.missProduction = length(which(is.na(dataCopy[[productionValue]])))
 
-    imputeVariable(columnNames = newColumnNames,
-                   imputationFlag = imputationFlag,
-                   newMethodFlag = newMethodFlag,
-                   data = dataCopy,
-                   restrictWeights = restrictWeights,
-                   maximumWeights = maximumWeights,
-                   ensembleModels = ensembleModelsProduction,
-                   flagTable = flagTable,
-                   errorType = errorType,
-                   errorFunction = errorFunction,
-                   variable = "production")
+    assignParameters(productionImputationParameters)
+    imputeVariable(data = dataCopy)
 
-    n.missProduction2 = length(which(is.na(dataCopy$productionValue)))
+    n.missProduction2 = length(which(is.na(dataCopy[[productionValue]])))
     cat("Number of values imputed: ",
         n.missProduction - n.missProduction2, "\n")
     cat("Number of values still missing: ", n.missProduction2, "\n")
@@ -173,12 +92,9 @@ imputeProductionDomain = function(data, columnNames = defaultColumnNames(),
     ## step four: balance area harvested
     cat("Imputing Area Harvested ...\n")
     n.missAreaHarvested =
-        length(which(is.na(dataCopy$areaHarvestedValue)))
+        length(which(is.na(dataCopy[[areaHarvestedValue]])))
 
-    balanceAreaHarvested(newColumnNames, 
-                         newMethodFlag = newMethodFlag,
-                         data = dataCopy,
-                         flagTable = flagTable)
+    balanceAreaHarvested(data = dataCopy)
 
     n.missAreaHarvested2 =
         length(which(is.na(dataCopy$areaHarvestedValue)))
@@ -186,11 +102,5 @@ imputeProductionDomain = function(data, columnNames = defaultColumnNames(),
         n.missAreaHarvested - n.missAreaHarvested2, "\n")
     cat("Number of values still missing: ", n.missAreaHarvested2, "\n")
     
-    ## Reset the names
-    setnames(x = dataCopy,
-             old = newColumnNames,
-             new = oldColumnNames
-             )
-
     dataCopy
 }

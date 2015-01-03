@@ -22,26 +22,26 @@
 ##' @export
 ##' 
 
-defaultMixedModel = function(data, value, flag, columnNames, maxdf = 5,
-    weights = NULL, modelFormula){
+defaultMixedModel = function(data, maxdf = 5, weights = NULL, modelFormula,
+                             imputationParameters = NULL){
     
     ### Data Quality Checks
-    ensureData(data = data, columnNames = columnNames)
-    stopifnot(c(value, flag) %in% colnames(data))
-    assignColumnNames(columnNames = columnNames, environment = environment())
-    if(!is.null(weights)){
-        stopifnot(length(weights) == nrow(data))
-        stopifnot(min(weights) >= 0)
+    if(!exists("parametersAssigned") || !parametersAssigned){
+        stopifnot(!is.null(imputationParameters))
+        assignParameters(imputationParameters)
     }
-    if(!missing(modelFormula))
-        stopifnot(is(modelFormula, "formula"))
+    if(!ensuredData)
+        ensureData(data = data)
+    if(!ensuredFlagTable)
+        ensureFlagTable(flagTable = flagTable, data = data)
+    uniqueByKey = data[!is.na(get(imputationValueColumn)), 1, by = byKey]
+    if(nrow(uniqueByKey) <= 1) # Mixed model invalid if only one level:
+        return(rep(NA, nrow(data)))
     
-    setnames(x = data, old = c(value, flag, yearValue),
-             new = c("value", "flag", "year"))
     if(missing(modelFormula)){
         modelFormula =
-            as.formula(paste0("value ~ -1 + (1 + year|",
-            byKey, ")"))
+            as.formula(paste0(imputationValueColumn, " ~ -1 + (1 + ",
+                              yearValue, "|", byKey, ")"))
         ## print(modelFormula)
         model = try(
             lmer(formula = modelFormula, data = data,
@@ -59,7 +59,7 @@ defaultMixedModel = function(data, value, flag, columnNames, maxdf = 5,
 
         benchmarkError = bootMer(model,
             FUN = function(x){
-                predictError(x = x, y = data$value,
+                predictError(x = x, y = data[[imputationValueColumn]],
                              newdata = data)
             }, nsim = 100)
         
@@ -67,8 +67,8 @@ defaultMixedModel = function(data, value, flag, columnNames, maxdf = 5,
             for(i in 2:maxdf){
                 ## cat("proposing df:", i, "\n")
                 newModelFormula =
-                    as.formula(paste0("value ~ -1 + (1 + bs(year, df = ",
-                                      i, ", degree = 1)|", byKey, ")"))
+                    as.formula(paste0(imputationValueColumn, "~ -1 + (1 + bs(",
+                                      yearValue, "df = ",i, ", degree = 1)|", byKey, ")"))
                 ## print(newModelFormula)
                 newModel = try(
                     lmer(formula = newModelFormula,
@@ -81,7 +81,7 @@ defaultMixedModel = function(data, value, flag, columnNames, maxdf = 5,
 
                     newModelError = bootMer(newModel,
                         FUN = function(x){
-                            predictError(x = x, y = data$value,
+                            predictError(x = x, y = data$imputationValue,
                                          newdata = data)
                         }, nsim = 100)
                     ## cat("old:", mean(benchmarkError$t), "\n")
@@ -123,8 +123,5 @@ defaultMixedModel = function(data, value, flag, columnNames, maxdf = 5,
         modelFit = predict(model, newdata = data, allow.new.levels = TRUE)
     }
 
-    setnames(x = data,
-             old = c("value", "flag", "year"),
-             new = c(value, flag, yearValue))
     return(modelFit)
 }

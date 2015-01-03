@@ -23,23 +23,17 @@
 ##' @export
 ##' 
 
-imputeVariable = function(columnNames, imputationFlag = "I",
-    newMethodFlag, data, restrictWeights = TRUE, maximumWeights = 0.7,
-    ensembleModels = allDefaultModels(), flagTable = faoswsFlagTable,
-    errorType = "loocv", errorFunction = function(x) mean(x^2), variable){
+imputeVariable = function(data, imputationParameters){
 
     ### Data Quality Checks
-    ensureData(data = data, columnNames = columnNames)
-    stopifnot(is.logical(restrictWeights))
-    # Ensure all elements of ensembleModel are functions
-    stopifnot(all(sapply(ensembleModels, is, "ensembleModel")))
-    stopifnot(maximumWeights <= 1 & maximumWeights >= .5)
-    stopifnot(errorType %in% c("loocv", "raw"))
-    stopifnot(is(errorFunction, "function"))
-    assignColumnNames(columnNames = columnNames, environment = environment())
-	ensureFlagTable(flagTable = flagTable, data = data,
-        columnNames = columnNames)
-    stopifnot(variable %in% c("production", "yield"))
+    if(!exists("parametersAssigned") || !parametersAssigned){
+        stopifnot(!is.null(imputationParameters))
+        assignParameters(imputationParameters)
+    }
+    if(!ensuredData)
+        ensureData(data = data)
+    if(!ensuredFlagTable)
+        ensureFlagTable(flagTable = flagTable, data = data)
 
     ## By balancing first, if variable == "production"
     if(variable == "production"){
@@ -54,42 +48,36 @@ imputeVariable = function(columnNames, imputationFlag = "I",
         setnames(x = data,
                  old = c(productionValue, productionObservationFlag,
                      productionMethodFlag),
-                 new = c("value", "observationFlag", "methodFlag"))
-        columnNames["productionValue"]           = "value"
+                 new = c("imputationValueColumn", "observationFlag",
+                         "methodFlag"))
+        columnNames["productionValue"]           = "imputationValueColumn"
         columnNames["productionObservationFlag"] = "observationFlag"
         columnNames["productionMethodFlag"]      = "methodFlag"
     } else if(variable == "yield"){
         setnames(x = data,
                  old = c(yieldValue, yieldObservationFlag,
                          yieldMethodFlag),
-                 new = c("value", "observationFlag", "methodFlag"))
-        columnNames["yieldValue"]           = "value"
+                 new = c("imputationValueColumn", "observationFlag",
+                         "methodFlag"))
+        columnNames["yieldValue"]           = "imputationValueColumn"
         columnNames["yieldObservationFlag"] = "observationFlag"
         columnNames["yieldMethodFlag"]      = "methodFlag"
     }
 
-    missingIndex = is.na(data[, value])
-    data[, value :=
-         ensembleImpute(data = data, columnNames = columnNames, 
-                        value = "value",
-                        flag = "observationFlag",
-                        ensembleModels = ensembleModels,
-                        restrictWeights = restrictWeights,
-                        maximumWeights = maximumWeights,
-                        plot = FALSE, errorType = errorType,
-                        errorFunction = errorFunction)]
-    data[missingIndex & !is.na(value),
+    missingIndex = is.na(data[, imputationValueColumn])
+    data[, imputationValue := ensembleImpute(data = data)]
+    data[missingIndex & !is.na(imputationValueColumn),
          c("observationFlag", "methodFlag") :=
          list(imputationFlag, newMethodFlag)]
     
     if(variable == "production"){
         setnames(x = data,
-                 old = c("value", "observationFlag", "methodFlag"),
+                 old = c("imputationValueColumn", "observationFlag", "methodFlag"),
                  new = c(productionValue, productionObservationFlag,
                      productionMethodFlag))
     } else if(variable == "yield"){
         setnames(x = data,
-                 old = c("value", "observationFlag", "methodFlag"),
+                 old = c("imputationValueColumn", "observationFlag", "methodFlag"),
                  new = c(yieldValue, yieldObservationFlag, yieldMethodFlag))
     }
 }

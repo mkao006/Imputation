@@ -13,14 +13,15 @@
 ##' @export
 ##' 
 
-processProductionDomain = function(data, columnNames,
-    removePriorImputation = TRUE, removeConflictValues = TRUE,
-    imputedFlag = "E",  naFlag = "M"){
+processProductionDomain = function(data, processingParameters){
     
     ### Data Quality Checks
-    ensureData(data = data, columnNames = columnNames)
-    stopifnot(is.logical(c(removePriorImputation, removeConflictValues)))
-    assignColumnNames(columnNames = columnNames, environment = environment())
+    if(!exists("parametersAssigned") || !parametersAssigned){
+        stopifnot(!is.null(imputationParameters))
+        assignParameters(imputationParameters)
+    }
+    if(!ensuredData)
+        ensureData(data = data)
         
     if(removePriorImputation){
         removeImputation(data = data,

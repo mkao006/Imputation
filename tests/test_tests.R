@@ -1,67 +1,48 @@
 context("Testing functions")
 library(faoswsFlag)
 
-# Define some simple data objects:
-columnNames = c(productionValue              = "productionValue",
-                productionObservationFlag    = "productionObservationFlag",
-                productionMethodFlag         = "productionMethodFlag",
-                areaHarvestedValue           = "areaHarvestedValue",
-                areaHarvestedObservationFlag = "areaHarvestedObservationFlag",
-                areaHarvestedMethodFlag      = "areaHarvestedMethodFlag",
-                yieldValue                   = "yieldValue",
-                yieldObservationFlag         = "yieldObservationFlag",
-                yieldMethodFlag              = "yieldMethodFlag",
-                yearValue                    = "yearValue",
-                byKey                        = "byKey")
-data = data.table(productionValue              = 1:10,
-                  productionObservationFlag    =
-                      sample(faoswsFlagTable[,1], size = 10, replace = TRUE),
-                  productionMethodFlag         = 
-                      sample(faoswsFlagTable[,1], size = 10, replace = TRUE),
-                  areaHarvestedValue           = 1:10,
-                  areaHarvestedObservationFlag = 
-                      sample(faoswsFlagTable[,1], size = 10, replace = TRUE),
-                  areaHarvestedMethodFlag      = 
-                      sample(faoswsFlagTable[,1], size = 10, replace = TRUE),
-                  yieldValue                   = 1:10,
-                  yieldObservationFlag         = 
-                      sample(faoswsFlagTable[,1], size = 10, replace = TRUE),
-                  yieldMethodFlag              = 
-                      sample(faoswsFlagTable[,1], size = 10, replace = TRUE),
-                  yearValue                    = 2000+1:10,
-                  byKey                        = rep(1,10))
+params = defaultImputationParameters()
+params$flagTable = data.frame(
+    flagObservationStatus = c("", "T", "E", "I", "M", "*", "F"),
+    flagObservationWeights = c(1, .8, .75, .5, .4, .3, 0),
+    stringsAsFactors = FALSE)
+assignParameters(params)
 
-### ensureColumnNames()
-test_that("ensureColumnNames works", {
-    expect_that(ensureColumnNames(columnNames = columnNames, data = data),
-        is_a("NULL"))
+### ensureData()
+test_that("ensureData works", {
+    # ensureData() should run without any problems. However, nothing is
+    # returned, printed, etc. so just ensure that it takes less than a minute.
+    expect_that(ensureData(okrapd), takes_less_than(amount = 60))
 })
 
-test_that("ensureColumnNames fails when expected", {
+test_that("ensureData fails when expected", {
+    data = copy(okrapd)
     setnames(data, old = "productionValue", new = "prodValue")
-    expect_that(ensureColumnNames(columnNames = columnNames, data = data),
+    expect_that(ensureData(data = data),
         throws_error("The following columns do not exist in data"))
-    columnNames[1] = "prodValue"
-    expect_that(ensureColumnNames(columnNames = columnNames, data = data),
-        is_a("NULL"))
-    names(columnNames)[1] = "prodValue"
-    expect_that(ensureColumnNames(columnNames = columnNames, data = data),
-        throws_error("The following elements do not exist in columnNames"))
-    names(columnNames)[1] = "productionValue"
-    setnames(data, old = "prodValue", new = "productionValue")
-    columnNames[1] = "productionValue"
+    reassignGlobalVariable("productionValue", "prodValue")
+    # Now it should work again
+    expect_that(ensureData(data = data), takes_less_than(amount = 60))
+    reassignGlobalVariable("productionValue", "productionValue")
 })
 
 ### ensureFlagTable()
 test_that("ensureFlagTable works when expected", {
-    expect_that(ensureFlagTable(flagTable = faoswsFlagTable,
-        data = data, columnNames = columnNames),
+    data = copy(okrapd)
+    expect_that(ensureFlagTable(flagTable = flagTable,
+        data = data),
         is_a("NULL"))
 })
 
 test_that("ensureFlagTable fails when expected", {
-    data[10,productionObservationFlag:="Invalid Value"]
-    expect_that(ensureFlagTable(flagTable = faoswsFlagTable,
-        data = data, columnNames = columnNames),
+    data = copy(okrapd)
+    data[[productionObservationFlag]][10] = "Invalid Value"
+    expect_that(ensureFlagTable(flagTable = flagTable,
+        data = data),
         throws_error("Some observation flags are not in the flag table!"))
+})
+
+test_that("Default parameters pass checks", {
+    ensureImputationParameters(defaultImputationParameters())
+    ensureProcessingParameters(defaultProcessingParameters())
 })

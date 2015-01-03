@@ -17,12 +17,15 @@
 ##'
 ##' @export
 
-removeZeroConflict = function(columnNames, naFlag = "M", data){
+removeZeroConflict = function(data, processingParameters = NULL){
     
     ### Data Quality Checks
-    ensureData(data = data, columnNames = columnNames)
-    ensureColumnNames(columnNames = columnNames, data = data)
-    assignColumnNames(columnNames = columnNames, environment = environment())
+    if(!exists("parametersAssigned") || !parametersAssigned){
+        stopifnot(!is.null(processingParameters))
+        assignParameters(processingParameters)
+    }
+    if(!ensuredData)
+        ensureData(data = data)
     
     setnames(x = data,
              old = c(productionValue,

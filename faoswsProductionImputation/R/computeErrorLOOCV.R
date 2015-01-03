@@ -18,36 +18,40 @@
 ##' 
 ##' @export
 
-computeErrorLOOCV = function(data, columnNames, value, flag, model, cvGroup){
+computeErrorLOOCV = function(data, model, cvGroup,
+                             imputationParameters = NULL){
 
     ### Data Quality Checks
-    ensureData(data = data, columnNames = columnNames)
-    stopifnot(c(value, flag) %in% colnames(data))
+    if(!exists("parametersAssigned") || !parametersAssigned){
+        stopifnot(!is.null(imputationParameters))
+        assignParameters(imputationParameters)
+    }
+    if(!ensuredData)
+        ensureData(data = data)
+    if(!ensuredFlagTable)
+        ensureFlagTable(flagTable = flagTable, data = data)
     stopifnot(is(model, "ensembleModel"))
     stopifnot(is.numeric(cvGroup))
     stopifnot(length(cvGroup)==nrow(data))
-    assignColumnNames(columnNames = columnNames)
+    stopifnot(length(unique(cvGroup)) > 1)
 
-    setnames(data, old = c(value, flag), new = c("value", "flag"))
     error = rep(0, nrow(data))
     for(i in 1:length(unique(cvGroup))){
         #Copy x and remove the ith observation to fit the model
         dataTemporary = copy(data)
-        dataTemporary[cvGroup == i, value := NA]
-        columnNamesTemporary = columnNames
-        columnNamesTemporary[columnNames == value] = "value"
-        columnNamesTemporary[columnNames == flag] = "flag"        
+        setnames(dataTemporary, old = imputationValueColumn,
+                 new = "imputationValueColumn")
+        dataTemporary[cvGroup == i, imputationValueColumn := NA]
+        setnames(dataTemporary, old = "imputationValueColumn",
+                 new = imputationValueColumn)
         if(model@level == "commodity"){
-            fitTemporary = model@model(data = dataTemporary, value = "value",
-                flag = "flag", columnNames = columnNamesTemporary)
+            fitTemporary = model@model(data = dataTemporary)
         } else if(model@level == "countryCommodity"){
             fitTemporary = extendSimpleModel(data = dataTemporary,
-                model = model@model, value = "value", flag = "flag",
-                columnNames = columnNamesTemporary)
+                model = model@model)
         }
         filter = !is.na(cvGroup) & cvGroup == i
-        error[filter] = (data[, value] - fitTemporary)[filter]
+        error[filter] = (data[[imputationValueColumn]] - fitTemporary)[filter]
     }
-    setnames(data, old = c("value", "flag"), new = c(value, flag))
     return(error)
 }

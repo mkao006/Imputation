@@ -23,14 +23,17 @@
 ##' @export
 ##' 
 
-removeNoInfo = function (data, value, flag, byKey,
+removeNoInfo = function (data, value, flag, processingParameters = NULL,
     environment = parent.frame(1)){
     
     ### Data Quality Checks
-    stopifnot(is(data, "data.table"))
-    stopifnot(value %in% colnames(data))
-    stopifnot(flag %in% colnames(data))
-    stopifnot(byKey %in% colnames(data))
+    if(!exists("parametersAssigned") || !parametersAssigned){
+        stopifnot(!is.null(processingParameters))
+        assignParameters(processingParameters)
+    }
+    if(!ensuredData)
+        ensureData(data = data)
+    stopifnot(c(value, flag) %in% colnames(data))
     stopifnot(is(environment, "environment"))
     
     info = data[, rep(containInfo(get(value), get(flag)),

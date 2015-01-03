@@ -3,9 +3,9 @@
 ##' This function plots each of the individual models in the ensemble as well
 ##' as the initial data and the final ensemble.  This function is not meant to
 ##' be called directly by the user but instead is a helper function called by
-##' ensembleImpute (if the argument plot = TRUE).  This function differs from
-##' plotEnsemble in that it uses the original plotting code (base graphics
-##' instead of ggplot2).
+##' ensembleImpute (if the argument plotImputation = TRUE).  This function
+##' differs from plotEnsemble in that it uses the original plotting code (base
+##' graphics instead of ggplot2).
 ##' 
 ##' @param data The data.table containing the data being imputed.
 ##' @param modelFits A list of length equal to the number of models.  Each
@@ -25,12 +25,11 @@
 ##' @return No value is returned, but a plot is generated.
 ##' 
 
-plotEnsembleOld = function(data, modelFits, modelWeights, ensemble, value,
-                           byKey){
+plotEnsembleOld = function(data, modelFits, modelWeights, ensemble){
     modelNames = names(modelFits)
     nModels = length(modelNames)
     # Use par(mfrow=...) to plot all ensemble imputations
-    plotCount = data[, anyNA(get(value)), by = byKey]
+    plotCount = data[, anyNA(get(imputationValueColumn)), by = byKey]
     plotCount = sum(plotCount$V1)
     if(plotCount == 0){
         warning("No values imputed so no plots generated!")
@@ -43,7 +42,7 @@ plotEnsembleOld = function(data, modelFits, modelWeights, ensemble, value,
         for(aCode in unique(data[[byKey]])){
             filter = data[[byKey]] == aCode
             # Don't plot this value of byKey if no imputation was done
-            if(!anyNA(data[[value]][filter]))
+            if(!anyNA(data[[imputationValueColumn]][filter]))
                 next
             plotMax = sapply(modelFits, function(x){
                 max(x[filter])

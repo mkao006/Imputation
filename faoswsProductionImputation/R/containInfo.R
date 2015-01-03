@@ -4,7 +4,8 @@
 ##' marked as no information.
 ##'
 ##' @param value A numeric vector to be checked
-##' @param flag The observation flag corresponding to the value.
+##' @param flag The character vector representing the observation flag
+##' corresponding to the value.
 ##' @param naFlag The observation flag which corresponds to missing
 ##' value.
 ##'

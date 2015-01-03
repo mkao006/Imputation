@@ -1,82 +1,51 @@
 ##' Function to compute the weights of the ensemble models
 ##'
 ##' @param data A data.table containing the data.
-##' @param columnNames See the same argument at ?imputeProductionDomain.
-##' @param value The column name of data which contains the values to be
-##' imputed.
-##' @param flag The column name of data which contains the flag describing the
-##' status of value.
-##' @param ensembleModels A list of the models fit to data.  Each element
-##' should be of class ensembleModel.
 ##' @param cvGroup A vector of the same length as nrow(data).  Entries of the
 ##' vector should be integers from 1 to the number of cross-validation groups
 ##' (typically 10).  This should be randomly assigned, and is usually created
 ##' by ensembleImpute.
 ##' @param fits The fitted values from the models.
-##' @param restrictWeights Whether a maximum weight restriction should
-##' be imposed.
-##' @param maximumWeights The maximum weight to be imposed, must be
-##' between [0.5, 1].  Note that this is enforced when computing the weight
-##' vector (average performance for each model).  Once the weight vector is
-##' converted to a weight matrix, certain models may not be allowed to
-##' extrapolate.  Since a smaller subset of models is valid at that point, it's
-##' possible that a weight for one of these models may exceed the maximum
-##' weight.
-##' @param errorType Specifies what type of error to compute.  Currently, "raw"
-##' and "loocv" are implemented.  If "raw", then error is computed as the
-##' difference between the model and observed data.  "loocv" performs
-##' leave-one-out cross-validation to determine the predictive error of the
-##' model.  "loocv" is more rigorous but much slower.
-##' @param errorFunction Function taking a vector of errors and returning a
-##' positive value.  Smaller values should indicate a better fit to the data.
-##' The default is the mean-squared error (so f(x)=mean(x^2)), but other
-##' functions (such as the median absolute deviation, or f(x)=median(abs(x)))
-##' can be used.  Note: NA values will be removed prior to calling this
-##' function.  Also, the errors are all positive, so the median absolute
-##' deviation can also be computed with f(x)=median(x).
+##' @param imputationParameters A list of the parameters for the imputation
+##' algorithms.  See defaultImputationParameters() for a starting point.
 ##' 
 ##' @export
 ##' 
 
-computeEnsembleWeight = function(data, columnNames, value, flag,
-    ensembleModels, cvGroup, fits, restrictWeights = TRUE,
-    maximumWeights = 0.7, errorType = "raw",
-    errorFunction = function(x) mean(x^2)){
+computeEnsembleWeight = function(data, cvGroup, fits,
+                                 imputationParameters = NULL){
     
-    ### Data quality checks
-    ensureData(data = data, columnNames = columnNames)
+    ### Data Quality Checks
+    if(!exists("parametersAssigned") || !parametersAssigned){
+        stopifnot(!is.null(imputationParameters))
+        assignParameters(imputationParameters)
+    }
+    if(!ensuredData)
+        ensureData(data = data)
+    if(!ensuredFlagTable)
+        ensureFlagTable(flagTable = flagTable, data = data)
     if(!all(lapply(fits, length) == nrow(data)))
         stop("All elements of fits must have the same length as nrow(x)!")
-    if(!is.null(ensembleModels))
-        stopifnot(all(names(fits) == names(ensembleModels)))
+    stopifnot(all(names(fits) == names(ensembleModels)))
     if(is.null(names(fits)))
         names(fits) = paste("Model", 1:length(fits), sep="_")
-    stopifnot(errorType %in% c("raw", "loocv"))
-    stopifnot(maximumWeights <= 1 & maximumWeights >= 0.5)
-    if(errorType=="loocv" & is.null(ensembleModel))
-        stop("ensembleModels must be provided if errorType='loocv'")
-    assignColumnNames(columnNames = columnNames)
     # Ensure all time series have at least one valid observation
     # Using yieldValue directly in next line causes an error if yieldValue is a
     # column name of data, so create variable y.
-    y = yieldValue
+    y = ifelse(variable == "yield", yieldValue, productionValue)
     counts = data[, sum(!is.na(get(y))), by = byKey]
     if(min(counts[, V1]) == 0)
         stop("Some countries have no data.  Have you ran removeNoInfo?")
-    # Verify errorFunction
-    stopifnot(is(errorFunction, "function"))
-    stopifnot(length(errorFunction(1:10))==1)
-    stopifnot(is.numeric(errorFunction(1:10)))
     
     ### Compute errors from each model
     error = lapply(1:length(fits),
         FUN = function(i){
-            out = computeErrorRate(data = data, columnNames = columnNames,
-                value = value, flag = flag, model = ensembleModels[[i]],
-                cvGroup = cvGroup, fit = fits[[i]], errorType = errorType)
+            out = computeErrorRate(data = data, cvGroup = cvGroup,
+                                   fit = fits[[i]])
             out = data.table( model = names(fits)[i],
                               byKey = data[[byKey]],
-                              missingValue = is.na(data[[value]]),
+                              missingValue =
+                                  is.na(data[[imputationValueColumn]]),
                               year = data[[yearValue]],
                               error = out,
                               fit = fits[[i]])
@@ -87,11 +56,14 @@ computeEnsembleWeight = function(data, columnNames, value, flag,
     # around this, assign that NA to the highest error for that observation.
     # In other words, assumme the model that failed did as poor as possible.
     error[, error := ifelse(is.na(error), max(error, na.rm = TRUE), error),
-          by = list(byKey, year)]
+          by = list(byKey, yearValue)]
     if(error[!(missingValue), max(abs(error))] == Inf)
         stop("Infinite error observed!  This may have been created because of
         no valid models for some time/country.  Is defaultMean() included
-        in the ensembleModels?  That may fix this error.")
+        in the ensembleModels?  That may fix this error.  Or, you may get this
+        error if errorType == 'loocv' and a time series has only one valid
+        value (in which case errors are not possible to compute).  Consider
+        including a model like defaultMixedModel.")
     # If the fit failed, we can't use this model.  Assign error of Inf.
     error[, modelFailed := anyNA(fit), by = list(byKey, model)]
     error[(modelFailed), error := NA]
@@ -143,7 +115,6 @@ computeEnsembleWeight = function(data, columnNames, value, flag,
     }
     
     ### Convert weights to a matrix
-    weights = getWeightMatrix( data = data, value = value, byKey = byKey,
-        yearValue = yearValue, w = weights, ensembleModels = ensembleModels )
+    weights = getWeightMatrix(data = data, w = weights, imputationParameters)
     weights
 }

@@ -23,8 +23,7 @@
 ##' @return No value is returned, but a plot is generated.
 ##' 
 
-plotEnsemble = function(data, modelFits, modelWeights, ensemble, value, byKey,
-                        yearValue){
+plotEnsemble = function(data, modelFits, modelWeights, ensemble){
     
     ### Data Quality Checks
     stopifnot(is(data, "data.table"))
@@ -36,16 +35,15 @@ plotEnsemble = function(data, modelFits, modelWeights, ensemble, value, byKey,
     stopifnot(names(modelWeights) %in% names(modelFits))
     stopifnot(names(modelFits) %in% names(modelWeights))
     stopifnot(nrow(data) == length(ensemble))
-    stopifnot(c(value, byKey, yearValue) %in% colnames(data))
     
     ### Set up toPlot data.table (holds data for ggplot call)
-    plotKeys = data[, anyNA(get(value)), by = byKey]
+    plotKeys = data[, anyNA(get(imputationValueColumn)), by = byKey]
     plotKeys = plotKeys[(V1), get(byKey)]
     filter = data[, get(byKey) %in% plotKeys]
     toPlot = data[filter, ]
     toPlot$ensemble = ensemble[filter]
-    setnames(toPlot, old = c(yearValue, byKey, value),
-             new = c("year", "byKey", "value"))
+    setnames(toPlot, old = c(yearValue, byKey, imputationValueColumn),
+             new = c("year", "byKey", "imputationValueColumn"))
     
     ### Set up toPlotModels data.table
     toPlotModels = lapply(modelFits, function(x) x[filter])
@@ -68,7 +66,7 @@ plotEnsemble = function(data, modelFits, modelWeights, ensemble, value, byKey,
     toPlotWeights$byKey = toPlot$byKey
     toPlotWeights = data.table:::melt.data.table(data = toPlotWeights,
                     id.vars = c("year", "byKey"))
-    setnames(toPlotWeights, "value", "modelWeight")
+    setnames(toPlotWeights, "imputationValueColumn", "modelWeight")
     toPlotModels = merge(toPlotModels, toPlotWeights,
                          by = c("year", "byKey", "variable"))
     
@@ -97,18 +95,21 @@ plotEnsemble = function(data, modelFits, modelWeights, ensemble, value, byKey,
                                           shape = "none", fill = variable)) +
         ggplot2::geom_point(data = toPlot,
             ggplot2::aes(x = year, y = ensemble,
-                         color = ifelse(is.na(value), "Ensemble", "Data"),
-                         shape = ifelse(is.na(value), "Ensemble", "Data"),
-                         fill = ifelse(is.na(value), "Ensemble", "Data"))) +
+                         color = ifelse(is.na(imputationValueColumn),
+                                        "Ensemble", "Data"),
+                         shape = ifelse(is.na(imputationValueColumn),
+                                        "Ensemble", "Data"),
+                         fill = ifelse(is.na(imputationValueColumn) +
+                                        "Ensemble", "Data"))) +
         ggplot2::facet_wrap( ~ byKey, scale = "free") +
         ggplot2::scale_size_continuous(range = c(.5, 2)) +
-        ggplot2::scale_color_manual(
+        ggplot2::scale_color_manual( 
             values = c("black", "black", plotColors),
             limits = c("Data", "Ensemble", modelNames)) +
         ggplot2::scale_fill_manual(
             values = c(NA, NA, plotColors),
             limits = c("Data", "Ensemble", modelNames)) +
-        ggplot2::labs(x = "Year", y = value, size = "Model Weight",
+        ggplot2::labs(x = "Year", y = imputationValueColumn, size = "Model Weight",
                       color = "", shape = "", fill = "") +
         ggplot2::scale_shape_manual(values = c(16, 4, rep(NA, nModels)),
                                     limits=c("Data", "Ensemble", modelNames)) +

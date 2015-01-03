@@ -9,8 +9,8 @@
 ##' commodity ("commodity" level) at once.
 ##'
 ##' @param model The function defining how the model is fit to the data.  The
-##' function should take arguments data, value, flag, and columnNames (see
-##' extendSimpleModel).
+##' function should take two arguments: data and imputationParameters = NULL
+##' (see extendSimpleModel).
 ##' @param extrapolationRange How many time steps outside of the data is this
 ##' model valid for?  Should be a positive integer (or Inf).
 ##' @param level The level at which this model is applied.  Currently, must be
@@ -31,7 +31,7 @@ checkEnsembleModel = function(object){
     }
     modelArguments = names(as.list(args(object@model)))
     if(object@level == "commodity"){
-        requiredColumns = c("data", "value", "flag", "columnNames")
+        requiredColumns = c("data", "imputationParameters")
         missing = requiredColumns[!requiredColumns %in% modelArguments]
         if(length(missing) > 1){
             msg = paste("model missing required arguments:",

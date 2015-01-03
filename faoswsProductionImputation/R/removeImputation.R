@@ -18,11 +18,15 @@
 ##'
 ##' @export
 
-removeImputation = function(data, value, flag, imputedFlag = "T",
-    naFlag = "M"){
+removeImputation = function(data, value, flag, processingParameters = NULL){
     
     ### Data Quality Checks
-    stopifnot(is(data, "data.table"))
+    if(!exists("parametersAssigned") || !parametersAssigned){
+        stopifnot(!is.null(processingParameters))
+        assignParameters(processingParameters)
+    }
+    if(!ensuredData)
+        ensureData(data = data)
     stopifnot(c(value, flag) %in% colnames(data))
     
     imputedIndex = which(data[[flag]] %in% imputedFlag)

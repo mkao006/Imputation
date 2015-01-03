@@ -7,13 +7,10 @@
 ##' @param data The data.table object containing the data.
 ##' @param model The model to be applied to each individual time series.  
 ##' Typically, this will be a function such as one from allDefaultModels().
-##' @param value Which variable should be imputed?  This should be one of the
-##' column names of data, typically corresponding to productionValue,
-##' yieldValue, or areaHarvestedValue.
-##' @param flag Column name (of data) of the flag variable corresponding to the
-##' value argument, i.e. "productionObservationFlag", "yieldObservationFlag",
-##' or "areaHarvestedObservationFlag".
-##' @param columnNames See the same argument at ?imputeProductionDomain.
+##' @param imputationParameters A list of the parameters for the imputation
+##' algorithms.  See defaultImputationParameters() for a starting point. If
+##' NULL, the parameters should have already been assigned (otherwise an error
+##' will occur).
 ##' 
 ##' @return Returns a vector of the estimated/imputed values.  If a value
 ##' existed in the original data, then an NA is returned in that location.
@@ -21,23 +18,27 @@
 ##' @export
 ##' 
 
-extendSimpleModel = function(data, model, value, flag, columnNames){
+extendSimpleModel = function(data, model, imputationParameters = NULL){
     
-    ### Data quality checks
-    ensureData(data = data, columnNames = columnNames)
-    stopifnot(is(model, "function"))
-    stopifnot(c(value, flag) %in% colnames(data))
-    assignColumnNames(columnNames = columnNames, environment = environment())
+    ### Data Quality Checks
+    if(!exists("parametersAssigned") || !parametersAssigned){
+        stopifnot(!is.null(imputationParameters))
+        assignParameters(imputationParameters)
+    }
+    if(!ensuredData)
+        ensureData(data = data)
+    if(!ensuredFlagTable)
+        ensureFlagTable(flagTable = flagTable, data = data)
     
-    setnames(data, old = value, new = "value")
-    missingIndex = is.na(data[, value])
+    setnames(data, old = imputationValueColumn, new = "imputationValueColumn")
+    missingIndex = is.na(data[, imputationValueColumn])
     modelFit = data[,
         # Apply the model if there is a missing value.  Else, return the data
-        if(anyNA(value)){
-            model(value)
+        if(anyNA(imputationValueColumn)){
+            model(imputationValueColumn)
         } else {
-            value
+            imputationValueColumn
         }, by = byKey]
-    setnames(data, old = "value", new = value)
+    setnames(data, old = "imputationValueColumn", new = imputationValueColumn)
     return(modelFit$V1)
 }

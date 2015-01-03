@@ -34,30 +34,35 @@
 ##' @export
 ##' 
 
-getWeightMatrix = function(data, value, byKey, yearValue, w,
-    ensembleModels){
+getWeightMatrix = function(data, w, ensembleModels,
+                           imputationParameters = NULL){
 
-    ### Data quality checks
-    stopifnot(is(data, "data.table"))
+    ### Data Quality Checks
+    if(!exists("parametersAssigned") || !parametersAssigned){
+        stopifnot(!is.null(imputationParameters))
+        assignParameters(imputationParameters)
+    }
+    if(!ensuredData)
+        ensureData(data = data)
+    if(!ensuredFlagTable)
+        ensureFlagTable(flagTable = flagTable, data = data)
     stopifnot(is(w, "data.table"))
-    stopifnot(c(value, byKey, yearValue) %in% colnames(data))
-    stopifnot(is(ensembleModels, "list"))
-    stopifnot(all(sapply(ensembleModels, is) == "ensembleModel"))
     # w should have one row for each model at each byKey level
     stopifnot(nrow(w) == length(unique(data[[byKey]])) *
                   length(ensembleModels))
     
     ### Run the function:
-    setnames(data, old = c(value, byKey, yearValue),
-             new = c("value", "byKey", "yearValue"))
+    setnames(data, old = c(imputationValueColumn, byKey, yearValue),
+             new = c("imputationValueColumn", "byKey", "yearValue"))
     data[, extrapolationRange := 
-             getObservedExtrapolationRange(value), by = byKey]
-    weightMatrix = merge(data[,.(byKey, value, yearValue, extrapolationRange)],
+             getObservedExtrapolationRange(imputationValueColumn), by = byKey]
+    weightMatrix = merge(data[,.(byKey, imputationValueColumn, yearValue,
+                               extrapolationRange)],
                           w, by = "byKey", all = TRUE, allow.cartesian = TRUE)
     # Set data back to it's original state
     data[, extrapolationRange := NULL]
-    setnames(data, old = c("value", "byKey", "yearValue"),
-             new = c(value, byKey, yearValue))
+    setnames(data, old = c("imputationValueColumn", "byKey", "yearValue"),
+             new = c(imputationValueColumn, byKey, yearValue))
     # Set weights to 0 that are outside of extrapolationRange
     range = sapply(ensembleModels, function(model){
         model@extrapolationRange
@@ -69,6 +74,6 @@ getWeightMatrix = function(data, value, byKey, yearValue, w,
     weightMatrix = dcast.data.table(weightMatrix, byKey + yearValue ~ model,
                                      value.var = "weight")
     weightMatrix[, c("byKey", "yearValue") := list(NULL, NULL)]
-    weightMatrix[!is.na(data[[value]])] = NA
+    weightMatrix[!is.na(data[[imputationValueColumn]])] = NA
     return(weightMatrix)
 }
