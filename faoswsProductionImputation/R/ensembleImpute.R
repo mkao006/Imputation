@@ -43,7 +43,6 @@ ensembleImpute = function(data, imputationParameters = NULL){
         cat("Flags with missingFlag value: ", sum(flagMissingIndex), "\n")
         stop("Different missing values from flags/values!  Maybe call remove0M?")
     }
-    assignColumnNames(columnNames = columnNames)
     if(is.null(names(ensembleModels)))
         names(ensembleModels) = paste("Model", 1:length(ensembleModels),
                                       sep = "_")

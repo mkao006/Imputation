@@ -65,11 +65,15 @@ assignParameters = function(parameterList, environment = .GlobalEnv){
                 parameterList$productionValue
             parameterList$imputationFlagColumn = 
                 parameterList$productionObservationFlag
+            parameterList$imputationMethodColumn = 
+                parameterList$productionMethodFlag
         } else if(parameterList$variable == "yield"){
             parameterList$imputationValueColumn = 
                 parameterList$yieldValue
             parameterList$imputationFlagColumn = 
                 parameterList$yieldObservationFlag
+            parameterList$imputationMethodColumn = 
+                parameterList$yieldMethodFlag
         } else {
             stop("No implementation for current value of variable!")
         }

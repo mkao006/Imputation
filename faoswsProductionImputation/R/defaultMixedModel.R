@@ -68,7 +68,8 @@ defaultMixedModel = function(data, maxdf = 5, weights = NULL, modelFormula,
                 ## cat("proposing df:", i, "\n")
                 newModelFormula =
                     as.formula(paste0(imputationValueColumn, "~ -1 + (1 + bs(",
-                                      yearValue, "df = ",i, ", degree = 1)|", byKey, ")"))
+                                      yearValue, ", df = ", i,
+                                      ", degree = 1)|", byKey, ")"))
                 ## print(newModelFormula)
                 newModel = try(
                     lmer(formula = newModelFormula,

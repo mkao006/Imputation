@@ -29,11 +29,7 @@ computeEnsembleWeight = function(data, cvGroup, fits,
     stopifnot(all(names(fits) == names(ensembleModels)))
     if(is.null(names(fits)))
         names(fits) = paste("Model", 1:length(fits), sep="_")
-    # Ensure all time series have at least one valid observation
-    # Using yieldValue directly in next line causes an error if yieldValue is a
-    # column name of data, so create variable y.
-    y = ifelse(variable == "yield", yieldValue, productionValue)
-    counts = data[, sum(!is.na(get(y))), by = byKey]
+    counts = data[, sum(!is.na(get(imputationValueColumn))), by = byKey]
     if(min(counts[, V1]) == 0)
         stop("Some countries have no data.  Have you ran removeNoInfo?")
     
@@ -41,7 +37,8 @@ computeEnsembleWeight = function(data, cvGroup, fits,
     error = lapply(1:length(fits),
         FUN = function(i){
             out = computeErrorRate(data = data, cvGroup = cvGroup,
-                                   fit = fits[[i]])
+                                   fit = fits[[i]],
+                                   model = ensembleModels[[i]])
             out = data.table( model = names(fits)[i],
                               byKey = data[[byKey]],
                               missingValue =
@@ -56,7 +53,7 @@ computeEnsembleWeight = function(data, cvGroup, fits,
     # around this, assign that NA to the highest error for that observation.
     # In other words, assumme the model that failed did as poor as possible.
     error[, error := ifelse(is.na(error), max(error, na.rm = TRUE), error),
-          by = list(byKey, yearValue)]
+          by = c("byKey", "year")]
     if(error[!(missingValue), max(abs(error))] == Inf)
         stop("Infinite error observed!  This may have been created because of
         no valid models for some time/country.  Is defaultMean() included
@@ -115,6 +112,6 @@ computeEnsembleWeight = function(data, cvGroup, fits,
     }
     
     ### Convert weights to a matrix
-    weights = getWeightMatrix(data = data, w = weights, imputationParameters)
+    weights = getWeightMatrix(data = data, w = weights)
     weights
 }

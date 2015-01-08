@@ -16,47 +16,36 @@
 processProductionDomain = function(data, processingParameters){
     
     ### Data Quality Checks
-    if(!exists("parametersAssigned") || !parametersAssigned){
-        stopifnot(!is.null(imputationParameters))
-        assignParameters(imputationParameters)
-    }
+    stopifnot(!is.null(processingParameters))
+    assignParameters(processingParameters)
     if(!ensuredData)
         ensureData(data = data)
         
     if(removePriorImputation){
         removeImputation(data = data,
                          value = areaHarvestedValue,
-                         flag = areaHarvestedObservationFlag,
-                         imputedFlag = imputedFlag,
-                         naFlag = naFlag)
+                         flag = areaHarvestedObservationFlag)
         
         removeImputation(data = data,
                          value = productionValue,
-                         flag = productionObservationFlag,
-                         imputedFlag = imputedFlag,
-                         naFlag = naFlag)
+                         flag = productionObservationFlag)
 
         removeImputation(data = data,
                          value = yieldValue,
-                         flag = yieldObservationFlag,
-                         imputedFlag = imputedFlag,
-                         naFlag = naFlag)
+                         flag = yieldObservationFlag)
     }
 
     remove0M(data = data,
              value = areaHarvestedValue,
-             flag = areaHarvestedObservationFlag,
-             naFlag = naFlag)
+             flag = areaHarvestedObservationFlag)
     
     remove0M(data = data,
              value = productionValue,
-             flag = productionObservationFlag,
-             naFlag = naFlag)
+             flag = productionObservationFlag)
     
     remove0M(data = data,
              value = yieldValue,
-             flag = yieldObservationFlag,
-             naFlag = naFlag)        
+             flag = yieldObservationFlag)
 
     if(removeConflictValues){
         removeZeroConflict(columnNames, data = data)
@@ -64,8 +53,7 @@ processProductionDomain = function(data, processingParameters){
 
     removeNoInfo(data = data,
                  value = yieldValue,
-                 flag = yieldObservationFlag,
-                 byKey = byKey)
+                 flag = yieldObservationFlag)
     # removeNoInfo assigns the new data.table to the variable "data" in the
     # environment of this function.  Thus, to ensure "data" is returned to the
     # caller of this function, assign the data.table to the calling environment.

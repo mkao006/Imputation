@@ -34,8 +34,7 @@
 ##' @export
 ##' 
 
-getWeightMatrix = function(data, w, ensembleModels,
-                           imputationParameters = NULL){
+getWeightMatrix = function(data, w, imputationParameters = NULL){
 
     ### Data Quality Checks
     if(!exists("parametersAssigned") || !parametersAssigned){

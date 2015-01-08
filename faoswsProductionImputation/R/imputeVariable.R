@@ -26,58 +26,34 @@
 imputeVariable = function(data, imputationParameters){
 
     ### Data Quality Checks
-    if(!exists("parametersAssigned") || !parametersAssigned){
-        stopifnot(!is.null(imputationParameters))
-        assignParameters(imputationParameters)
-    }
+    stopifnot(!is.null(imputationParameters))
+    assignParameters(imputationParameters)
     if(!ensuredData)
         ensureData(data = data)
     if(!ensuredFlagTable)
         ensureFlagTable(flagTable = flagTable, data = data)
 
     ## By balancing first, if variable == "production"
-    if(variable == "production"){
-        balanceProduction(columnNames,
-                          newMethodFlag = newMethodFlag,
-                          data = data,
-                          flagTable = flagTable)
+    if(imputationParameters$variable == "production"){
+        balanceProduction(data = data)
     }
 
     ## Then imputation by ensemble
-    if(variable == "production"){
-        setnames(x = data,
-                 old = c(productionValue, productionObservationFlag,
-                     productionMethodFlag),
-                 new = c("imputationValueColumn", "observationFlag",
-                         "methodFlag"))
-        columnNames["productionValue"]           = "imputationValueColumn"
-        columnNames["productionObservationFlag"] = "observationFlag"
-        columnNames["productionMethodFlag"]      = "methodFlag"
-    } else if(variable == "yield"){
-        setnames(x = data,
-                 old = c(yieldValue, yieldObservationFlag,
-                         yieldMethodFlag),
-                 new = c("imputationValueColumn", "observationFlag",
-                         "methodFlag"))
-        columnNames["yieldValue"]           = "imputationValueColumn"
-        columnNames["yieldObservationFlag"] = "observationFlag"
-        columnNames["yieldMethodFlag"]      = "methodFlag"
-    }
+#     setnames(x = data,
+#              old = c(imputationValueColumn, imputationFlagColumn,
+#                  imputationMethodColumn),
+#              new = c("imputationValueColumn", "imputationFlagColumn",
+#                      "imputationMethodColumn"))
 
     missingIndex = is.na(data[, imputationValueColumn])
-    data[, imputationValue := ensembleImpute(data = data)]
+    data[, get(imputationValueColumn) := ensembleImpute(data = data)]
     data[missingIndex & !is.na(imputationValueColumn),
-         c("observationFlag", "methodFlag") :=
+         c("imputationFlagColumn", "imputationMethodColumn") :=
          list(imputationFlag, newMethodFlag)]
     
-    if(variable == "production"){
-        setnames(x = data,
-                 old = c("imputationValueColumn", "observationFlag", "methodFlag"),
-                 new = c(productionValue, productionObservationFlag,
-                     productionMethodFlag))
-    } else if(variable == "yield"){
-        setnames(x = data,
-                 old = c("imputationValueColumn", "observationFlag", "methodFlag"),
-                 new = c(yieldValue, yieldObservationFlag, yieldMethodFlag))
-    }
+#     setnames(x = data,
+#              old = c("imputationValueColumn", "imputationFlagColumn",
+#                      "imputationMethodColumn"),
+#              new = c(imputationValueColumn, imputationFlagColumn,
+#                  imputationMethodColumn))
 }

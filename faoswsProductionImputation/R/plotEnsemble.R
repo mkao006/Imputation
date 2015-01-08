@@ -66,7 +66,7 @@ plotEnsemble = function(data, modelFits, modelWeights, ensemble){
     toPlotWeights$byKey = toPlot$byKey
     toPlotWeights = data.table:::melt.data.table(data = toPlotWeights,
                     id.vars = c("year", "byKey"))
-    setnames(toPlotWeights, "imputationValueColumn", "modelWeight")
+    setnames(toPlotWeights, "value", "modelWeight")
     toPlotModels = merge(toPlotModels, toPlotWeights,
                          by = c("year", "byKey", "variable"))
     
@@ -99,7 +99,7 @@ plotEnsemble = function(data, modelFits, modelWeights, ensemble){
                                         "Ensemble", "Data"),
                          shape = ifelse(is.na(imputationValueColumn),
                                         "Ensemble", "Data"),
-                         fill = ifelse(is.na(imputationValueColumn) +
+                         fill = ifelse(is.na(imputationValueColumn),
                                         "Ensemble", "Data"))) +
         ggplot2::facet_wrap( ~ byKey, scale = "free") +
         ggplot2::scale_size_continuous(range = c(.5, 2)) +
