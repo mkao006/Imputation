@@ -62,7 +62,7 @@ computeEnsembleWeight = function(data, cvGroup, fits,
         value (in which case errors are not possible to compute).  Consider
         including a model like defaultMixedModel.")
     # If the fit failed, we can't use this model.  Assign error of Inf.
-    error[, modelFailed := anyNA(fit), by = list(byKey, model)]
+    error[, modelFailed := any(is.na(fit)), by = list(byKey, model)]
     error[(modelFailed), error := NA]
     
     ### Create the weights data.table using the errors

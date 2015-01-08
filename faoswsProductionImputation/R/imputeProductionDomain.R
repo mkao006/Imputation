@@ -54,13 +54,16 @@ imputeProductionDomain = function(data, processingParameters,
     ensureFlagTable(flagTable = flagTable, data = data)
     assignParameters(productionImputationParameters)
     ensureData(data = data)
-    ensureFlagTable(flagTable = flagTable, data = data)   
-        
+    ensureFlagTable(flagTable = flagTable, data = data)
+    stopifnot(yieldImputationParameters$variable == "yield")
+    stopifnot(productionImputationParameters$variable == "production")
+    
     cat("Initializing ... \n")
     assignParameters(processingParameters)
     dataCopy = copy(data)
     setkeyv(x = dataCopy, cols = c(byKey, yearValue))
-    processProductionDomain(data = dataCopy)
+    processProductionDomain(data = dataCopy,
+                            processingParameters = processingParameters)
 
     ## Step two: Impute Yield
     cat("Imputing Yield ...\n")
@@ -71,8 +74,8 @@ imputeProductionDomain = function(data, processingParameters,
 #                             gsub(yieldValue, "yieldValue",
 #                                  deparse(yieldFormula))))
     
-    assignParameters(yieldImputationParameters)
-    imputeVariable(data = dataCopy)
+    imputeVariable(data = dataCopy,
+                   imputationParameters = yieldImputationParameters)
     n.missYield2 = length(which(is.na(dataCopy[[yieldValue]])))
     cat("Number of values imputed: ", n.missYield - n.missYield2, "\n")
     cat("Number of values still missing: ", n.missYield2, "\n")
@@ -81,8 +84,8 @@ imputeProductionDomain = function(data, processingParameters,
     cat("Imputing Production ...\n")
     n.missProduction = length(which(is.na(dataCopy[[productionValue]])))
 
-    assignParameters(productionImputationParameters)
-    imputeVariable(data = dataCopy)
+    imputeVariable(data = dataCopy,
+                   imputationParameters = productionImputationParameters)
 
     n.missProduction2 = length(which(is.na(dataCopy[[productionValue]])))
     cat("Number of values imputed: ",

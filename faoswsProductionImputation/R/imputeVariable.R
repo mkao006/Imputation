@@ -45,10 +45,10 @@ imputeVariable = function(data, imputationParameters){
 #              new = c("imputationValueColumn", "imputationFlagColumn",
 #                      "imputationMethodColumn"))
 
-    missingIndex = is.na(data[, imputationValueColumn])
+    missingIndex = is.na(data[, get(imputationValueColumn)])
     data[, get(imputationValueColumn) := ensembleImpute(data = data)]
-    data[missingIndex & !is.na(imputationValueColumn),
-         c("imputationFlagColumn", "imputationMethodColumn") :=
+    data[missingIndex & !is.na(get(imputationValueColumn)),
+         c(imputationFlagColumn, imputationMethodColumn) :=
          list(imputationFlag, newMethodFlag)]
     
 #     setnames(x = data,

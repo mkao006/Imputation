@@ -46,7 +46,7 @@ ensembleImpute = function(data, imputationParameters = NULL){
     if(is.null(names(ensembleModels)))
         names(ensembleModels) = paste("Model", 1:length(ensembleModels),
                                       sep = "_")
-    if(!anyNA(data[[imputationValueColumn]])){
+    if(!any(is.na(data[[imputationValueColumn]]))){
         warning("No missing values in data[[imputationValueColumn]].",
         "Returning data[[imputationValueColumn]]")
         return(data[[imputationValueColumn]])

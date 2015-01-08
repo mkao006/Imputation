@@ -37,7 +37,7 @@ plotEnsemble = function(data, modelFits, modelWeights, ensemble){
     stopifnot(nrow(data) == length(ensemble))
     
     ### Set up toPlot data.table (holds data for ggplot call)
-    plotKeys = data[, anyNA(get(imputationValueColumn)), by = byKey]
+    plotKeys = data[, any(is.na(get(imputationValueColumn))), by = byKey]
     plotKeys = plotKeys[(V1), get(byKey)]
     filter = data[, get(byKey) %in% plotKeys]
     toPlot = data[filter, ]

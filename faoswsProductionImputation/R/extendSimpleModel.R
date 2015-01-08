@@ -34,7 +34,7 @@ extendSimpleModel = function(data, model, imputationParameters = NULL){
     missingIndex = is.na(data[, imputationValueColumn])
     modelFit = data[,
         # Apply the model if there is a missing value.  Else, return the data
-        if(anyNA(imputationValueColumn)){
+        if(any(is.na(imputationValueColumn))){
             model(imputationValueColumn)
         } else {
             imputationValueColumn
