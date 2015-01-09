@@ -26,10 +26,10 @@ defaultMixedModel = function(data, maxdf = 5, weights = NULL, modelFormula,
                              imputationParameters = NULL){
     
     ### Data Quality Checks
-    if(!exists("parametersAssigned") || !parametersAssigned){
+    if(!exists("parametersAssigned"))
         stopifnot(!is.null(imputationParameters))
+    if(!is.null(imputationParameters))
         assignParameters(imputationParameters)
-    }
     if(!ensuredData)
         ensureData(data = data)
     if(!ensuredFlagTable)
@@ -82,7 +82,7 @@ defaultMixedModel = function(data, maxdf = 5, weights = NULL, modelFormula,
 
                     newModelError = bootMer(newModel,
                         FUN = function(x){
-                            predictError(x = x, y = data$imputationValue,
+                            predictError(x = x, y = data[[imputationValueColumn]],
                                          newdata = data)
                         }, nsim = 100)
                     ## cat("old:", mean(benchmarkError$t), "\n")
