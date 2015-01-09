@@ -19,11 +19,19 @@
 ##' @param value The column name of data containing the variable being imputed.
 ##' @param byKey The column name of data containing the grouping variable.
 ##' @param yearValue The column name of data containing the time variable.
+##' @returnFormat In what format should the plots be returned?  If "faceted", a
+##' single plot showing with all countries is returned.  If "individual", a
+##' list with ggplot objects is returned.  If "prompt", the first country's
+##' plot is displayed and then the user must press ENTER to cycle through the
+##' plots.
 ##' 
-##' @return No value is returned, but a plot is generated.
+##' @return If returnType = "faceted" or "prompt", then no value is returned
+##' (but a plot is generated).  However, if returnType = prompt, then a list of
+##' ggplot objects is returned.
 ##' 
 
-plotEnsemble = function(data, modelFits, modelWeights, ensemble){
+plotEnsemble = function(data, modelFits, modelWeights, ensemble,
+                        returnFormat = "faceted"){
     
     ### Data Quality Checks
     stopifnot(is(data, "data.table"))
@@ -35,6 +43,7 @@ plotEnsemble = function(data, modelFits, modelWeights, ensemble){
     stopifnot(names(modelWeights) %in% names(modelFits))
     stopifnot(names(modelFits) %in% names(modelWeights))
     stopifnot(nrow(data) == length(ensemble))
+    stopifnot(returnFormat %in% c("faceted", "individual", "prompt"))
     
     ### Set up toPlot data.table (holds data for ggplot call)
     plotKeys = data[, any(is.na(get(imputationValueColumn))), by = byKey]
@@ -86,33 +95,80 @@ plotEnsemble = function(data, modelFits, modelWeights, ensemble){
     ### Plotting call
     toPlotModels[, maxY := max(modelFit, na.rm = TRUE), by = "byKey"]
     toPlotModels[, ribbonWidth := maxY * modelWeight * .03]
-    print(ggplot2::ggplot(toPlotModels,
-                    # year - .5 to center the lines on each year
-                    ggplot2::aes(x = year, color = variable,
-                                 shape = variable)) +
-        ggplot2::geom_ribbon(ggplot2::aes(ymax = modelFit + ribbonWidth,
-                                          ymin = modelFit - ribbonWidth,
-                                          shape = "none", fill = variable)) +
-        ggplot2::geom_point(data = toPlot,
-            ggplot2::aes(x = year, y = ensemble,
-                         color = ifelse(is.na(imputationValueColumn),
-                                        "Ensemble", "Data"),
-                         shape = ifelse(is.na(imputationValueColumn),
-                                        "Ensemble", "Data"),
-                         fill = ifelse(is.na(imputationValueColumn),
-                                        "Ensemble", "Data"))) +
-        ggplot2::facet_wrap( ~ byKey, scale = "free") +
-        ggplot2::scale_size_continuous(range = c(.5, 2)) +
-        ggplot2::scale_color_manual( 
-            values = c("black", "black", plotColors),
-            limits = c("Data", "Ensemble", modelNames)) +
-        ggplot2::scale_fill_manual(
-            values = c(NA, NA, plotColors),
-            limits = c("Data", "Ensemble", modelNames)) +
-        ggplot2::labs(x = "Year", y = imputationValueColumn, size = "Model Weight",
-                      color = "", shape = "", fill = "") +
-        ggplot2::scale_shape_manual(values = c(16, 4, rep(NA, nModels)),
-                                    limits=c("Data", "Ensemble", modelNames)) +
-        ggplot2::expand_limits(y = 0)
-    )
+    if(returnFormat == "faceted"){
+        print(ggplot2::ggplot(toPlotModels,
+                        # year - .5 to center the lines on each year
+                        ggplot2::aes(x = year, color = variable,
+                                     shape = variable)) +
+            ggplot2::geom_ribbon(ggplot2::aes(ymax = modelFit + ribbonWidth,
+                                              ymin = modelFit - ribbonWidth,
+                                              shape = "none",
+                                              fill = variable)) +
+            ggplot2::geom_point(data = toPlot,
+                ggplot2::aes(x = year, y = ensemble,
+                             color = ifelse(is.na(imputationValueColumn),
+                                            "Ensemble", "Data"),
+                             shape = ifelse(is.na(imputationValueColumn),
+                                            "Ensemble", "Data"),
+                             fill = ifelse(is.na(imputationValueColumn),
+                                            "Ensemble", "Data"))) +
+            ggplot2::facet_wrap( ~ byKey, scale = "free") +
+            ggplot2::scale_size_continuous(range = c(.5, 2)) +
+            ggplot2::scale_color_manual( 
+                values = c("black", "black", plotColors),
+                limits = c("Data", "Ensemble", modelNames)) +
+            ggplot2::scale_fill_manual(
+                values = c(NA, NA, plotColors),
+                limits = c("Data", "Ensemble", modelNames)) +
+            ggplot2::labs(x = "Year", y = imputationValueColumn,
+                          size = "Model Weight", color = "", shape = "",
+                          fill = "") +
+            ggplot2::scale_shape_manual(values = c(16, 4, rep(NA, nModels)),
+                                        limits=c("Data", "Ensemble",
+                                                 modelNames)) +
+            ggplot2::expand_limits(y = 0)
+        )
+        return()
+    } else {
+        plotList = lapply(unique(toPlot$byKey), function(i){
+            ggplot2::ggplot(toPlotModels[byKey == i,],
+                            # year - .5 to center the lines on each year
+                            ggplot2::aes(x = year, color = variable,
+                                         shape = variable)) +
+                ggplot2::geom_ribbon(ggplot2::aes(ymax = modelFit + ribbonWidth,
+                                                  ymin = modelFit - ribbonWidth,
+                                                  shape = "none",
+                                                  fill = variable)) +
+                ggplot2::geom_point(data = toPlot[byKey == i,],
+                    ggplot2::aes(x = year, y = ensemble,
+                                 color = ifelse(is.na(imputationValueColumn),
+                                                "Ensemble", "Data"),
+                                 shape = ifelse(is.na(imputationValueColumn),
+                                                "Ensemble", "Data"),
+                                 fill = ifelse(is.na(imputationValueColumn),
+                                                "Ensemble", "Data"))) +
+                ggplot2::facet_wrap( ~ byKey, scale = "free") +
+                ggplot2::scale_size_continuous(range = c(.5, 2)) +
+                ggplot2::scale_color_manual( 
+                    values = c("black", "black", plotColors),
+                    limits = c("Data", "Ensemble", modelNames)) +
+                ggplot2::scale_fill_manual(
+                    values = c(NA, NA, plotColors),
+                    limits = c("Data", "Ensemble", modelNames)) +
+                ggplot2::labs(x = "Year", y = imputationValueColumn,
+                              size = "Model Weight", color = "", shape = "",
+                              fill = "") +
+                ggplot2::scale_shape_manual(values = c(16, 4, rep(NA, nModels)),
+                                            limits=c("Data", "Ensemble",
+                                                     modelNames)) +
+                ggplot2::expand_limits(y = 0)
+        })
+    }
+    if(returnFormat == "individual")
+        return(plotList)
+    if(returnFormat == "prompt")
+        for(i in 1:length(plotList)){
+            print(plotList[[i]])
+            readline("Next?")
+        }
 }
