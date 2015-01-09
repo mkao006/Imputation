@@ -7,19 +7,24 @@ production imputation methodology.
 
 
 ### Installation
-To install the imputation package, simply run the following command. 
+To install the imputation package, simply run the following command.  Note: the
+faosws package must first be installed.
 
 ```r
 library(devtools)
 
 ## The package depends on the faoswsFlag package
-install_github(repo = "sws_flag", username = "mkao006", 
-               subdir = "faoswsFlag")
+install_github(repo = "mkao006/sws_flag", subdir = "faoswsFlag",
+               dependencies = TRUE)
+
+## The utilities package, also necessary for the imputation
+install_github(repo = "mkao006/sws_util", subdir = "faoswsUtil",
+               dependencies = TRUE)
 
 ## The imputation package
-install_github(repo = "sws_imputation", 
-	       username = "mkao006", 
-	       subdir = "faoswsProductionImputation")
+install_github(repo = "mkao006/sws_imputation", 
+	           subdir = "faoswsProductionImputation",
+               dependencies = TRUE)
 ```
 
 #### Vignettes
