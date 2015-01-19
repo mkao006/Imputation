@@ -27,10 +27,10 @@ removeNoInfo = function (data, value, flag, processingParameters = NULL,
     environment = parent.frame(1)){
     
     ### Data Quality Checks
-    if(!exists("parametersAssigned") || !parametersAssigned){
+    if(!exists("parametersAssigned") || !parametersAssigned)
         stopifnot(!is.null(processingParameters))
+    if(!is.null(processingParameters))
         assignParameters(processingParameters)
-    }
     if(!ensuredData)
         ensureData(data = data)
     stopifnot(c(value, flag) %in% colnames(data))

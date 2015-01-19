@@ -20,10 +20,10 @@
 removeZeroConflict = function(data, processingParameters = NULL){
     
     ### Data Quality Checks
-    if(!exists("parametersAssigned") || !parametersAssigned){
+    if(!exists("parametersAssigned") || !parametersAssigned)
         stopifnot(!is.null(processingParameters))
+    if(!is.null(processingParameters))
         assignParameters(processingParameters)
-    }
     if(!ensuredData)
         ensureData(data = data)
     

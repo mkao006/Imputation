@@ -16,10 +16,10 @@ computeEnsembleWeight = function(data, cvGroup, fits,
                                  imputationParameters = NULL){
     
     ### Data Quality Checks
-    if(!exists("parametersAssigned") || !parametersAssigned){
+    if(!exists("parametersAssigned") || !parametersAssigned)
         stopifnot(!is.null(imputationParameters))
+    if(!is.null(imputationParameters))
         assignParameters(imputationParameters)
-    }
     if(!ensuredData)
         ensureData(data = data)
     if(!ensuredFlagTable)

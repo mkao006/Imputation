@@ -48,7 +48,7 @@ processProductionDomain = function(data, processingParameters){
              flag = yieldObservationFlag)
 
     if(removeConflictValues){
-        removeZeroConflict(columnNames, data = data)
+        removeZeroConflict(data = data)
     }
 
     removeNoInfo(data = data,
