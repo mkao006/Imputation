@@ -38,22 +38,9 @@ imputeVariable = function(data, imputationParameters){
         balanceProduction(data = data)
     }
 
-    ## Then imputation by ensemble
-#     setnames(x = data,
-#              old = c(imputationValueColumn, imputationFlagColumn,
-#                  imputationMethodColumn),
-#              new = c("imputationValueColumn", "imputationFlagColumn",
-#                      "imputationMethodColumn"))
-
     missingIndex = is.na(data[, get(imputationValueColumn)])
     data[, get(imputationValueColumn) := ensembleImpute(data = data)]
     data[missingIndex & !is.na(get(imputationValueColumn)),
          c(imputationFlagColumn, imputationMethodColumn) :=
          list(imputationFlag, newMethodFlag)]
-    
-#     setnames(x = data,
-#              old = c("imputationValueColumn", "imputationFlagColumn",
-#                      "imputationMethodColumn"),
-#              new = c(imputationValueColumn, imputationFlagColumn,
-#                  imputationMethodColumn))
 }
