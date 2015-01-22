@@ -32,6 +32,7 @@ ensureImputationParameters = function(parameterList){
     stopifnot(p$groupCount <= 100)
     stopifnot(is.character(c(p$missingFlag, p$imputationFlag,
                              p$newMethodFlag)))
+    # Flag Table checks
     stopifnot(c(p$missingFlag, p$imputationFlag) %in%
                   p$flagTable$flagObservationStatus)
     stopifnot(is.data.frame(p$flagTable))

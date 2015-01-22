@@ -30,6 +30,6 @@ remove0M = function(data, value, flag, processingParameters = NULL){
     missingIndex = which(data[[flag]] == naFlag)
     missingValues = data[missingIndex,][[value]]
     if(any(!is.na(missingValues) & missingValues!=0))
-        stop("Some missing values are not 0 or NA!")
+        warning("Some missing values are not 0 or NA!")
     invisible(data[missingIndex, `:=`(c(value), list(NA))])
 }

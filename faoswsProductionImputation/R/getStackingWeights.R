@@ -38,6 +38,8 @@
 
 getStackingWeights = function(data, fits){
     
+    stop("Stacking weights have not yet been implemented!")
+    
     ### Data Quality Checks
     if(!ensuredData)
         ensureData(data)

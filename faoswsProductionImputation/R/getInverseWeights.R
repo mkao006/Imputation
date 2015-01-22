@@ -44,15 +44,23 @@ getInverseWeights = function(data, fits){
     # In other words, assumme the model that failed did as poor as possible.
     error[, error := ifelse(is.na(error), max(error, na.rm = TRUE), error),
           by = c("byKey", "year")]
-    if(error[!(missingValue), max(abs(error))] == Inf)
-        stop("Infinite error observed!  This may have been created because of
-             no valid models for some time/country.  Is defaultMean() included
-             in the ensembleModels?  That may fix this error.  Or, you may get this
-             error if errorType == 'loocv' and a time series has only one valid
-             value (in which case errors are not possible to compute).  Consider
-             including a model like defaultMixedModel.")
-    # If the fit failed, we can't use this model.  Assign error of Inf.
-    error[, modelFailed := any(is.na(fit)), by = list(byKey, model)]
+    ## Errors should never be infinity, so this signals some sort of problem:
+    if(error[!(missingValue), max(abs(error))] == Inf){
+        badKeys = error[!(missingValue) & abs(error) == Inf, unique(byKey)]
+        warning("Model fitting failed for keys: ", paste(badKeys, collapse=" "),
+            "\nSome countries may have only one observation, and thus no",
+            "cross-validation models worked.  Have you tried a global model",
+            "like defaultMixedModel()?  Or, including a simple model like",
+            "defaultMean() (which should fit every dataset well) might work.",
+            "Or, you could also try errorType = 'raw' (although loocv is", 
+            "generally preferred).")
+    }
+    # If the fit failed, we can't use this model.  Assign error of Inf.  To
+    # determine if a model failed, we can check if a fitted value is NULL (but
+    # we must exclude values which are missing, as loocv won't estimate those
+    # and they won't influence error calcs anyways).
+    error[, modelFailed := any(is.na(fit) & !missingValue),
+          by = list(byKey, model)]
     error[(modelFailed), error := NA]
     
     ### Create the weights data.table using the errors

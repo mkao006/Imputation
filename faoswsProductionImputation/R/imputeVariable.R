@@ -39,7 +39,7 @@ imputeVariable = function(data, imputationParameters){
     }
 
     missingIndex = is.na(data[, get(imputationValueColumn)])
-    data[, get(imputationValueColumn) := ensembleImpute(data = data)]
+    data[, c(imputationValueColumn) := ensembleImpute(data = data)]
     data[missingIndex & !is.na(get(imputationValueColumn)),
          c(imputationFlagColumn, imputationMethodColumn) :=
          list(imputationFlag, newMethodFlag)]
