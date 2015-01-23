@@ -9,13 +9,8 @@
 
 ensureImputationParameters = function(parameterList){
     p = parameterList
-    stopifnot(is.character(c(p$productionValue, p$productionObservationFlag,
-                             p$productionMethodFlag, p$yieldValue,
-                             p$yieldObservationFlag, p$yieldMethodFlag,
-                             p$areaHarvestedValue,
-                             p$areaHarvestedObservationFlag,
-                             p$areaHarvestedMethodFlag, p$yearValue, p$byKey)))
-    stopifnot(p$variable %in% c("production", "yield"))
+    stopifnot(is.character(c(p$yearValue, p$byKey)))
+    stopifnot(p$variable %in% c("production", "yield", "seed"))
     stopifnot(is(p$ensembleModels, "list"))
     stopifnot(sapply(p$ensembleModels, is) == "ensembleModel")
     stopifnot(is.logical(c(p$restrictWeights, p$plotImputation)))

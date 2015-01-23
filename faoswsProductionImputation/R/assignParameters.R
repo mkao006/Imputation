@@ -32,24 +32,45 @@ assignParameters = function(parameterList, environment = .GlobalEnv){
     stopifnot(is(parameterList, "list"))
     stopifnot(is(names(parameterList), "character"))
     stopifnot(is(environment, "environment"))
-    imputationParameters = c("productionValue", "productionObservationFlag",
-         "productionMethodFlag", "yieldValue", "yieldObservationFlag",
-         "yieldMethodFlag", "areaHarvestedValue",
-         "areaHarvestedObservationFlag", "areaHarvestedMethodFlag",
-         "yearValue", "byKey", "variable", "ensembleModels", "restrictWeights",
-         "maximumWeights", "plotImputation", "errorType", "errorFunction", "groupCount",
-         "missingFlag", "imputationFlag", "newMethodFlag", "flagTable",
-         "ensuredData", "ensuredFlagTable", "parametersAssigned")
+    if("productionValue" %in% parameterList){
+        type = "processing"
+    } else {
+        type = "imputation"
+    }
+    
+    ## If variable is provided and type = "imputation", create imputation cols.
+    if("variable" in parameterList & type == "imputation"){
+        if(parameterList$variable == "production"){
+            parameterList$imputationValueColumn = "productionValue"
+            parameterList$imputationFlagColumn = "productionFlag"
+            parameterList$imputationMethodColumn = "productionFlag2"
+        } else if(parameterList$variable == "yield"){
+            parameterList$imputationValueColumn = "yieldValue"
+            parameterList$imputationFlagColumn = "yieldFlag"
+            parameterList$imputationMethodColumn = "yieldFlag2"
+        } else if(parameterList$variable == "seed"){
+            parameterList$imputationValueColumn = "seedValue"
+            parameterList$imputationFlagColumn = "seedFlag"
+            parameterList$imputationMethodColumn = "seedFlag2"
+        } else {
+            stop("No implementation for current value of variable!")
+        }
+        parameterList$variable = NULL 
+    }
+    
+    imputationParameters = c("yearValue", "byKey", "ensembleModels",
+        "restrictWeights", "maximumWeights", "plotImputation", "errorType",
+        "errorFunction", "groupCount", "missingFlag", "imputationFlag",
+        "newMethodFlag", "flagTable", "ensuredData", "ensuredFlagTable",
+        "parametersAssigned", "imputationValueColumn", "imputationFlagColumn",
+        "imputationMethodColumn")
     processingParameters = c("productionValue", "productionObservationFlag",
-         "productionMethodFlag", "yieldValue", "yieldObservationFlag",
-         "yieldMethodFlag", "areaHarvestedValue",
-         "areaHarvestedObservationFlag", "areaHarvestedMethodFlag",
-         "yearValue", "byKey", "removePriorImputation", "removeConflictValues",
-         "imputedFlag", "naFlag", "ensuredData", "ensuredFlagTable",
-         "parametersAssigned")
-    type = ifelse(all(names(parameterList) %in% imputationParameters),
-                  "imputation",
-                  "processing")
+        "productionMethodFlag", "yieldValue", "yieldObservationFlag",
+        "yieldMethodFlag", "areaHarvestedValue",
+        "areaHarvestedObservationFlag", "areaHarvestedMethodFlag",
+        "yearValue", "byKey", "removePriorImputation", "removeConflictValues",
+        "imputedFlag", "naFlag", "ensuredData", "ensuredFlagTable",
+        "parametersAssigned")
     if(type == "imputation"){
         # Don't allow variables other than those expected to be assigned
         stopifnot(setequal(names(parameterList), imputationParameters))
@@ -59,26 +80,6 @@ assignParameters = function(parameterList, environment = .GlobalEnv){
         ensureProcessingParameters(parameterList)
     }
     
-    if(type == "imputation"){
-        if(parameterList$variable == "production"){
-            parameterList$imputationValueColumn = 
-                parameterList$productionValue
-            parameterList$imputationFlagColumn = 
-                parameterList$productionObservationFlag
-            parameterList$imputationMethodColumn = 
-                parameterList$productionMethodFlag
-        } else if(parameterList$variable == "yield"){
-            parameterList$imputationValueColumn = 
-                parameterList$yieldValue
-            parameterList$imputationFlagColumn = 
-                parameterList$yieldObservationFlag
-            parameterList$imputationMethodColumn = 
-                parameterList$yieldMethodFlag
-        } else {
-            stop("No implementation for current value of variable!")
-        }
-        parameterList$variable = NULL 
-    }
     parameterList$parametersAssigned = TRUE
     for(var in names(parameterList)){
         # Unlock binding so variable can be reassigned, if applicable

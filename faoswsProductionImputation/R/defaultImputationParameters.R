@@ -22,15 +22,16 @@
 ##' 
 
 defaultImputationParameters = function(){
-    list(productionValue = "productionValue",
-         productionObservationFlag = "productionFlag",
-         productionMethodFlag = "productionFlag2",
-         yieldValue = "yieldValue",
-         yieldObservationFlag = "yieldFlag",
-         yieldMethodFlag = "yieldFlag2",
-         areaHarvestedValue = "areaHarvestedValue",
-         areaHarvestedObservationFlag = "areaHarvestedFlag",
-         areaHarvestedMethodFlag = "areaHarvestedFlag2",
+    list(
+#          productionValue = "productionValue",
+#          productionObservationFlag = "productionFlag",
+#          productionMethodFlag = "productionFlag2",
+#          yieldValue = "yieldValue",
+#          yieldObservationFlag = "yieldFlag",
+#          yieldMethodFlag = "yieldFlag2",
+#          areaHarvestedValue = "areaHarvestedValue",
+#          areaHarvestedObservationFlag = "areaHarvestedFlag",
+#          areaHarvestedMethodFlag = "areaHarvestedFlag2",
          yearValue = "year",
          byKey = "areaCode",
          variable = "production",
