@@ -18,9 +18,7 @@ ensureFlagTable = function(flagTable, data){
     
     ### Before running tests, ensure all necessary variables exist
     requiredVariables = c("ensuredFlagTable", "parametersAssigned",
-                          "ensuredData", "productionObservationFlag",
-                          "yieldObservationFlag",
-                          "areaHarvestedObservationFlag")
+                          "ensuredData", "imputationFlagColumn")
     missingVariables = requiredVariables[!sapply(requiredVariables, exists)]
     if(length(missingVariables) > 0)
         stop("Data cannot be ensured without the existence of these variables:\n\t",
@@ -28,21 +26,26 @@ ensureFlagTable = function(flagTable, data){
              "\nMaybe try running assignParameters with an argument of either ",
              "defaultImputationParameters() or defaultProcessingParameters()?")
     
-    ### Main checks of this function
+    ## Check data is valid
     if(!ensuredData)
-        ensureData(data = data)
+        ensureImputationData(data)
+    
+    ## Check structure of flagTable
     stopifnot(colnames(flagTable) ==
                   c("flagObservationStatus", "flagObservationWeights"))
-    # Check that all flags are in the flagTable:
-    flags = data[[productionObservationFlag]]
-    flags = c(flags, data[[areaHarvestedObservationFlag]])
-    flags = c(flags, data[[yieldObservationFlag]])
+    stopifnot(is(flagTable, "data.frame"))
+
+    ## Check that all flags are in the flagTable:
+    flags = data[[imputationFlagColumn]]
     flags = unique(flags)
     missingFlags = flags[!flags %in% flagTable$flagObservationStatus]
     if(length(missingFlags) > 0){
         stop("Some observation flags are not in the flag table!  Missing:\n",
             paste0("'", missingFlags, "'", collapse="\n"))
     }
+    
+    ## Ensure flags of flagTable are valid
+    stopifnot(checkObservationFlag(flagTable[["flagObservationStatus"]]))
     
     ### Globally assign ensuredFlagTable so flagTable will not be ensured again
     reassignGlobalVariable("ensuredFlagTable", TRUE)

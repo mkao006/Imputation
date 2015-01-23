@@ -11,6 +11,8 @@ FAO FAOSTAT production domain.
 }
 \author{
 Michael. C. J. Kao \email{michael.kao@fao.org}
+
+Joshua M. Browning \email{joshua.browning@fao.org}
 }
 \keyword{package}
 

@@ -53,19 +53,15 @@ getProductionDomainData = function(key){
             as.character(flagMethod_measuredElement_5510)
     )]
     
-    
     ### Some values don't exist in the database, and thus are given NA's.
     ### However, for our purposes, these should be 0M values.
     data[is.na(Value_measuredElement_5312), `:=` (
-        Value_measuredElement_5312 = 0L,
         flagObservationStatus_measuredElement_5312 = "M",
         flagMethod_measuredElement_5312 = "u")]
     data[is.na(Value_measuredElement_5416), `:=` (
-        Value_measuredElement_5416 = 0L,
         flagObservationStatus_measuredElement_5416 = "M",
         flagMethod_measuredElement_5416 = "u")]
     data[is.na(Value_measuredElement_5312), `:=` (
-        Value_measuredElement_5312 = 0L,
         flagObservationStatus_measuredElement_5312 = "M",
         flagMethod_measuredElement_5312 = "u")]
 }

@@ -4,28 +4,19 @@
 \alias{computeEnsembleFit}
 \title{Function to compute the fits of all the component models}
 \usage{
-computeEnsembleFit(data, ensembleModels = allDefaultModels(), columnNames,
-  value, flag)
+computeEnsembleFit(data, imputationParameters = NULL)
 }
 \arguments{
 \item{data}{The data.table object containing the data.}
 
-\item{columnNames}{See the same argument at ?imputeProductionDomain}
-
-\item{value}{Which variable should be imputed?  This should be one of the
-column names of data, typically corresponding to productionValue,
-yieldValue, or areaHarvestedValue.}
-
-\item{flag}{Column name (of data) of the flag variable corresponding to the
-value argument, i.e. "productionObservationFlag", "yieldObservationFlag",
-or "areaHarvestedObservationFlag".}
-
-\item{commodityCountryModels}{A list of models that should be applied to
-each individual country/commodity time series separately.   Defaults to
-allDefaultModels().}
-
-\item{commodityModels}{A list of models to be applied to all countries at
-once.}
+\item{imputationParameters}{A list of the parameters for the imputation
+algorithms.  See defaultImputationParameters() for a starting point. If
+NULL, the parameters should have already been assigned (otherwise an error
+will occur).}
+}
+\value{
+Returns a list of vectors of the same length as ensembleModels. The
+ith element of the list represents the fit of the ith model to data.
 }
 \description{
 Function to compute the fits of all the component models

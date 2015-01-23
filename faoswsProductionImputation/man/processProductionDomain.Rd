@@ -5,8 +5,7 @@
 \title{This is a wrapper for all the data manipulation step before the
 preparation of the imputation.}
 \usage{
-processProductionDomain(data, columnNames, removePriorImputation = TRUE,
-  removeConflictValues = TRUE, imputedFlag = "E", naFlag = "M")
+processProductionDomain(data, processingParameters)
 }
 \arguments{
 \item{data}{The data}

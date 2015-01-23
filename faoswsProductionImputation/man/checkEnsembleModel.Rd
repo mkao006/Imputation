@@ -8,8 +8,8 @@ checkEnsembleModel(object)
 }
 \arguments{
 \item{model}{The function defining how the model is fit to the data.  The
-function should take arguments data, value, flag, and columnNames (see
-extendSimpleModel).}
+function should take two arguments: data and imputationParameters = NULL
+(see extendSimpleModel).}
 
 \item{extrapolationRange}{How many time steps outside of the data is this
 model valid for?  Should be a positive integer (or Inf).}

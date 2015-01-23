@@ -3,14 +3,14 @@
 ##' This function takes the values of a parameter list and assigns them to the 
 ##' variables defined by names(parameterList), see defaultImputationParameters
 ##' and defaultProcessingParameters for examples.  This assignment is done in
-##' the environment passed to this function by env.  Not all variables
-##' value/name pairs are assigned, however; only the variables needed by the
-##' functions of this package (execute defaultColumnNames() to see this list).
+##' the environment passed to this function by env.  All value/name pairs are
+##' assigned, as a check is made to ensure the parameters in parameterList are
+##' exactly the ones needed for the processing or imputation.
 ##' 
-##' This function is used in combination with the columnNames argument to load
-##' variables into the environment of a particular function.  That function can
-##' then access all these variables (which describe the columns of the dataset)
-##' without creating global variables.
+##' This function is used in combination with the parameterList argument to load
+##' variables into a particular environment.  Functions can then access all
+##' these variables (which describe the columns of the dataset) without needing
+##' to pass long lists through.
 ##' 
 ##' @param parameterList A named character vector with the variables that
 ##' should be assigned.
@@ -18,10 +18,10 @@
 ##' assigned.  Defaults to the global environment.
 ##'
 ##' @return No value is returned.  However, values are assigned to the passed
-##' environment.  Since values are assigned in the global environment,
+##' environment.  Since values are typically assigned in the global environment,
 ##' lockBinding is also called on these variables to ensure they are not easily
 ##' changed.  If the variables need to be changed, unlockBinding can be called
-##' before reassigning.
+##' before reassigning.  Alternatively, one may use reassignGlobalVariable.
 ##' 
 ##' @export
 ##' 
@@ -39,19 +39,25 @@ assignParameters = function(parameterList, environment = .GlobalEnv){
     }
     
     ## If variable is provided and type = "imputation", create imputation cols.
-    if("variable" in parameterList & type == "imputation"){
+    if("variable" %in% names(parameterList) & type == "imputation"){
         if(parameterList$variable == "production"){
-            parameterList$imputationValueColumn = "productionValue"
-            parameterList$imputationFlagColumn = "productionFlag"
-            parameterList$imputationMethodColumn = "productionFlag2"
+            parameterList$imputationValueColumn = "Value_measuredElement_5510"
+            parameterList$imputationFlagColumn =
+                "flagObservationStatus_measuredElement_5510"
+            parameterList$imputationMethodColumn =
+                "flagMethod_measuredElement_5510"
         } else if(parameterList$variable == "yield"){
-            parameterList$imputationValueColumn = "yieldValue"
-            parameterList$imputationFlagColumn = "yieldFlag"
-            parameterList$imputationMethodColumn = "yieldFlag2"
+            parameterList$imputationValueColumn = "Value_measuredElement_5416"
+            parameterList$imputationFlagColumn =
+                "flagObservationStatus_measuredElement_5416"
+            parameterList$imputationMethodColumn =
+                "flagMethod_measuredElement_5416"
         } else if(parameterList$variable == "seed"){
-            parameterList$imputationValueColumn = "seedValue"
-            parameterList$imputationFlagColumn = "seedFlag"
-            parameterList$imputationMethodColumn = "seedFlag2"
+            parameterList$imputationValueColumn = "areaSownRatio"
+            parameterList$imputationFlagColumn =
+                "flagObservationStatus_measuredElement_5212"
+            parameterList$imputationMethodColumn =
+                "flagMethod_measuredElement_5212"
         } else {
             stop("No implementation for current value of variable!")
         }

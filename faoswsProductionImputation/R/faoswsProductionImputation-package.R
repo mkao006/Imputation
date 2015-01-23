@@ -7,6 +7,7 @@
 ##' @title Package to perform imputation for the FAOSTAT production
 ##' domain.
 ##' @author Michael. C. J. Kao \email{michael.kao@@fao.org}
+##' @author Joshua M. Browning \email{joshua.browning@@fao.org}
 ##' @keywords package
 ##' @import data.table
 ##' @import lme4

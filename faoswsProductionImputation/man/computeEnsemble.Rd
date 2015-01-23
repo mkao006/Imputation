@@ -9,7 +9,12 @@ computeEnsemble(fits, weights)
 \arguments{
 \item{fits}{A list of fitted values from models.}
 
-\item{weights}{A vector for the weights of each model.}
+\item{weights}{A weight matrix giving the weights of each model for each
+observation.}
+}
+\value{
+A vector of length nrow(weights), where each value represents the
+ensemble estimate for that observation.
 }
 \description{
 Function to combine the ensembles

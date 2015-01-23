@@ -4,22 +4,8 @@
 ##' developed for the FAO production domain.
 ##'
 ##' @param data A data.table containing the data.
-##' @param columnNames See the same argument at ?imputeProductionDomain.
-##' @param value The column name of data which contains the values to be
-##' imputed.
-##' @param flag The column name of data which contains the flag describing the
-##' status of value.
-##' @param ensembleModels A list of the models fit to data.  Each element
-##' should be of class ensembleModel.
-##' @param restrictWeights Whether a maximum weight restriction should
-##' be imposed.
-##' @param maximumWeights The maximum weight to be imposed, must be
-##' between [0.5, 1].  See ?computeEnsembleWeight for more details.
-##' @param plot Whether the result of the ensemble should be plotted.
-##' @param errorType See ?computeErrorRate.
-##' @param errorFunction See ?computeEnsembleWeight.  Defaults to MSE.
-##' @param missingFlag What value of the flag variable represents a missing
-##' value?  Defaults to "M".
+##' @param imputationParameters A list of the parameters necessary to perform
+##' the imputation.  See ?defaultImputationParameters.
 ##'
 ##' @export
 ##' 
@@ -32,7 +18,7 @@ ensembleImpute = function(data, imputationParameters = NULL){
     if(!is.null(imputationParameters))
         assignParameters(imputationParameters)
     if(!ensuredData)
-        ensureData(data = data)
+        ensureImputationData(data = data)
     if(!ensuredFlagTable)
         ensureFlagTable(flagTable = flagTable, data = data)
     valueMissingIndex = is.na(data[[imputationValueColumn]])

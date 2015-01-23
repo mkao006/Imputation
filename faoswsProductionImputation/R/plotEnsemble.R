@@ -16,10 +16,7 @@
 ##' matched.
 ##' @param ensemble A numeric vector containing either the original data (if it
 ##' was not missing) or the imputed value (if the original data was missing).
-##' @param value The column name of data containing the variable being imputed.
-##' @param byKey The column name of data containing the grouping variable.
-##' @param yearValue The column name of data containing the time variable.
-##' @returnFormat In what format should the plots be returned?  If "faceted", a
+##' @param returnFormat In what format should the plots be returned?  If "faceted", a
 ##' single plot showing with all countries is returned.  If "individual", a
 ##' list with ggplot objects is returned.  If "prompt", the first country's
 ##' plot is displayed and then the user must press ENTER to cycle through the

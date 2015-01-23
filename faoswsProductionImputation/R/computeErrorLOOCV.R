@@ -5,16 +5,15 @@
 ##' computeErrorRate and not directly.
 ##'
 ##' @param data A data.table containing the data.
-##' @param columnNames See the same argument at ?imputeProductionDomain.
-##' @param value The column name of data which contains the values to be
-##' imputed.
-##' @param flag The column name of data which contains the flag describing the
-##' status of value.
 ##' @param model The model fit to x, should be of class ensembleModel.
 ##' @param cvGroup A vector of the same length as nrow(data).  Entries of the
 ##' vector should be integers from 1 to the number of cross-validation groups
 ##' (typically 10).  This should be randomly assigned, and is usually created
 ##' by ensembleImpute.
+##' @param imputationParameters A list of the parameters for the imputation
+##' algorithms.  See defaultImputationParameters() for a starting point. If
+##' NULL, the parameters should have already been assigned (otherwise an error
+##' will occur).
 ##' 
 ##' @export
 

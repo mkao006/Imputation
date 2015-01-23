@@ -4,28 +4,28 @@
 \alias{imputeVariable}
 \title{Function to impute production or yield}
 \usage{
-imputeVariable(columnNames, imputationFlag = "I", newMethodFlag, data,
-  restrictWeights = TRUE, maximumWeights = 0.7,
-  ensembleModels = allDefaultModels(), flagTable = faoswsFlagTable,
-  errorType = "loocv", errorFunction = function(x) mean(x^2), variable)
+imputeVariable(data, imputationParameters)
 }
 \arguments{
+\item{data}{The data.table object containing the data.}
+
 \item{columnNames}{See the same argument at ?imputeProductionDomain}
 
 \item{imputationFlag}{Flag value for new imputation values.}
 
-\item{data}{The data.table object containing the data.}
+\item{newMethodFlag}{The character value that should be assigned to
+*ObservationFlag when it is imputed (where *=variable).}
+
+\item{flagTable}{see data(faoswsFlagTable) in \pkg{faoswsFlag}}
+
+\item{ensembleModels}{A list of models to be used to build the
+ensemble.}
 
 \item{restrictWeights}{Whether a maximum weight restriction should
 be imposed.}
 
 \item{maximumWeights}{The maximum weight to be imposed, must be
 between [0.5, 1].}
-
-\item{ensembleModels}{A list of models to be used to build the
-ensemble.}
-
-\item{flagTable}{see data(faoswsFlagTable) in \pkg{faoswsFlag}}
 
 \item{errorType}{See ?computeErrorRate.}
 

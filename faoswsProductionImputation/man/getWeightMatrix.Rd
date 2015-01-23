@@ -4,10 +4,15 @@
 \alias{getWeightMatrix}
 \title{Get Weight Matrix}
 \usage{
-getWeightMatrix(data, value, byKey, yearValue, w, ensembleModels)
+getWeightMatrix(data, w, imputationParameters = NULL)
 }
 \arguments{
 \item{data}{The data.table containing the data.}
+
+\item{w}{The weights data.table, typically as produced in
+computeEnsembleWeight.  There should be at least three columns: byKey,
+model, and weight.  Weight gives the model weight for model within the
+byKey group.}
 
 \item{value}{The column name of data which contains the variable being
 imputed.}
@@ -16,11 +21,6 @@ imputed.}
 (typically the areaCode).}
 
 \item{yearValue}{The column name of data which specifies the year.}
-
-\item{w}{The weights data.table, typically as produced in
-computeEnsembleWeight.  There should be at least three columns: byKey,
-model, and weight.  Weight gives the model weight for model within the
-byKey group.}
 
 \item{ensembleModels}{The list of ensemble models used.  Each element of
 this list should be of class ensembleModel.  This is used to determine
@@ -44,6 +44,6 @@ This function creates a weight matrix to use in constructing the final
 ensemble.  If F is a nxk matrix (n = number of observations, k = number of
 models) containing the fitted models, then this function constructs W,
 another nxk matrix of weights.  The final ensemble estimate for observation
-i can be computed by sum( F[i,]*W[i,] ).
+i can be computed by sum(F[i,]*W[i,]).
 }
 

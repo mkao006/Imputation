@@ -4,9 +4,9 @@ Title: Package to perform the imputation of area harvested, production and yield
 Version: 4.1
 Date: 2014-08-26
 Authors@R: c(person("Micheal. C. J.", "Kao", role = c("aut", "cre"), email = "michael.kao@fao.org"))
-Author: Michael C. J. Kao <michael.kao@fao.org>
-Maintainer: Michael C. J. Kao <michael.kao@fao.org>
-Description: This package provides all the function to perform imputation of area, production and yield under for the FAO production domain..
+Author: Michael C. J. Kao <michael.kao@fao.org>, Joshua M. Browning <joshua.browning@fao.org>
+Maintainer: Joshua M. Browning <joshua.browning@fao.org>
+Description: This package provides all the functions to perform imputation of area, production and yield for the FAO production domain.
 URL: https://github.com/mkao006/sws_imputation
 License: GPL (>= 3)
 Imports:
@@ -18,7 +18,7 @@ Imports:
     zoo (>= 1.7-11),
     RColorBrewer (>= 1.0-5)
 Depends:
-    faoswsFlag (>= 1.0),
+    faoswsFlag (>= 0.1.0),
     splines (>= 3.0.2)
 LazyData: yes
 ZipData: no

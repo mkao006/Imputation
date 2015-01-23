@@ -9,7 +9,8 @@ containInfo(value, flag, naFlag = "M")
 \arguments{
 \item{value}{A numeric vector to be checked}
 
-\item{flag}{The observation flag corresponding to the value.}
+\item{flag}{The character vector representing the observation flag
+corresponding to the value.}
 
 \item{naFlag}{The observation flag which corresponds to missing
 value.}

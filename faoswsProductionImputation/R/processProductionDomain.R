@@ -37,15 +37,18 @@ processProductionDomain = function(data, processingParameters){
 
     remove0M(data = data,
              value = areaHarvestedValue,
-             flag = areaHarvestedObservationFlag)
+             flag = areaHarvestedObservationFlag,
+             naFlag = naFlag)
     
     remove0M(data = data,
              value = productionValue,
-             flag = productionObservationFlag)
+             flag = productionObservationFlag,
+             naFlag = naFlag)
     
     remove0M(data = data,
              value = yieldValue,
-             flag = yieldObservationFlag)
+             flag = yieldObservationFlag,
+             naFlag = naFlag)
 
     if(removeConflictValues){
         removeZeroConflict(data = data)

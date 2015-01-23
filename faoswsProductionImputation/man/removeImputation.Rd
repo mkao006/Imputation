@@ -4,7 +4,7 @@
 \alias{removeImputation}
 \title{Function to remove prior imputation.}
 \usage{
-removeImputation(data, value, flag, imputedFlag = "T", naFlag = "M")
+removeImputation(data, value, flag, processingParameters = NULL)
 }
 \arguments{
 \item{data}{The data.table object containing the values.}
@@ -28,8 +28,8 @@ Function to remove prior imputation.
 \examples{
 data = copy(okrapd[areaName=="Sudan",])
 data[,.(yieldValue, yieldFlag)]
-removeImputation( data = data, value = "yieldValue", flag = "yieldFlag",
-    imputedFlag = "T", naFlag = "M" )
+removeImputation(data = data, value = "yieldValue", flag = "yieldFlag",
+    imputedFlag = "T", naFlag = "M")
 data[,.(yieldValue, yieldFlag)]
 }
 

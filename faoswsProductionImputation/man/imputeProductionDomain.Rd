@@ -4,12 +4,8 @@
 \alias{imputeProductionDomain}
 \title{This function imputes the whole production domain.}
 \usage{
-imputeProductionDomain(data, columnNames = defaultColumnNames(),
-  flagTable = faoswsFlagTable, removePriorImputation = TRUE,
-  removeConflictValues = TRUE, imputedFlag = "E", imputationFlag = "I",
-  newMethodFlag = "", naFlag = "M", restrictWeights = TRUE,
-  maximumWeights = 0.7, ensembleModels = allDefaultModels(),
-  errorType = "loocv", errorFunction = function(x) mean(x^2))
+imputeProductionDomain(data, processingParameters, yieldImputationParameters,
+  productionImputationParameters)
 }
 \arguments{
 \item{data}{The data}
@@ -37,6 +33,10 @@ imputation, ignored if removePriorImputation is FALSE.}
 
 \item{imputationFlag}{Flag value for new imputation values.}
 
+\item{newMethodFlag}{The character value that should be assigned to
+*ObservationFlag when *Value is imputed (*=production, yield, or
+areaHarvested).}
+
 \item{naFlag}{Flag value for missing values.}
 
 \item{restrictWeights}{Whether a maximum weight restriction should
@@ -45,8 +45,11 @@ be imposed.}
 \item{maximumWeights}{The maximum weight to be imposed, must be
 between [0.5, 1].}
 
-\item{ensembleModels}{A list of models to be used to build the
-ensemble.}
+\item{ensembleModelsYield}{A list of models to be used to build the
+ensemble for the yield variable.}
+
+\item{ensembleModelsProduction}{A list of models to be used to build the
+ensemble for the production variable.}
 
 \item{errorType}{See ?computeErrorRate.}
 

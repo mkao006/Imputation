@@ -4,11 +4,19 @@
 \alias{defaultMixedModel}
 \title{Mixed Model for Imputation}
 \usage{
-defaultMixedModel(data, value, flag, columnNames, maxdf = 5, weights = NULL,
-  modelFormula)
+defaultMixedModel(data, maxdf = 5, weights = NULL, modelFormula,
+  imputationParameters = NULL)
 }
 \arguments{
 \item{data}{The data.table object containing the data.}
+
+\item{maxdf}{The maximum degree of freedom for the spline.}
+
+\item{weights}{The weights for the observation}
+
+\item{modelFormula}{Formula specifying how the dependent variable (value)
+depends on the other columns of data.  Should be a valid mixed model
+formula, as it will be passed to lmer (R's mixed model function).}
 
 \item{value}{Which variable should be imputed?  This should be one of the
 column names of data corresponding to productionValue, yieldValue, or
@@ -19,14 +27,6 @@ argument, i.e. "productionObservationFlag", "yieldObservationFlag", or
 "areaHarvestedObservationFlag".}
 
 \item{columnNames}{See the same argument at ?imputeProductionDomain.}
-
-\item{maxdf}{The maximum degree of freedom for the spline.}
-
-\item{weights}{The weights for the observation}
-
-\item{modelFormula}{Formula specifying how the dependent variable (value)
-depends on the other columns of data.  Should be a valid mixed model
-formula, as it will be passed to lmer (R's mixed model function).}
 }
 \value{
 Returns a vector of the estimated/imputed values.  If a value

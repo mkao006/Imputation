@@ -29,7 +29,7 @@ imputeVariable = function(data, imputationParameters){
     stopifnot(!is.null(imputationParameters))
     assignParameters(imputationParameters)
     if(!ensuredData)
-        ensureData(data = data)
+        ensureImputationData(data = data)
     if(!ensuredFlagTable)
         ensureFlagTable(flagTable = flagTable, data = data)
 

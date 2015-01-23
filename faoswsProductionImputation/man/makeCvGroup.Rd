@@ -4,7 +4,7 @@
 \alias{makeCvGroup}
 \title{Make Cross-Validation Groups}
 \usage{
-makeCvGroup(data, value, byKey, groupCount = 10)
+makeCvGroup(data)
 }
 \arguments{
 \item{data}{A data.table object containing the data.}

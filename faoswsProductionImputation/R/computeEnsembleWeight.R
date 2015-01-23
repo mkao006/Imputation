@@ -15,7 +15,9 @@
 ##' restricted, however: no weights may be negative and the weights must sum to
 ##' one.
 ##' @param imputationParameters A list of the parameters for the imputation
-##' algorithms.  See defaultImputationParameters() for a starting point.
+##' algorithms.  See defaultImputationParameters() for a starting point. If
+##' NULL, the parameters should have already been assigned (otherwise an error
+##' will occur).
 ##' 
 ##' @export
 ##' 
@@ -29,7 +31,7 @@ computeEnsembleWeight = function(data, cvGroup, fits, method = "inverse",
     if(!is.null(imputationParameters))
         assignParameters(imputationParameters)
     if(!ensuredData)
-        ensureData(data = data)
+        ensureImputationData(data = data)
     if(!ensuredFlagTable)
         ensureFlagTable(flagTable = flagTable, data = data)
     if(!all(lapply(fits, length) == nrow(data)))

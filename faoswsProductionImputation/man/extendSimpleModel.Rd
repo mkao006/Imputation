@@ -4,7 +4,7 @@
 \alias{extendSimpleModel}
 \title{Extend Simple Model}
 \usage{
-extendSimpleModel(data, model, value, flag, columnNames)
+extendSimpleModel(data, model, imputationParameters = NULL)
 }
 \arguments{
 \item{data}{The data.table object containing the data.}
@@ -12,15 +12,10 @@ extendSimpleModel(data, model, value, flag, columnNames)
 \item{model}{The model to be applied to each individual time series.
 Typically, this will be a function such as one from allDefaultModels().}
 
-\item{value}{Which variable should be imputed?  This should be one of the
-column names of data, typically corresponding to productionValue,
-yieldValue, or areaHarvestedValue.}
-
-\item{flag}{Column name (of data) of the flag variable corresponding to the
-value argument, i.e. "productionObservationFlag", "yieldObservationFlag",
-or "areaHarvestedObservationFlag".}
-
-\item{columnNames}{See the same argument at ?imputeProductionDomain.}
+\item{imputationParameters}{A list of the parameters for the imputation
+algorithms.  See defaultImputationParameters() for a starting point. If
+NULL, the parameters should have already been assigned (otherwise an error
+will occur).}
 }
 \value{
 Returns a vector of the estimated/imputed values.  If a value

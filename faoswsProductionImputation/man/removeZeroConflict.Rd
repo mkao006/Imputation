@@ -5,14 +5,14 @@
 \title{The function removes conflicting zeroes between production and
 area harvested.}
 \usage{
-removeZeroConflict(columnNames, naFlag = "M", data)
+removeZeroConflict(data, processingParameters = NULL)
 }
 \arguments{
+\item{data}{The data table objest}
+
 \item{columnNames}{See columnNames argument at ?imputeProductionDomain.}
 
 \item{naFlag}{Flag value for missing values.}
-
-\item{data}{The data table objest}
 }
 \value{
 No value is returned.  However, the object "data" which was passed
@@ -24,8 +24,8 @@ area harvested.
 }
 \examples{
 data = okrapd[1:10,]
-data[,areaHarvestedValue := c(rep(0,5), rep(100,5))]
-data[,productionValue := c(0,0,100,100,100,0,0,100,100,100)]
+data[,areaHarvestedValue := c(rep(0, 5), rep(100, 5))]
+data[,productionValue := c(0, 0, 100, 100, 100, 0, 0, 100, 100, 100)]
 removeZeroConflict(columnNames = defaultColumnNames(), data = data)
 data[,.(areaHarvestedValue, areaHarvestedFlag, productionValue,
     productionFlag, yieldValue, yieldFlag)]

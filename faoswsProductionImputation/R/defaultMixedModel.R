@@ -3,18 +3,15 @@
 ##' This function imputes missing values through linear mixed model.
 ##'
 ##' @param data The data.table object containing the data.
-##' @param value Which variable should be imputed?  This should be one of the
-##' column names of data corresponding to productionValue, yieldValue, or
-##' areaHarvestedValue.
-##' @param flag Column name (of data) of the flag variable corresponding to the value
-##' argument, i.e. "productionObservationFlag", "yieldObservationFlag", or
-##' "areaHarvestedObservationFlag".
-##' @param columnNames See the same argument at ?imputeProductionDomain.
 ##' @param maxdf The maximum degree of freedom for the spline.
 ##' @param weights The weights for the observation
 ##' @param modelFormula Formula specifying how the dependent variable (value)
 ##' depends on the other columns of data.  Should be a valid mixed model
 ##' formula, as it will be passed to lmer (R's mixed model function).
+##' @param imputationParameters A list of the parameters for the imputation
+##' algorithms.  See defaultImputationParameters() for a starting point. If
+##' NULL, the parameters should have already been assigned (otherwise an error
+##' will occur).
 ##' 
 ##' @return Returns a vector of the estimated/imputed values.  If a value
 ##' existed in the original data, then an NA is returned in that location.

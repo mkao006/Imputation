@@ -5,9 +5,10 @@
 ##' vector should be integers from 1 to the number of cross-validation groups
 ##' (typically 10).  This should be randomly assigned, and is usually created
 ##' by ensembleImpute.
-##' @param imputationParameters Specifies the imputation parameters to use, see
-##' ?defaultImputationParameters.  If NULL, whatever currently exists will be
-##' used.
+##' @param imputationParameters A list of the parameters for the imputation
+##' algorithms.  See defaultImputationParameters() for a starting point. If
+##' NULL, the parameters should have already been assigned (otherwise an error
+##' will occur).
 ##' 
 ##' @return A list of the same length as ensembleModels which contains the
 ##' fitted values corresponding to the loocv procedure.  The ith element of the
@@ -24,20 +25,16 @@ computeLoocvFits = function(data, cvGroup, imputationParameters = NULL){
     if(!is.null(imputationParameters))
         assignParameters(imputationParameters)
     if(!ensuredData)
-        ensureData(data = data)
+        ensureImputationData(data = data)
     stopifnot(length(cvGroup) == nrow(data))
     
     fits = lapply(1:length(ensembleModels), FUN = function(i){
         model = ensembleModels[[i]]
         fit = rep(NA, nrow(data))
-        for(j in 1:length(unique(cvGroup[!is.na(cvGroup)]))){
+        for(j in unique(cvGroup[!is.na(cvGroup)])){
             #Copy x and remove the ith observation to fit the model
             dataTemporary = copy(data)
-            setnames(dataTemporary, old = imputationValueColumn,
-                     new = "imputationValueColumn")
-            dataTemporary[cvGroup == j, imputationValueColumn := NA]
-            setnames(dataTemporary, old = "imputationValueColumn",
-                     new = imputationValueColumn)
+            dataTemporary[cvGroup == j, c(imputationValueColumn) := NA]
             if(model@level == "commodity"){
                 fitTemporary = model@model(data = dataTemporary)
             } else if(model@level == "countryCommodity"){
