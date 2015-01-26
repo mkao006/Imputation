@@ -10,50 +10,16 @@ imputeProductionDomain(data, processingParameters, yieldImputationParameters,
 \arguments{
 \item{data}{The data}
 
-\item{columnNames}{A named character vector.  This argument specifies what
-each of the relevant columns of data correspond to.  The values of this
-vector should correspond to column names of data, and the names of this
-vector should be productionValue, productionObservationFlag,
-productionMethodFlag, areaHarvestedValue, areaHarvestedObservationFlag,
-areaHarvestedMethodFlag, yieldValue, yieldObservationFlag, yieldMethodFlag,
-yearValue, and byKey.  Ordering of this vector is not important, and it may
-have additional elements, but it must have the elements listed above.  The
-defaultColumnNames function may be helpful in setting up a starting point.}
+\item{processingParameters}{A list of the parameters for the production
+processing algorithms.  See defaultProductionParameters() for a starting
+point.}
 
-\item{flagTable}{see data(faoswsFlagTable) in \pkg{faoswsFlag}}
+\item{yieldImputationParameters}{A list of the parameters for the
+yield imputation.  See defaultImputationParameters() for a starting point.}
 
-\item{removePriorImputation}{logical, whether prior imputation
-should be removed.}
-
-\item{removeConflictValues}{logical, whether conflict area
-harvested value and production should be removed.}
-
-\item{imputedFlag}{Flag value corresponding to values from prior
-imputation, ignored if removePriorImputation is FALSE.}
-
-\item{imputationFlag}{Flag value for new imputation values.}
-
-\item{newMethodFlag}{The character value that should be assigned to
-*ObservationFlag when *Value is imputed (*=production, yield, or
-areaHarvested).}
-
-\item{naFlag}{Flag value for missing values.}
-
-\item{restrictWeights}{Whether a maximum weight restriction should
-be imposed.}
-
-\item{maximumWeights}{The maximum weight to be imposed, must be
-between [0.5, 1].}
-
-\item{ensembleModelsYield}{A list of models to be used to build the
-ensemble for the yield variable.}
-
-\item{ensembleModelsProduction}{A list of models to be used to build the
-ensemble for the production variable.}
-
-\item{errorType}{See ?computeErrorRate.}
-
-\item{errorFunction}{See ?computeEnsembleWeight.}
+\item{productionImputationParameters}{A list of the parameters for the
+production imputation.  See defaultImputationParameters() for a starting
+point.}
 }
 \description{
 The function will impute production, area harvested and yield at

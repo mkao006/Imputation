@@ -4,13 +4,13 @@
 \alias{ensembleImpute}
 \title{Function to perform ensemble imputation}
 \usage{
-ensembleImpute(data, imputationParameters = NULL)
+ensembleImpute(data, imputationParameters)
 }
 \arguments{
 \item{data}{A data.table containing the data.}
 
-\item{imputationParameters}{A list of the parameters necessary to perform
-the imputation.  See ?defaultImputationParameters.}
+\item{imputationParameters}{A list of the parameters for the imputation
+algorithms.  See defaultImputationParameters() for a starting point.}
 }
 \description{
 This is an implementation of the ensemble imputation methodology

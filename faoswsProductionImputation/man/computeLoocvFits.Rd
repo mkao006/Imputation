@@ -4,7 +4,7 @@
 \alias{computeLoocvFits}
 \title{Function to compute the fitted values from Leave One Out Cross Validation}
 \usage{
-computeLoocvFits(data, cvGroup, imputationParameters = NULL)
+computeLoocvFits(data, cvGroup, imputationParameters)
 }
 \arguments{
 \item{data}{A data.table containing the data.}
@@ -15,9 +15,7 @@ vector should be integers from 1 to the number of cross-validation groups
 by ensembleImpute.}
 
 \item{imputationParameters}{A list of the parameters for the imputation
-algorithms.  See defaultImputationParameters() for a starting point. If
-NULL, the parameters should have already been assigned (otherwise an error
-will occur).}
+algorithms.  See defaultImputationParameters() for a starting point.}
 }
 \value{
 A list of the same length as ensembleModels which contains the

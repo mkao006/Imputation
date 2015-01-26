@@ -8,7 +8,6 @@
 ##' @param data The data
 ##' @param value The value of the production.
 ##' @param flag The flag/symbol of production.
-##' @param byKey The unique keys which identify groups.
 ##' @param environment The functions in this package generally work by
 ##' passing the data.table by reference and modifying it in place.  In place
 ##' row deletion is currently not supported by data.table.  Thus, to make this
@@ -23,21 +22,20 @@
 ##' @export
 ##' 
 
-removeNoInfo = function (data, value, flag, processingParameters = NULL,
+removeNoInfo = function (data, value, flag, processingParameters,
     environment = parent.frame(1)){
     
     ### Data Quality Checks
-    if(!exists("parametersAssigned") || !parametersAssigned)
-        stopifnot(!is.null(processingParameters))
-    if(!is.null(processingParameters))
-        assignParameters(processingParameters)
-    if(!ensuredData)
-        ensureData(data = data)
+    if(!ensuredProcessingParameters)
+        ensureProcessingParameters(processingParameters = processingParameters)
+    if(!ensuredProductionData)
+        ensureProductionData(data = data)
     stopifnot(c(value, flag) %in% colnames(data))
     stopifnot(is(environment, "environment"))
     
-    info = data[, rep(containInfo(get(value), get(flag)),
-        NROW(.SD)), by = byKey]$V1
+    info = data[, rep(containInfo(value = get(value), flag = get(flag),
+                                  processingParameters = processingParameters),
+        NROW(.SD)), by = processingParameters$byKey]$V1
     
     #Assign the new data.table to environment
     dataTableName = as.character(match.call()$data)

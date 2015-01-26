@@ -4,7 +4,7 @@
 \alias{computeErrorRate}
 \title{Function to compute the error of different model fits}
 \usage{
-computeErrorRate(data, fit)
+computeErrorRate(data, fit, imputationParameters)
 }
 \arguments{
 \item{data}{A data.table containing the data.}

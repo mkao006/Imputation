@@ -9,14 +9,17 @@
 ##' @export
 ##' 
 
-computeErrorRate = function(data, fit){
+computeErrorRate = function(data, fit, imputationParameters){
     
     ### Data Quality Checks
-    if(!ensuredData)
-        ensureData(data = data)
+    if(!ensuredImputationParameters)
+        ensureImputationParameters(imputationParameters = imputationParameters)
+    if(!ensuredImputationData)
+        ensureImputationData(data = data,
+                             imputationParameters = imputationParameters)
     
     ### Run the function:
-    x = data[[imputationValueColumn]]
+    x = data[[imputationParameters$imputationValueColumn]]
     if(all(is.na(x - fit))){
         er = rep(NA, length.out = nrow(data))
     } else {

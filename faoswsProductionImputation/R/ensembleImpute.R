@@ -4,41 +4,44 @@
 ##' developed for the FAO production domain.
 ##'
 ##' @param data A data.table containing the data.
-##' @param imputationParameters A list of the parameters necessary to perform
-##' the imputation.  See ?defaultImputationParameters.
+##' @param imputationParameters A list of the parameters for the imputation
+##' algorithms.  See defaultImputationParameters() for a starting point.
 ##'
 ##' @export
 ##' 
 
-ensembleImpute = function(data, imputationParameters = NULL){
+ensembleImpute = function(data, imputationParameters){
 
     ### Data Quality Checks
-    if(!exists("parametersAssigned"))
-        stopifnot(!is.null(imputationParameters))
-    if(!is.null(imputationParameters))
-        assignParameters(imputationParameters)
-    if(!ensuredData)
-        ensureImputationData(data = data)
+    if(!ensuredImputationParameters)
+        ensureImputationParameters(imputationParameters = imputationParameters)
+    if(!ensuredImputationData)
+        ensureImputationData(data = data,
+                             imputationParameters = imputationParameters)
     if(!ensuredFlagTable)
-        ensureFlagTable(flagTable = flagTable, data = data)
-    valueMissingIndex = is.na(data[[imputationValueColumn]])
-    flagMissingIndex = (data[[imputationFlagColumn]] == missingFlag)
+        ensureFlagTable(flagTable = imputationParameters$flagTable,
+                        data = data,
+                        imputationParameters = imputationParameters)
+    valueMissingIndex = is.na(
+        data[[imputationParameters$imputationValueColumn]])
+    flagMissingIndex = (data[[imputationParameters$imputationFlagColumn]] ==
+                            imputationParameters$missingFlag)
     # Ensure missing values agree with missing flags
-    if(!all(valueMissingIndex == flagMissingIndex)){
+    if(!all(valueMissingIndex == imputationParameters$flagMissingIndex)){
         cat("Values that are NA: ", sum(valueMissingIndex), "\n")
         cat("Flags with missingFlag value: ", sum(flagMissingIndex), "\n")
         stop("Different missing values from flags/values!  Maybe call remove0M?")
     }
-    if(is.null(names(ensembleModels)))
-        names(ensembleModels) = paste("Model", 1:length(ensembleModels),
-                                      sep = "_")
-    if(!any(is.na(data[[imputationValueColumn]]))){
+    if(is.null(names(imputationParameters$ensembleModels)))
+        names(imputationParameters$ensembleModels) = paste(
+            "Model", 1:length(imputationParameters$ensembleModels), sep = "_")
+    if(!any(is.na(data[[imputationParameters$imputationValueColumn]]))){
         warning("No missing values in data[[imputationValueColumn]].",
         "Returning data[[imputationValueColumn]]")
-        return(data[[imputationValueColumn]])
+        return(data[[imputationParameters$imputationValueColumn]])
     }
     
-    ensemble = data[[imputationValueColumn]]
+    ensemble = data[[imputationParameters$imputationValueColumn]]
     missIndex = is.na(ensemble)
     cvGroup = makeCvGroup(data = data)
     modelFits = computeEnsembleFit(data = data)

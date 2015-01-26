@@ -4,7 +4,7 @@
 \alias{ensureFlagTable}
 \title{Ensure Flag Table}
 \usage{
-ensureFlagTable(flagTable, data)
+ensureFlagTable(flagTable, data, imputationParameters)
 }
 \arguments{
 \item{flagTable}{see data(faoswsFlagTable) in \pkg{faoswsFlag}}

@@ -1,8 +1,6 @@
 ##' The function removes conflicting zeroes between production and
 ##' area harvested.
 ##'
-##' @param columnNames See columnNames argument at ?imputeProductionDomain.
-##' @param naFlag Flag value for missing values.
 ##' @param data The data table objest
 ##'
 ##' @return No value is returned.  However, the object "data" which was passed
@@ -17,23 +15,21 @@
 ##'
 ##' @export
 
-removeZeroConflict = function(data, processingParameters = NULL){
+removeZeroConflict = function(data, processingParameters){
     
     ### Data Quality Checks
-    if(!exists("parametersAssigned") || !parametersAssigned)
-        stopifnot(!is.null(processingParameters))
-    if(!is.null(processingParameters))
-        assignParameters(processingParameters)
-    if(!ensuredData)
-        ensureData(data = data)
+    if(!ensuredProcessingParameters)
+        ensureProcessingParameters(processingParameters = processingParameters)
+    if(!ensuredProductionData)
+        ensureProductionData(data = data)
     
     setnames(x = data,
-             old = c(productionValue,
-                     areaHarvestedValue,
-                     yieldValue,
-                     productionObservationFlag,
-                     areaHarvestedObservationFlag,
-                     yieldObservationFlag),
+             old = c(processingParameters$productionValue,
+                     processingParameters$areaHarvestedValue,
+                     processingParameters$yieldValue,
+                     processingParameters$productionObservationFlag,
+                     processingParameters$areaHarvestedObservationFlag,
+                     processingParameters$yieldObservationFlag),
              new = c("productionValue",
                      "areaHarvestedValue",
                      "yieldValue",
@@ -60,11 +56,11 @@ removeZeroConflict = function(data, processingParameters = NULL){
                      "productionObservationFlag",
                      "areaHarvestedObservationFlag",
                      "yieldObservationFlag"),
-             new = c(productionValue,
-                     areaHarvestedValue,
-                     yieldValue,
-                     productionObservationFlag,
-                     areaHarvestedObservationFlag,
-                     yieldObservationFlag))
+             new = c(processingParameters$productionValue,
+                     processingParameters$areaHarvestedValue,
+                     processingParameters$yieldValue,
+                     processingParameters$productionObservationFlag,
+                     processingParameters$areaHarvestedObservationFlag,
+                     processingParameters$yieldObservationFlag))
     
 }

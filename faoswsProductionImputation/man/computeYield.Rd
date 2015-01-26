@@ -34,6 +34,9 @@ observation flag of yield.}
 \item{flagTable}{see data(faoswsFlagTable) in \pkg{faoswsFlag}}
 
 \item{data}{The data.table object containing the data.}
+
+\item{unitConversion}{Yield is computed as (production) / (area) and
+multiplied by unitConversion.  This parameter defaults to 1.}
 }
 \description{
 Function to compute and update yield

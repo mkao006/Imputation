@@ -4,7 +4,7 @@
 \alias{getWeightMatrix}
 \title{Get Weight Matrix}
 \usage{
-getWeightMatrix(data, w, imputationParameters = NULL)
+getWeightMatrix(data, w, imputationParameters)
 }
 \arguments{
 \item{data}{The data.table containing the data.}
@@ -14,17 +14,8 @@ computeEnsembleWeight.  There should be at least three columns: byKey,
 model, and weight.  Weight gives the model weight for model within the
 byKey group.}
 
-\item{value}{The column name of data which contains the variable being
-imputed.}
-
-\item{byKey}{The column name of data which specifies the grouping
-(typically the areaCode).}
-
-\item{yearValue}{The column name of data which specifies the year.}
-
-\item{ensembleModels}{The list of ensemble models used.  Each element of
-this list should be of class ensembleModel.  This is used to determine
-the extrapolation range of each model in the ensemble.}
+\item{imputationParameters}{A list of the parameters for the imputation
+algorithms.  See defaultImputationParameters() for a starting point.}
 }
 \value{
 A matrix of weights that can be multiplied by the fitted models to

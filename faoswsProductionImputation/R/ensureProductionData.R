@@ -60,5 +60,8 @@ ensureProductionData = function(data){
     }
     
     ### Globally assign ensuredData so data will not need to be ensured again
-    reassignGlobalVariable("ensuredData", TRUE)
+    if(exists("ensuredProductionData"))
+        reassignGlobalVariable("ensuredProductionData", TRUE)
+    else
+        ensuredProductionData <<- TRUE
 }

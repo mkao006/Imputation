@@ -18,17 +18,16 @@
 ##'
 ##' @export
 
-removeImputation = function(data, value, flag, processingParameters = NULL){
+removeImputation = function(data, value, flag, processingParameters){
     
     ### Data Quality Checks
-    if(!exists("parametersAssigned") || !parametersAssigned)
-        stopifnot(!is.null(processingParameters))
-    if(!is.null(processingParameters))
-        assignParameters(processingParameters)
-    if(!ensuredData)
-        ensureData(data = data)
+    if(!ensuredProcessingParameters)
+        ensureProcessingParameters(processingParameters = processingParameters)
+    if(!ensuredProductionData)
+        ensureProductionData(data = data)
     stopifnot(c(value, flag) %in% colnames(data))
     
-    imputedIndex = which(data[[flag]] %in% imputedFlag)
-    invisible(data[imputedIndex, `:=`(c(value, flag), list(NA, naFlag))])
+    imputedIndex = which(data[[flag]] %in% processingParameters$imputedFlag)
+    invisible(data[imputedIndex, `:=`(c(value, flag),
+                                      list(NA, processingParameters$naFlag))])
 }

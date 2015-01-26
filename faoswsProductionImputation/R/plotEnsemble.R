@@ -28,10 +28,14 @@
 ##' 
 
 plotEnsemble = function(data, modelFits, modelWeights, ensemble,
-                        returnFormat = "faceted"){
+                        imputationParameters, returnFormat = "faceted"){
     
     ### Data Quality Checks
-    stopifnot(is(data, "data.table"))
+    if(!ensuredImputationParameters)
+        ensureImputationParameters(imputationParameters = imputationParameters)
+    if(!ensuredImputationData)
+        ensureImputationData(data = data,
+                             imputationParameters = imputationParameters)
     stopifnot(is(modelFits, "list"))
     stopifnot(is(modelWeights, "data.table"))
     stopifnot(length(modelFits) == ncol(modelWeights))
@@ -43,12 +47,15 @@ plotEnsemble = function(data, modelFits, modelWeights, ensemble,
     stopifnot(returnFormat %in% c("faceted", "individual", "prompt"))
     
     ### Set up toPlot data.table (holds data for ggplot call)
-    plotKeys = data[, any(is.na(get(imputationValueColumn))), by = byKey]
-    plotKeys = plotKeys[(V1), get(byKey)]
-    filter = data[, get(byKey) %in% plotKeys]
+    plotKeys = data[, any(is.na(get(imputationValueColumn))),
+                    by = imputationParameters$byKey]
+    plotKeys = plotKeys[(V1), get(imputationParameters$byKey)]
+    filter = data[, get(imputationParameters$byKey) %in% plotKeys]
     toPlot = data[filter, ]
     toPlot$ensemble = ensemble[filter]
-    setnames(toPlot, old = c(yearValue, byKey, imputationValueColumn),
+    setnames(toPlot, old = c(imputationParameters$yearValue,
+                             imputationParameters$byKey,
+                             imputationParameters$imputationValueColumn),
              new = c("year", "byKey", "imputationValueColumn"))
     
     ### Set up toPlotModels data.table

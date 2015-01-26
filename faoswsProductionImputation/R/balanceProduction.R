@@ -3,24 +3,23 @@
 ##'
 ##' @param data The data.table object containing the data.
 ##' @param imputationParameters A list of the parameters for the imputation
-##' algorithms.  See defaultImputationParameters() for a starting point. If
-##' NULL, the parameters should have already been assigned (otherwise an error
-##' will occur).
+##' algorithms.  See defaultImputationParameters() for a starting point.
 ##'
 ##' @export
 ##' 
 
-balanceProduction = function(data, imputationParameters = NULL){
+balanceProduction = function(data, imputationParameters){
 
     ### Data Quality Checks
-    if(!exists("parametersAssigned"))
-        stopifnot(!is.null(imputationParameters))
-    if(!is.null(imputationParameters))
-        assignParameters(imputationParameters)
-    if(!ensuredData)
-        ensureData(data = data)
+    if(!ensuredImputationParameters)
+        ensureImputationParameters(imputationParameters = imputationParameters)
+    if(!ensuredImputationData)
+        ensureImputationData(data = data,
+                             imputationParameters = imputationParameters)
     if(!ensuredFlagTable)
-        ensureFlagTable(flagTable = flagTable, data = data)
+        ensureFlagTable(flagTable = imputationParameters$flagTable,
+                        data = data,
+                        imputationParameters = imputationParameters)
     
     origName = c(productionValue, productionObservationFlag,
         productionMethodFlag, areaHarvestedValue,

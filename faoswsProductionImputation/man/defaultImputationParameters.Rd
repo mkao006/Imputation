@@ -16,15 +16,4 @@ ensemble imputation code.  This is a good way to get a list of the required
 parameters and then modify parameters to match your particular
 configuration.
 }
-\note{
-Currently, three parameters are not directly used for the
-pre-processing: ensuredData, ensuredFlagTable, and parametersAssigned.
-The first two of these will become global variables, and they will be
-changed to TRUE once the objects data and flagTable pass a series of
-checks.  Once they are true, the checks will not be ran again (unless a
-function causes them to be set to FALSE and ensureData() or
-ensureFlagTable() is called again).  parametersAssigned indicates that the
-parameters in this function have already been assigned to the global
-environment and that they do not need to be assigned again.
-}
 

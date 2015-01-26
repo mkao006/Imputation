@@ -6,9 +6,7 @@
 ##' (typically 10).  This should be randomly assigned, and is usually created
 ##' by ensembleImpute.
 ##' @param imputationParameters A list of the parameters for the imputation
-##' algorithms.  See defaultImputationParameters() for a starting point. If
-##' NULL, the parameters should have already been assigned (otherwise an error
-##' will occur).
+##' algorithms.  See defaultImputationParameters() for a starting point.
 ##' 
 ##' @return A list of the same length as ensembleModels which contains the
 ##' fitted values corresponding to the loocv procedure.  The ith element of the
@@ -17,35 +15,37 @@
 ##' @export
 ##' 
 
-computeLoocvFits = function(data, cvGroup, imputationParameters = NULL){
+computeLoocvFits = function(data, cvGroup, imputationParameters){
     
     ### Data Quality Checks
-    if(!exists("parametersAssigned") || !parametersAssigned)
-        stopifnot(!is.null(imputationParameters))
-    if(!is.null(imputationParameters))
-        assignParameters(imputationParameters)
-    if(!ensuredData)
-        ensureImputationData(data = data)
+    if(!ensuredImputationParameters)
+        ensureImputationParameters(imputationParameters = imputationParameters)
+    if(!ensuredImputationData)
+        ensureImputationData(data = data,
+                             imputationParameters = imputationParameters)
     stopifnot(length(cvGroup) == nrow(data))
     
     fits = lapply(1:length(ensembleModels), FUN = function(i){
-        model = ensembleModels[[i]]
+        model = imputationParameters$ensembleModels[[i]]
         fit = rep(NA, nrow(data))
         for(j in unique(cvGroup[!is.na(cvGroup)])){
             #Copy x and remove the ith observation to fit the model
             dataTemporary = copy(data)
-            dataTemporary[cvGroup == j, c(imputationValueColumn) := NA]
+            dataTemporary[cvGroup == j,
+                          c(imputationParameters$imputationValueColumn) := NA]
             if(model@level == "commodity"){
                 fitTemporary = model@model(data = dataTemporary)
             } else if(model@level == "countryCommodity"){
                 fitTemporary = extendSimpleModel(data = dataTemporary,
-                                                 model = model@model)
+                                                 model = model@model,
+                                                 imputationParameters =
+                                                     imputationParameters)
             }
             filter = !is.na(cvGroup) & cvGroup == j
             fit[filter] = fitTemporary[filter]
         }
         return(fit)
     })
-    names(fits) = names(ensembleModels)
+    names(fits) = names(imputationParameters$ensembleModels)
     return(fits)
 }

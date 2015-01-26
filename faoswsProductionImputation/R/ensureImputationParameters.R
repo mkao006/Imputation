@@ -7,8 +7,8 @@
 ##' are not as expected.
 ##' 
 
-ensureImputationParameters = function(parameterList){
-    p = parameterList
+ensureImputationParameters = function(imputationParameters){
+    p = imputationParameters
     stopifnot(is.character(c(p$yearValue, p$byKey)))
     stopifnot(p$variable %in% c("production", "yield", "seed"))
     stopifnot(is(p$ensembleModels, "list"))

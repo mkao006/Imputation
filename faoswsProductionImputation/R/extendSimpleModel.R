@@ -8,9 +8,7 @@
 ##' @param model The model to be applied to each individual time series.  
 ##' Typically, this will be a function such as one from allDefaultModels().
 ##' @param imputationParameters A list of the parameters for the imputation
-##' algorithms.  See defaultImputationParameters() for a starting point. If
-##' NULL, the parameters should have already been assigned (otherwise an error
-##' will occur).
+##' algorithms.  See defaultImputationParameters() for a starting point.
 ##' 
 ##' @return Returns a vector of the estimated/imputed values.  If a value
 ##' existed in the original data, then an NA is returned in that location.
@@ -18,27 +16,30 @@
 ##' @export
 ##' 
 
-extendSimpleModel = function(data, model, imputationParameters = NULL){
+extendSimpleModel = function(data, model, imputationParameters){
     
     ### Data Quality Checks
-    if(!exists("parametersAssigned") || !parametersAssigned)
-        stopifnot(!is.null(imputationParameters))
-    if(!is.null(imputationParameters))
-        assignParameters(imputationParameters)
-    if(!ensuredData)
-        ensureData(data = data)
+    if(!ensuredImputationParameters)
+        ensureImputationParameters(imputationParameters = imputationParameters)
+    if(!ensuredImputationData)
+        ensureImputationData(data = data,
+                             imputationParameters = imputationParameters)
     if(!ensuredFlagTable)
-        ensureFlagTable(flagTable = flagTable, data = data)
+        ensureFlagTable(flagTable = imputationParameters$flagTable,
+                        data = data,
+                        imputationParameters = imputationParameters)
     
-    setnames(data, old = imputationValueColumn, new = "imputationValueColumn")
-    missingIndex = is.na(data[, imputationValueColumn])
+    setnames(data, old = imputationParameters$imputationValueColumn,
+             new = "imputationValueColumn")
+    missingIndex = is.na(data[, imputationParameters$imputationValueColumn])
     modelFit = data[,
         # Apply the model if there is a missing value.  Else, return the data
-        if(any(is.na(imputationValueColumn))){
-            model(imputationValueColumn)
+        if(any(is.na(imputationParameters$imputationValueColumn))){
+            model(imputationParameters$imputationValueColumn)
         } else {
-            imputationValueColumn
-        }, by = byKey]
-    setnames(data, old = "imputationValueColumn", new = imputationValueColumn)
+            imputationParameters$imputationValueColumn
+        }, by = imputationParameters$byKey]
+    setnames(data, old = "imputationValueColumn",
+             new = imputationParameters$imputationValueColumn)
     return(modelFit$V1)
 }

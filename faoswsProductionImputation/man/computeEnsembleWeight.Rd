@@ -5,7 +5,7 @@
 \title{Function to compute the weights of the ensemble models}
 \usage{
 computeEnsembleWeight(data, cvGroup, fits, method = "inverse",
-  imputationParameters = NULL)
+  imputationParameters)
 }
 \arguments{
 \item{data}{A data.table containing the data.}
@@ -27,9 +27,7 @@ restricted, however: no weights may be negative and the weights must sum to
 one.}
 
 \item{imputationParameters}{A list of the parameters for the imputation
-algorithms.  See defaultImputationParameters() for a starting point. If
-NULL, the parameters should have already been assigned (otherwise an error
-will occur).}
+algorithms.  See defaultImputationParameters() for a starting point.}
 }
 \description{
 Function to compute the weights of the ensemble models

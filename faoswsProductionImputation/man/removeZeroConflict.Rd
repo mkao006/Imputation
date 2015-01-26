@@ -5,14 +5,10 @@
 \title{The function removes conflicting zeroes between production and
 area harvested.}
 \usage{
-removeZeroConflict(data, processingParameters = NULL)
+removeZeroConflict(data, processingParameters)
 }
 \arguments{
 \item{data}{The data table objest}
-
-\item{columnNames}{See columnNames argument at ?imputeProductionDomain.}
-
-\item{naFlag}{Flag value for missing values.}
 }
 \value{
 No value is returned.  However, the object "data" which was passed

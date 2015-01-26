@@ -14,12 +14,10 @@
 ##' @export
 ##' 
 
-ensureFlagTable = function(flagTable, data){
+ensureFlagTable = function(flagTable, data, imputationParameters){
     
     ### Before running tests, ensure all necessary variables exist
-    requiredVariables = c("ensuredFlagTable", "parametersAssigned",
-                          "ensuredData", "imputationFlagColumn")
-    missingVariables = requiredVariables[!sapply(requiredVariables, exists)]
+    stopifnot(!imputationParameters$imputationFlagColumn %in% colnames(data))
     if(length(missingVariables) > 0)
         stop("Data cannot be ensured without the existence of these variables:\n\t",
              paste(missingVariables, collapse = "\n\t"),
@@ -27,8 +25,9 @@ ensureFlagTable = function(flagTable, data){
              "defaultImputationParameters() or defaultProcessingParameters()?")
     
     ## Check data is valid
-    if(!ensuredData)
-        ensureImputationData(data)
+    if(!ensuredImputationData)
+        ensureImputationData(data = data,
+                             imputationParameters = imputationParameters)
     
     ## Check structure of flagTable
     stopifnot(colnames(flagTable) ==
@@ -45,8 +44,11 @@ ensureFlagTable = function(flagTable, data){
     }
     
     ## Ensure flags of flagTable are valid
-    stopifnot(checkObservationFlag(flagTable[["flagObservationStatus"]]))
+    stopifnot(checkObservationFlag(flagTable[[imputationParameters$flagObservationStatus]]))
     
     ### Globally assign ensuredFlagTable so flagTable will not be ensured again
-    reassignGlobalVariable("ensuredFlagTable", TRUE)
+    if(exists("ensuredFlagTable"))
+        reassignGlobalVariable("ensuredFlagTable", TRUE)
+    else
+        ensuredFlagTable <<- TRUE
 }

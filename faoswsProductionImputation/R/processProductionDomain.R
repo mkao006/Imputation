@@ -2,61 +2,59 @@
 ##' preparation of the imputation.
 ##'
 ##' @param data The data
-##' @param columnNames See columnNames argument at ?imputeProductionDomain.
-##' @param removePriorImputation logical, whether prior imputation
-##' should be removed.
-##' @param removeConflictValues logical, whether conflict area
-##' harvested value and production should be removed.
-##' @param imputedFlag Flag value corresponding to values from prior
-##' imputation, ignored if removePriorImputation is FALSE.
-##' @param naFlag Flag value for missing values.
+##' 
 ##' @export
 ##' 
 
 processProductionDomain = function(data, processingParameters){
     
     ### Data Quality Checks
-    stopifnot(!is.null(processingParameters))
-    assignParameters(processingParameters)
-    if(!ensuredData)
-        ensureData(data = data)
+    if(!ensuredProcessingParameters)
+        ensureProcessingParameters(processingParameters = processingParameters)
+    if(!ensuredProductionData)
+        ensureProductionData(data = data)
         
     if(removePriorImputation){
         removeImputation(data = data,
-                         value = areaHarvestedValue,
-                         flag = areaHarvestedObservationFlag)
+                    value = processingParameters$areaHarvestedValue,
+                    flag = processingParameters$areaHarvestedObservationFlag,
+                    processingParameters = processingParameters)
         
         removeImputation(data = data,
-                         value = productionValue,
-                         flag = productionObservationFlag)
-
+                    value = processingParameters$areaHarvestedValue,
+                    flag = processingParameters$areaHarvestedObservationFlag,
+                    processingParameters = processingParameters)
+        
         removeImputation(data = data,
-                         value = yieldValue,
-                         flag = yieldObservationFlag)
+                    value = processingParameters$areaHarvestedValue,
+                    flag = processingParameters$areaHarvestedObservationFlag,
+                    processingParameters = processingParameters)
     }
 
     remove0M(data = data,
-             value = areaHarvestedValue,
-             flag = areaHarvestedObservationFlag,
-             naFlag = naFlag)
+             value = processingParameters$areaHarvestedValue,
+             flag = processingParameters$areaHarvestedObservationFlag,
+             naFlag = processingParameters$naFlag)
     
     remove0M(data = data,
-             value = productionValue,
-             flag = productionObservationFlag,
-             naFlag = naFlag)
+             value = processingParameters$areaHarvestedValue,
+             flag = processingParameters$areaHarvestedObservationFlag,
+             naFlag = processingParameters$naFlag)
     
     remove0M(data = data,
-             value = yieldValue,
-             flag = yieldObservationFlag,
-             naFlag = naFlag)
-
+             value = processingParameters$areaHarvestedValue,
+             flag = processingParameters$areaHarvestedObservationFlag,
+             naFlag = processingParameters$naFlag)
+    
     if(removeConflictValues){
-        removeZeroConflict(data = data)
+        removeZeroConflict(data = data,
+                           processingParameters = processingParameters)
     }
 
     removeNoInfo(data = data,
-                 value = yieldValue,
-                 flag = yieldObservationFlag)
+                 value = processingParameters$yieldValue,
+                 flag = processingParameters$yieldObservationFlag,
+                 processingParameters = processingParameters)
     # removeNoInfo assigns the new data.table to the variable "data" in the
     # environment of this function.  Thus, to ensure "data" is returned to the
     # caller of this function, assign the data.table to the calling environment.

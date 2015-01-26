@@ -19,22 +19,14 @@
 ##' @export
 ##' 
 
-ensureImputationData = function(data){
-    
-    ### Before running tests, ensure all necessary variables exist
-    requiredVariables = c("imputationValueColumn", "imputationFlagColumn",
-                          "imputationMethodColumn", "yearValue", "byKey",
-                          "ensuredData", "parametersAssigned")
-    missingVariables = requiredVariables[!sapply(requiredVariables, exists)]
-    if(length(missingVariables) > 0)
-        stop("Data cannot be ensured without the existence of these variables:\n\t",
-             paste(missingVariables, collapse = "\n\t"),
-             "\nMaybe try running assignParameters with an argument of",
-             "defaultImputationParameters()?")
+ensureImputationData = function(data, imputationParameters){
     
     ### Make sure all column name variables exist in data
-    columnNames = c(imputationValueColumn, imputationFlagColumn,
-                    imputationMethodColumn, yearValue, byKey)
+    columnNames = c(imputationParameters$imputationValueColumn,
+                    imputationParameters$imputationFlagColumn,
+                    imputationParameters$imputationMethodColumn,
+                    imputationParameters$yearValue,
+                    imputationParameters$byKey)
     missingColumns = ! columnNames %in% colnames(data)
     if( any(missingColumns) )
         stop("The following columns do not exist in data but should (or the",
@@ -42,15 +34,19 @@ ensureImputationData = function(data){
              paste(columnNames[missingColumns], collapse="\n\t"))
     
     ### Coerce columns to appropriate type:
-    for(name in c(imputationValueColumn)){
+    for(name in c(imputationParameters$imputationValueColumn)){
         expr = substitute(x := as.numeric(data[[x]]), list(x = name))
         data[, eval(expr)]
     }
-    for(name in c(imputationFlagColumn, imputationMethodColumn)){
+    for(name in c(imputationParameters$imputationFlagColumn,
+                  imputationParameters$imputationMethodColumn)){
         expr = substitute(x := as.character(data[[x]]), list(x = name))
         data[, eval(expr)]
     }
-    
+        
     ### Globally assign ensuredData so data will not need to be ensured again
-    reassignGlobalVariable("ensuredData", TRUE)
+    if(exists("ensuredImputationData"))
+        reassignGlobalVariable("ensuredImputationData", TRUE)
+    else
+        ensuredImputationData <<- TRUE
 }

@@ -4,7 +4,7 @@
 \alias{computeErrorLOOCV}
 \title{LOOCV Error Rate}
 \usage{
-computeErrorLOOCV(data, model, cvGroup, imputationParameters = NULL)
+computeErrorLOOCV(data, model, cvGroup, imputationParameters)
 }
 \arguments{
 \item{data}{A data.table containing the data.}
@@ -17,9 +17,7 @@ vector should be integers from 1 to the number of cross-validation groups
 by ensembleImpute.}
 
 \item{imputationParameters}{A list of the parameters for the imputation
-algorithms.  See defaultImputationParameters() for a starting point. If
-NULL, the parameters should have already been assigned (otherwise an error
-will occur).}
+algorithms.  See defaultImputationParameters() for a starting point.}
 }
 \description{
 This function computes the error of different model fits via leave-one-out

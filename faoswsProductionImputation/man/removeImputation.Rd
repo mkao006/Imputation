@@ -4,7 +4,7 @@
 \alias{removeImputation}
 \title{Function to remove prior imputation.}
 \usage{
-removeImputation(data, value, flag, processingParameters = NULL)
+removeImputation(data, value, flag, processingParameters)
 }
 \arguments{
 \item{data}{The data.table object containing the values.}

@@ -11,24 +11,18 @@
 ##' (typically 10).  This should be randomly assigned, and is usually created
 ##' by ensembleImpute.
 ##' @param imputationParameters A list of the parameters for the imputation
-##' algorithms.  See defaultImputationParameters() for a starting point. If
-##' NULL, the parameters should have already been assigned (otherwise an error
-##' will occur).
+##' algorithms.  See defaultImputationParameters() for a starting point.
 ##' 
 ##' @export
 
-computeErrorLOOCV = function(data, model, cvGroup,
-                             imputationParameters = NULL){
+computeErrorLOOCV = function(data, model, cvGroup, imputationParameters){
 
     ### Data Quality Checks
-    if(!exists("parametersAssigned") || !parametersAssigned)
-        stopifnot(!is.null(imputationParameters))
-    if(!is.null(imputationParameters))
-        assignParameters(imputationParameters)
-    if(!ensuredData)
-        ensureData(data = data)
-    if(!ensuredFlagTable)
-        ensureFlagTable(flagTable = flagTable, data = data)
+    if(!ensuredImputationParameters)
+        ensureImputationParameters(imputationParameters = imputationParameters)
+    if(!ensuredImputationData)
+        ensureImputationData(data = data,
+                             imputationParameters = imputationParameters)
     stopifnot(is(model, "ensembleModel"))
     stopifnot(is.numeric(cvGroup))
     stopifnot(length(cvGroup)==nrow(data))
@@ -38,19 +32,22 @@ computeErrorLOOCV = function(data, model, cvGroup,
     for(i in 1:length(unique(cvGroup))){
         #Copy x and remove the ith observation to fit the model
         dataTemporary = copy(data)
-        setnames(dataTemporary, old = imputationValueColumn,
+        setnames(dataTemporary,
+                 old = imputationParameters$imputationValueColumn,
                  new = "imputationValueColumn")
         dataTemporary[cvGroup == i, imputationValueColumn := NA]
         setnames(dataTemporary, old = "imputationValueColumn",
-                 new = imputationValueColumn)
+                 new = imputationParameters$imputationValueColumn)
         if(model@level == "commodity"){
             fitTemporary = model@model(data = dataTemporary)
         } else if(model@level == "countryCommodity"){
             fitTemporary = extendSimpleModel(data = dataTemporary,
-                model = model@model)
+                model = model@model,
+                imputationParameters = imputationParameters)
         }
         filter = !is.na(cvGroup) & cvGroup == i
-        error[filter] = (data[[imputationValueColumn]] - fitTemporary)[filter]
+        error[filter] = (data[[imputationParameters$imputationValueColumn]]
+                         - fitTemporary)[filter]
     }
     return(error)
 }

@@ -9,9 +9,7 @@
 ##' depends on the other columns of data.  Should be a valid mixed model
 ##' formula, as it will be passed to lmer (R's mixed model function).
 ##' @param imputationParameters A list of the parameters for the imputation
-##' algorithms.  See defaultImputationParameters() for a starting point. If
-##' NULL, the parameters should have already been assigned (otherwise an error
-##' will occur).
+##' algorithms.  See defaultImputationParameters() for a starting point.
 ##' 
 ##' @return Returns a vector of the estimated/imputed values.  If a value
 ##' existed in the original data, then an NA is returned in that location.
@@ -20,25 +18,28 @@
 ##' 
 
 defaultMixedModel = function(data, maxdf = 5, weights = NULL, modelFormula,
-                             imputationParameters = NULL){
+                             imputationParameters){
     
     ### Data Quality Checks
-    if(!exists("parametersAssigned"))
-        stopifnot(!is.null(imputationParameters))
-    if(!is.null(imputationParameters))
-        assignParameters(imputationParameters)
-    if(!ensuredData)
-        ensureData(data = data)
+    if(!ensuredImputationParameters)
+        ensureImputationParameters(imputationParameters = imputationParameters)
+    if(!ensuredImputationData)
+        ensureImputationData(data = data,
+                             imputationParameters = imputationParameters)
     if(!ensuredFlagTable)
-        ensureFlagTable(flagTable = flagTable, data = data)
-    uniqueByKey = data[!is.na(get(imputationValueColumn)), 1, by = byKey]
+        ensureFlagTable(flagTable = imputationParameters$flagTable,
+                        data = data,
+                        imputationParameters = imputationParameters)
+    uniqueByKey = data[!is.na(get(imputationParameters$imputationValueColumn)),
+                       1, by = imputationParameters$byKey]
     if(nrow(uniqueByKey) <= 1) # Mixed model invalid if only one level:
         return(rep(NA, nrow(data)))
     
     if(missing(modelFormula)){
         modelFormula =
-            as.formula(paste0(imputationValueColumn, " ~ -1 + (1 + ",
-                              yearValue, "|", byKey, ")"))
+            as.formula(paste0(imputationParameters$imputationValueColumn,
+                              " ~ -1 + (1 + ", yearValue, "|",
+                              imputationParameters$byKey, ")"))
         ## print(modelFormula)
         model = try(
             lmer(formula = modelFormula, data = data,
@@ -56,17 +57,18 @@ defaultMixedModel = function(data, maxdf = 5, weights = NULL, modelFormula,
 
         benchmarkError = bootMer(model,
             FUN = function(x){
-                predictError(x = x, y = data[[imputationValueColumn]],
-                             newdata = data)
+                predictError(x = x,
+                    y = data[[imputationParameters$imputationValueColumn]],
+                    newdata = data)
             }, nsim = 100)
         
         if(!inherits(model, "try-error") & maxdf > 1){
             for(i in 2:maxdf){
                 ## cat("proposing df:", i, "\n")
-                newModelFormula =
-                    as.formula(paste0(imputationValueColumn, "~ -1 + (1 + bs(",
-                                      yearValue, ", df = ", i,
-                                      ", degree = 1)|", byKey, ")"))
+                newModelFormula = as.formula(paste0(
+                    imputationParameters$imputationValueColumn,
+                    "~ -1 + (1 + bs(", yearValue, ", df = ", i,
+                    ", degree = 1)|", imputationParameters$byKey, ")"))
                 ## print(newModelFormula)
                 newModel = try(
                     lmer(formula = newModelFormula,
@@ -79,8 +81,9 @@ defaultMixedModel = function(data, maxdf = 5, weights = NULL, modelFormula,
 
                     newModelError = bootMer(newModel,
                         FUN = function(x){
-                            predictError(x = x, y = data[[imputationValueColumn]],
-                                         newdata = data)
+                            predictError(x = x,
+                                y = data[[imputationParameters$imputationValueColumn]],
+                                newdata = data)
                         }, nsim = 100)
                     ## cat("old:", mean(benchmarkError$t), "\n")
                     ## cat("new:", mean(newModelError$t), "\n")

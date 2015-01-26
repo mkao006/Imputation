@@ -7,8 +7,8 @@
 ##' are not as expected.
 ##' 
 
-ensureProcessingParameters = function(parameterList){
-    p = parameterList
+ensureProcessingParameters = function(processingParameters){
+    p = processingParameters
     stopifnot(is.character(c(p$productionValue, p$productionObservationFlag,
                              p$productionMethodFlag, p$yieldValue,
                              p$yieldObservationFlag, p$yieldMethodFlag,

@@ -5,7 +5,7 @@
 \title{Mixed Model for Imputation}
 \usage{
 defaultMixedModel(data, maxdf = 5, weights = NULL, modelFormula,
-  imputationParameters = NULL)
+  imputationParameters)
 }
 \arguments{
 \item{data}{The data.table object containing the data.}
@@ -18,15 +18,8 @@ defaultMixedModel(data, maxdf = 5, weights = NULL, modelFormula,
 depends on the other columns of data.  Should be a valid mixed model
 formula, as it will be passed to lmer (R's mixed model function).}
 
-\item{value}{Which variable should be imputed?  This should be one of the
-column names of data corresponding to productionValue, yieldValue, or
-areaHarvestedValue.}
-
-\item{flag}{Column name (of data) of the flag variable corresponding to the value
-argument, i.e. "productionObservationFlag", "yieldObservationFlag", or
-"areaHarvestedObservationFlag".}
-
-\item{columnNames}{See the same argument at ?imputeProductionDomain.}
+\item{imputationParameters}{A list of the parameters for the imputation
+algorithms.  See defaultImputationParameters() for a starting point.}
 }
 \value{
 Returns a vector of the estimated/imputed values.  If a value

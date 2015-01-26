@@ -7,37 +7,14 @@
 ##' taken into account.
 ##'
 ##' @param data The data
-##' @param columnNames A named character vector.  This argument specifies what
-##' each of the relevant columns of data correspond to.  The values of this
-##' vector should correspond to column names of data, and the names of this
-##' vector should be productionValue, productionObservationFlag,
-##' productionMethodFlag, areaHarvestedValue, areaHarvestedObservationFlag,
-##' areaHarvestedMethodFlag, yieldValue, yieldObservationFlag, yieldMethodFlag,
-##' yearValue, and byKey.  Ordering of this vector is not important, and it may
-##' have additional elements, but it must have the elements listed above.  The
-##' defaultColumnNames function may be helpful in setting up a starting point.
-##' @param flagTable see data(faoswsFlagTable) in \pkg{faoswsFlag}
-##' @param removePriorImputation logical, whether prior imputation
-##' should be removed.
-##' @param removeConflictValues logical, whether conflict area
-##' harvested value and production should be removed.
-##' @param imputedFlag Flag value corresponding to values from prior
-##' imputation, ignored if removePriorImputation is FALSE.
-##' @param imputationFlag Flag value for new imputation values.
-##' @param newMethodFlag The character value that should be assigned to
-##' *ObservationFlag when *Value is imputed (*=production, yield, or
-##' areaHarvested).
-##' @param naFlag Flag value for missing values.
-##' @param restrictWeights Whether a maximum weight restriction should
-##' be imposed.
-##' @param maximumWeights The maximum weight to be imposed, must be
-##' between [0.5, 1].
-##' @param ensembleModelsYield A list of models to be used to build the
-##' ensemble for the yield variable.
-##' @param ensembleModelsProduction A list of models to be used to build the
-##' ensemble for the production variable.
-##' @param errorType See ?computeErrorRate.
-##' @param errorFunction See ?computeEnsembleWeight.
+##' @param processingParameters A list of the parameters for the production
+##' processing algorithms.  See defaultProductionParameters() for a starting
+##' point.
+##' @param yieldImputationParameters A list of the parameters for the
+##' yield imputation.  See defaultImputationParameters() for a starting point.
+##' @param productionImputationParameters A list of the parameters for the
+##' production imputation.  See defaultImputationParameters() for a starting
+##' point.
 ##'
 ##' @export
 ##' 
@@ -47,27 +24,29 @@ imputeProductionDomain = function(data, processingParameters,
                                   productionImputationParameters){
 
     ### Data Quality Checks
-    assignParameters(processingParameters)
-    ensureData(data = data)
-    assignParameters(yieldImputationParameters)
-    ensureData(data = data)
-    ensureFlagTable(flagTable = flagTable, data = data)
-    assignParameters(productionImputationParameters)
-    ensureData(data = data)
-    ensureFlagTable(flagTable = flagTable, data = data)
+    ensureImputationParameters(imputationParameters = 
+                                   yieldImputationParameters)
+    ensureImputationParameters(imputationParameters =
+                                   productionImputationParameters)
+    ensureProcessingParameters(processingParameters = processingParameters)
+    ensureImputationData(data = data)
+    ensureProductionData(data = data)
+    ensureFlagTable(flagTable = imputationParameters$flagTable, data = data,
+                    imputationParameters = imputationParameters)
     stopifnot(yieldImputationParameters$variable == "yield")
     stopifnot(productionImputationParameters$variable == "production")
     
     cat("Initializing ... \n")
-    assignParameters(processingParameters)
     dataCopy = copy(data)
-    setkeyv(x = dataCopy, cols = c(byKey, yearValue))
+    setkeyv(x = dataCopy, cols = c(processingParameters$byKey,
+                                   processingParameters$yearValue))
     processProductionDomain(data = dataCopy,
                             processingParameters = processingParameters)
 
     ## Step two: Impute Yield
     cat("Imputing Yield ...\n")
-    n.missYield = length(which(is.na(dataCopy[[yieldValue]])))
+    n.missYield = length(which(is.na(
+        dataCopy[[processingParameters$yieldValue]])))
 #     if(!missing(yieldFormula))
 #         yieldFormula =
 #             as.formula(gsub(yearValue, "yearValue",
@@ -76,18 +55,21 @@ imputeProductionDomain = function(data, processingParameters,
     
     imputeVariable(data = dataCopy,
                    imputationParameters = yieldImputationParameters)
-    n.missYield2 = length(which(is.na(dataCopy[[yieldValue]])))
+    n.missYield2 = length(which(is.na(
+        dataCopy[[processingParameters$yieldValue]])))
     cat("Number of values imputed: ", n.missYield - n.missYield2, "\n")
     cat("Number of values still missing: ", n.missYield2, "\n")
 
     ## step three: Impute production
     cat("Imputing Production ...\n")
-    n.missProduction = length(which(is.na(dataCopy[[productionValue]])))
+    n.missProduction = length(which(is.na(
+        dataCopy[[processingParameters$productionValue]])))
 
     imputeVariable(data = dataCopy,
                    imputationParameters = productionImputationParameters)
 
-    n.missProduction2 = length(which(is.na(dataCopy[[productionValue]])))
+    n.missProduction2 = length(which(is.na(
+        dataCopy[[processingParameters$productionValue]])))
     cat("Number of values imputed: ",
         n.missProduction - n.missProduction2, "\n")
     cat("Number of values still missing: ", n.missProduction2, "\n")
@@ -95,12 +77,17 @@ imputeProductionDomain = function(data, processingParameters,
     ## step four: balance area harvested
     cat("Imputing Area Harvested ...\n")
     n.missAreaHarvested =
-        length(which(is.na(dataCopy[[areaHarvestedValue]])))
+        length(which(is.na(
+            dataCopy[[processingParameters$areaHarvestedValue]])))
 
-    balanceAreaHarvested(data = dataCopy)
+    balanceAreaHarvested(data = dataCopy,
+                         # imputation parameters just needed for flag table
+                         imputationParameters = yieldImputationParameters,
+                         processingParameters = processingParameters)
 
     n.missAreaHarvested2 =
-        length(which(is.na(dataCopy$areaHarvestedValue)))
+        length(which(is.na(
+            dataCopy[[processingParameters$areaHarvestedValue]])))
     cat("Number of values imputed: ",
         n.missAreaHarvested - n.missAreaHarvested2, "\n")
     cat("Number of values still missing: ", n.missAreaHarvested2, "\n")

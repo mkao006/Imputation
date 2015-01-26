@@ -14,18 +14,12 @@
 ##' i can be computed by sum(F[i,]*W[i,]).
 ##'
 ##' @param data The data.table containing the data.
-##' @param value The column name of data which contains the variable being
-##' imputed.
-##' @param byKey The column name of data which specifies the grouping
-##' (typically the areaCode).
-##' @param yearValue The column name of data which specifies the year.
 ##' @param w The weights data.table, typically as produced in
 ##' computeEnsembleWeight.  There should be at least three columns: byKey,
 ##' model, and weight.  Weight gives the model weight for model within the
 ##' byKey group.
-##' @param ensembleModels The list of ensemble models used.  Each element of
-##' this list should be of class ensembleModel.  This is used to determine
-##' the extrapolation range of each model in the ensemble.
+##' @param imputationParameters A list of the parameters for the imputation
+##' algorithms.  See defaultImputationParameters() for a starting point.
 ##' 
 ##' @return A matrix of weights that can be multiplied by the fitted models to
 ##' give the imputed values.  Rows corresponding to non-missing values in data
@@ -34,24 +28,27 @@
 ##' @export
 ##' 
 
-getWeightMatrix = function(data, w, imputationParameters = NULL){
+getWeightMatrix = function(data, w, imputationParameters){
 
     ### Data Quality Checks
-    if(!exists("parametersAssigned") || !parametersAssigned)
-        stopifnot(!is.null(imputationParameters))
-    if(!is.null(imputationParameters))
-        assignParameters(imputationParameters)
-    if(!ensuredData)
-        ensureData(data = data)
+    if(!ensuredImputationParameters)
+        ensureImputationParameters(imputationParameters = imputationParameters)
+    if(!ensuredImputationData)
+        ensureImputationData(data = data,
+                             imputationParameters = imputationParameters)
     if(!ensuredFlagTable)
-        ensureFlagTable(flagTable = flagTable, data = data)
+        ensureFlagTable(flagTable = imputationParameters$flagTable,
+                        data = data,
+                        imputationParameters = imputationParameters)
     stopifnot(is(w, "data.table"))
     # w should have one row for each model at each byKey level
-    stopifnot(nrow(w) == length(unique(data[[byKey]])) *
-                  length(ensembleModels))
+    stopifnot(nrow(w) == length(unique(data[[imputationParameters$byKey]])) *
+                  length(imputationParameters$ensembleModels))
     
     ### Run the function:
-    setnames(data, old = c(imputationValueColumn, byKey, yearValue),
+    setnames(data, old = c(imputationParameters$imputationValueColumn,
+                           imputationParameters$byKey,
+                           imputationParameters$yearValue),
              new = c("imputationValueColumn", "byKey", "yearValue"))
     data[, extrapolationRange := 
              getObservedExtrapolationRange(imputationValueColumn), by = byKey]
@@ -61,18 +58,22 @@ getWeightMatrix = function(data, w, imputationParameters = NULL){
     # Set data back to it's original state
     data[, extrapolationRange := NULL]
     setnames(data, old = c("imputationValueColumn", "byKey", "yearValue"),
-             new = c(imputationValueColumn, byKey, yearValue))
+             new = c(imputationParameters$imputationValueColumn,
+                     imputationParameters$byKey,
+                     imputationParameters$yearValue))
     # Set weights to 0 that are outside of extrapolationRange
-    range = sapply(ensembleModels, function(model){
+    range = sapply(imputationParameters$ensembleModels, function(model){
         model@extrapolationRange
     })
     weightMatrix[, allowedRange := range[model]]
     weightMatrix[allowedRange < extrapolationRange, weight := 0]
     # Renormalize weights so all columns add to 1
-    weightMatrix[, weight := weight / sum(weight), by = list(byKey, yearValue)]
+    weightMatrix[, weight := weight / sum(weight),
+                 by = list(byKey, yearValue)]
     weightMatrix = dcast.data.table(weightMatrix, byKey + yearValue ~ model,
                                      value.var = "weight")
     weightMatrix[, c("byKey", "yearValue") := list(NULL, NULL)]
-    weightMatrix[!is.na(data[[imputationValueColumn]])] = NA
+    weightMatrix[!is.na(data[[imputationParameters$imputationValueColumn]])] =
+        NA
     return(weightMatrix)
 }

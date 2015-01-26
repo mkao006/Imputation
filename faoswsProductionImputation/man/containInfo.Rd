@@ -2,9 +2,9 @@
 % Please edit documentation in R/containInfo.R
 \name{containInfo}
 \alias{containInfo}
-\title{Function to determin whether the data contains any information.}
+\title{Function to determine whether the data contains any information.}
 \usage{
-containInfo(value, flag, naFlag = "M")
+containInfo(value, flag, processingParameters)
 }
 \arguments{
 \item{value}{A numeric vector to be checked}
@@ -16,7 +16,7 @@ corresponding to the value.}
 value.}
 }
 \description{
-If the data contains only of missing value or zero then it is
+If the data contains only a missing value or zero then it is
 marked as no information.
 }
 

@@ -4,7 +4,7 @@
 \alias{removeNoInfo}
 \title{This function removes data with no information}
 \usage{
-removeNoInfo(data, value, flag, processingParameters = NULL,
+removeNoInfo(data, value, flag, processingParameters,
   environment = parent.frame(1))
 }
 \arguments{
@@ -21,8 +21,6 @@ function consistent with the other functions in this package, environment
 is passed to specify where the modified data.table should be placed.  The
 default of parent.frame(1) gives the calling environment and this should be
 satisfactory for most, if not all, use cases.}
-
-\item{byKey}{The unique keys which identify groups.}
 }
 \value{
 No value is returned.  However, the object "data" which was passed

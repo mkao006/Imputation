@@ -9,19 +9,6 @@ processProductionDomain(data, processingParameters)
 }
 \arguments{
 \item{data}{The data}
-
-\item{columnNames}{See columnNames argument at ?imputeProductionDomain.}
-
-\item{removePriorImputation}{logical, whether prior imputation
-should be removed.}
-
-\item{removeConflictValues}{logical, whether conflict area
-harvested value and production should be removed.}
-
-\item{imputedFlag}{Flag value corresponding to values from prior
-imputation, ignored if removePriorImputation is FALSE.}
-
-\item{naFlag}{Flag value for missing values.}
 }
 \description{
 This is a wrapper for all the data manipulation step before the

@@ -4,7 +4,7 @@
 \alias{extendSimpleModel}
 \title{Extend Simple Model}
 \usage{
-extendSimpleModel(data, model, imputationParameters = NULL)
+extendSimpleModel(data, model, imputationParameters)
 }
 \arguments{
 \item{data}{The data.table object containing the data.}
@@ -13,9 +13,7 @@ extendSimpleModel(data, model, imputationParameters = NULL)
 Typically, this will be a function such as one from allDefaultModels().}
 
 \item{imputationParameters}{A list of the parameters for the imputation
-algorithms.  See defaultImputationParameters() for a starting point. If
-NULL, the parameters should have already been assigned (otherwise an error
-will occur).}
+algorithms.  See defaultImputationParameters() for a starting point.}
 }
 \value{
 Returns a vector of the estimated/imputed values.  If a value

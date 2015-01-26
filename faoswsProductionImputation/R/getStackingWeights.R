@@ -41,12 +41,14 @@ getStackingWeights = function(data, fits){
     stop("Stacking weights have not yet been implemented!")
     
     ### Data Quality Checks
-    if(!ensuredData)
-        ensureData(data)
+    if(!ensuredImputationData)
+        ensureImputationData(data = data,
+                             imputationParameters = imputationParameters)
     stopifnot(nrow(data) == sapply(fits, length))
-    stackingData = data.table(y = data[[imputationValueColumn]],
-                              byKey = data[[byKey]],
-                              do.call("cbind", fits))
+    stackingData = data.table(
+        y = data[[imputationParameters$imputationValueColumn]],
+        byKey = data[[imputationParameters$byKey]],
+        do.call("cbind", fits))
     
     ### If a model is NA when y is not NA for some particular byKey value, then
     ### don't use that model for that byKey at all

@@ -4,15 +4,13 @@
 \alias{computeEnsembleFit}
 \title{Function to compute the fits of all the component models}
 \usage{
-computeEnsembleFit(data, imputationParameters = NULL)
+computeEnsembleFit(data, imputationParameters)
 }
 \arguments{
 \item{data}{The data.table object containing the data.}
 
 \item{imputationParameters}{A list of the parameters for the imputation
-algorithms.  See defaultImputationParameters() for a starting point. If
-NULL, the parameters should have already been assigned (otherwise an error
-will occur).}
+algorithms.  See defaultImputationParameters() for a starting point.}
 }
 \value{
 Returns a list of vectors of the same length as ensembleModels. The

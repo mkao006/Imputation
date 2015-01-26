@@ -4,7 +4,7 @@
 \alias{plotEnsemble}
 \title{Plot Ensemble and Model Fits}
 \usage{
-plotEnsemble(data, modelFits, modelWeights, ensemble,
+plotEnsemble(data, modelFits, modelWeights, ensemble, imputationParameters,
   returnFormat = "faceted")
 }
 \arguments{

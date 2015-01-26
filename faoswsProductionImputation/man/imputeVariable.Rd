@@ -9,30 +9,8 @@ imputeVariable(data, imputationParameters)
 \arguments{
 \item{data}{The data.table object containing the data.}
 
-\item{columnNames}{See the same argument at ?imputeProductionDomain}
-
-\item{imputationFlag}{Flag value for new imputation values.}
-
-\item{newMethodFlag}{The character value that should be assigned to
-*ObservationFlag when it is imputed (where *=variable).}
-
-\item{flagTable}{see data(faoswsFlagTable) in \pkg{faoswsFlag}}
-
-\item{ensembleModels}{A list of models to be used to build the
-ensemble.}
-
-\item{restrictWeights}{Whether a maximum weight restriction should
-be imposed.}
-
-\item{maximumWeights}{The maximum weight to be imposed, must be
-between [0.5, 1].}
-
-\item{errorType}{See ?computeErrorRate.}
-
-\item{errorFunction}{See ?computeEnsembleWeight.}
-
-\item{variable}{The variable to impute.  Should be either "production" or
-"yield".}
+\item{imputationParameters}{A list of the parameters for the imputation
+algorithms.  See defaultImputationParameters() for a starting point.}
 }
 \description{
 This is a wrapper of the ensemble imputation for the production

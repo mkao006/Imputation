@@ -1,6 +1,6 @@
-##' Function to determin whether the data contains any information.
+##' Function to determine whether the data contains any information.
 ##'
-##' If the data contains only of missing value or zero then it is
+##' If the data contains only a missing value or zero then it is
 ##' marked as no information.
 ##'
 ##' @param value A numeric vector to be checked
@@ -11,9 +11,11 @@
 ##'
 ##' @export
 
-containInfo = function (value, flag, naFlag = "M"){
+containInfo = function (value, flag, processingParameters){
     
     ### Data Quality Checks
+    if(!ensuredProcessingParameters)
+        ensureProcessingParameters(processingParameters = processingParameters)
     stopifnot(length(value) == length(flag))
     stopifnot(is(value, "numeric"))
     stopifnot(is(flag, "character"))
