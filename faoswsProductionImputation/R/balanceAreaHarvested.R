@@ -13,17 +13,12 @@ balanceAreaHarvested = function(data, imputationParameters,
                                 processingParameters){
     
     ### Data Quality Checks
-    if(!ensuredProcessingParameters)
-        ensureProcessingParameters(processingParameters = processingParameters)
-    if(!ensuredImputationParameters)
-        ensureImputationParameters(imputationParameters = imputationParameters)
-    if(!ensuredImputationData)
-        ensureImputationData(data = data,
+    if(!exists("ensuredImputationData") || !ensuredImputationData)
+        ensureImputationInputs(data = data,
                              imputationParameters = imputationParameters)
-    if(!ensuredFlagTable)
-        ensureFlagTable(flagTable = imputationParameters$flagTable,
-                        data = data,
-                        imputationParameters = imputationParameters)
+    if(!exists("ensuredProductionData") || !ensuredProductionData)
+        ensureProductionInputs(data = data,
+                               processingParameters = processingParameters)
 
     origName = c(processingParameters$productionValue,
                  processingParameters$productionObservationFlag,
@@ -40,8 +35,8 @@ balanceAreaHarvested = function(data, imputationParameters,
          c("aValue", "aObsFlag", "aMetFlag") :=
          list(computeRatio(pValue, yValue),
               aggregateObservationFlag(pObsFlag, yObsFlag,
-                                       Table = processingParameters$flagTable),
-              newMethodFlag)
+                                       Table = imputationParameters$flagTable),
+              imputationParameters$newMethodFlag)
          ]
     setnames(data, old = tmpName, new = origName)
 }

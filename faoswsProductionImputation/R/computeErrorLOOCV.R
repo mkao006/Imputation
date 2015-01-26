@@ -18,11 +18,9 @@
 computeErrorLOOCV = function(data, model, cvGroup, imputationParameters){
 
     ### Data Quality Checks
-    if(!ensuredImputationParameters)
-        ensureImputationParameters(imputationParameters = imputationParameters)
-    if(!ensuredImputationData)
-        ensureImputationData(data = data,
-                             imputationParameters = imputationParameters)
+    if(!exists("ensuredImputationData") || !ensuredImputationData)
+        ensureImputationInputs(data = data,
+                               imputationParameters = imputationParameters)
     stopifnot(is(model, "ensembleModel"))
     stopifnot(is.numeric(cvGroup))
     stopifnot(length(cvGroup)==nrow(data))

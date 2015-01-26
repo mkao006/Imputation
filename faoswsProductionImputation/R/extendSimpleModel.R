@@ -19,26 +19,20 @@
 extendSimpleModel = function(data, model, imputationParameters){
     
     ### Data Quality Checks
-    if(!ensuredImputationParameters)
-        ensureImputationParameters(imputationParameters = imputationParameters)
-    if(!ensuredImputationData)
-        ensureImputationData(data = data,
-                             imputationParameters = imputationParameters)
-    if(!ensuredFlagTable)
-        ensureFlagTable(flagTable = imputationParameters$flagTable,
-                        data = data,
-                        imputationParameters = imputationParameters)
+    if(!exists("ensuredImputationData") || !ensuredImputationData)
+        ensureImputationInputs(data = data,
+                               imputationParameters = imputationParameters)
     
     setnames(data, old = imputationParameters$imputationValueColumn,
              new = "imputationValueColumn")
     missingIndex = is.na(data[, imputationParameters$imputationValueColumn])
     modelFit = data[,
         # Apply the model if there is a missing value.  Else, return the data
-        if(any(is.na(imputationParameters$imputationValueColumn))){
-            model(imputationParameters$imputationValueColumn)
+        if(any(is.na(imputationValueColumn))){
+            model(imputationValueColumn)
         } else {
-            imputationParameters$imputationValueColumn
-        }, by = imputationParameters$byKey]
+            imputationValueColumn
+        }, by = c(imputationParameters$byKey)]
     setnames(data, old = "imputationValueColumn",
              new = imputationParameters$imputationValueColumn)
     return(modelFit$V1)

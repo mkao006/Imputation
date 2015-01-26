@@ -24,15 +24,12 @@ imputeProductionDomain = function(data, processingParameters,
                                   productionImputationParameters){
 
     ### Data Quality Checks
-    ensureImputationParameters(imputationParameters = 
-                                   yieldImputationParameters)
-    ensureImputationParameters(imputationParameters =
-                                   productionImputationParameters)
-    ensureProcessingParameters(processingParameters = processingParameters)
-    ensureImputationData(data = data)
-    ensureProductionData(data = data)
-    ensureFlagTable(flagTable = imputationParameters$flagTable, data = data,
-                    imputationParameters = imputationParameters)
+    ensureImputationInputs(data = data,
+                           imputationParameters = yieldImputationParameters)
+    ensureImputationInputs(data = data,
+                           imputationParameters = productionImputationParameters)
+    ensureProductionInputs(data = data,
+                           processingParameters = processingParameters)
     stopifnot(yieldImputationParameters$variable == "yield")
     stopifnot(productionImputationParameters$variable == "production")
     
@@ -45,8 +42,7 @@ imputeProductionDomain = function(data, processingParameters,
 
     ## Step two: Impute Yield
     cat("Imputing Yield ...\n")
-    n.missYield = length(which(is.na(
-        dataCopy[[processingParameters$yieldValue]])))
+    n.missYield = sum(is.na(dataCopy[[processingParameters$yieldValue]]))
 #     if(!missing(yieldFormula))
 #         yieldFormula =
 #             as.formula(gsub(yearValue, "yearValue",
@@ -59,6 +55,10 @@ imputeProductionDomain = function(data, processingParameters,
         dataCopy[[processingParameters$yieldValue]])))
     cat("Number of values imputed: ", n.missYield - n.missYield2, "\n")
     cat("Number of values still missing: ", n.missYield2, "\n")
+
+    ## Balance production now using imputed yield
+    balanceProduction(data = data, imputationParameters = imputationParameters,
+                      processingParameters = processingParameters)
 
     ## step three: Impute production
     cat("Imputing Production ...\n")

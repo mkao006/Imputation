@@ -13,15 +13,9 @@
 ensembleImpute = function(data, imputationParameters){
 
     ### Data Quality Checks
-    if(!ensuredImputationParameters)
-        ensureImputationParameters(imputationParameters = imputationParameters)
-    if(!ensuredImputationData)
-        ensureImputationData(data = data,
-                             imputationParameters = imputationParameters)
-    if(!ensuredFlagTable)
-        ensureFlagTable(flagTable = imputationParameters$flagTable,
-                        data = data,
-                        imputationParameters = imputationParameters)
+    if(!exists("ensuredImputationData") || !ensuredImputationData)
+        ensureImputationInputs(data = data,
+                               imputationParameters = imputationParameters)
     valueMissingIndex = is.na(
         data[[imputationParameters$imputationValueColumn]])
     flagMissingIndex = (data[[imputationParameters$imputationFlagColumn]] ==
@@ -43,16 +37,20 @@ ensembleImpute = function(data, imputationParameters){
     
     ensemble = data[[imputationParameters$imputationValueColumn]]
     missIndex = is.na(ensemble)
-    cvGroup = makeCvGroup(data = data)
-    modelFits = computeEnsembleFit(data = data)
+    cvGroup = makeCvGroup(data = data,
+                          imputationParameters = imputationParameters)
+    modelFits = computeEnsembleFit(data = data,
+                                   imputationParameters = imputationParameters)
     modelWeights = computeEnsembleWeight(data = data,
-        cvGroup = cvGroup, fits = modelFits)
+        cvGroup = cvGroup, fits = modelFits,
+        imputationParameters = imputationParameters)
     ## print(modelWeights)
     ensembleFit = computeEnsemble(modelFits, modelWeights)
     ensemble[missIndex] = ensembleFit[missIndex]
-    if(plotImputation){
+    if(imputationParameters$plotImputation){
         plotEnsemble(data = data, modelFits = modelFits,
-                     modelWeights = modelWeights, ensemble = ensemble)
+                     modelWeights = modelWeights, ensemble = ensemble,
+                     imputationParameters = imputationParameters)
 #         plotEnsembleOld(data, modelFits, modelWeights, ensemble)
     }
     ensemble

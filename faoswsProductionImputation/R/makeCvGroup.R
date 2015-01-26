@@ -15,14 +15,12 @@
 ##' each individual timeseries (defined by byKey) when possible.
 ##' 
 
-makeCvGroup = function(data, imputationParameters){
+makeCvGroup = function(data, imputationParameters, groupCount = 10){
 
     ### Data Quality Checks
-    if(!ensuredImputationParameters)
-        ensureImputationParameters(imputationParameters = imputationParameters)
-    if(!ensuredImputationData)
-        ensureImputationData(data = data,
-                             imputationParameters = imputationParameters)
+    if(!exists("ensuredImputationData") || !ensuredImputationData)
+        ensureImputationInputs(data = data,
+                               imputationParameters = imputationParameters)
     
     cvGroup = rep(NA, nrow(data))
     setnames(data, old = imputationParameters$imputationValueColumn,
@@ -30,7 +28,7 @@ makeCvGroup = function(data, imputationParameters){
     cvGroup[!is.na(data[,imputationValueColumn])] =
         data[!is.na(imputationValueColumn),
              sampleEqually(n = .N, k = groupCount),
-             by = imputationParameters$byKey]$V1
+             by = c(imputationParameters$byKey)]$V1
     setnames(data, old = "imputationValueColumn",
              new = imputationParameters$imputationValueColumn)
     return(cvGroup)

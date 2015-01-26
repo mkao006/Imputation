@@ -21,10 +21,9 @@
 removeImputation = function(data, value, flag, processingParameters){
     
     ### Data Quality Checks
-    if(!ensuredProcessingParameters)
-        ensureProcessingParameters(processingParameters = processingParameters)
-    if(!ensuredProductionData)
-        ensureProductionData(data = data)
+    if(!exists("ensuredProductionData") || !ensuredProductionData)
+        ensureProductionInputs(data = data,
+                               processingParameters = processingParameters)
     stopifnot(c(value, flag) %in% colnames(data))
     
     imputedIndex = which(data[[flag]] %in% processingParameters$imputedFlag)

@@ -13,21 +13,16 @@
 computeEnsembleFit = function(data, imputationParameters){
     
     ### Data Quality Checks
-    if(!ensuredImputationParameters)
-        ensureImputationParameters(imputationParameters = imputationParameters)
-    if(!ensuredImputationData)
-        ensureImputationData(data = data,
-                             imputationParameters = imputationParameters)
-    if(!ensuredFlagTable)
-        ensureFlagTable(flagTable = imputationParameters$flagTable,
-                        data = data,
-                        imputationParameters = imputationParameters)
+    if(!exists("ensuredImputationData") || !ensuredImputationData)
+        ensureImputationInputs(data = data,
+                               imputationParameters = imputationParameters)
     
     ### Fit Models
     fits = lapply(imputationParameters$ensembleModels,
         FUN = function(model){
             if(model@level == "commodity"){
-                model@model(data = data)
+                model@model(data = data,
+                            imputationParameters = imputationParameters)
             } else if(model@level == "countryCommodity"){
                 extendSimpleModel(data = data, model = model@model,
                                   imputationParameters = imputationParameters)

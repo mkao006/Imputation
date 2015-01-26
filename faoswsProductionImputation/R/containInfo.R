@@ -14,12 +14,14 @@
 containInfo = function (value, flag, processingParameters){
     
     ### Data Quality Checks
-    if(!ensuredProcessingParameters)
-        ensureProcessingParameters(processingParameters = processingParameters)
+    if(!exists("ensuredProductionData") || !ensuredProductionData)
+        ensureProductionInputs(data = data,
+                               processingParameters = processingParameters)
     stopifnot(length(value) == length(flag))
     stopifnot(is(value, "numeric"))
     stopifnot(is(flag, "character"))
     
-    ifelse(all(flag == naFlag) | sum(value, na.rm = TRUE) == 0,
+    ifelse(all(flag == processingParameters$naFlag) |
+               sum(value, na.rm = TRUE) == 0,
            FALSE, TRUE)
 }

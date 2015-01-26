@@ -36,15 +36,16 @@
 ##' @export
 ##' 
 
-getStackingWeights = function(data, fits){
+getStackingWeights = function(data, fits, imputationParameters){
     
     stop("Stacking weights have not yet been implemented!")
     
     ### Data Quality Checks
-    if(!ensuredImputationData)
-        ensureImputationData(data = data,
-                             imputationParameters = imputationParameters)
+    if(!exists("ensuredImputationData") || !ensuredImputationData)
+        ensureImputationInputs(data = data,
+                               imputationParameters = imputationParameters)
     stopifnot(nrow(data) == sapply(fits, length))
+
     stackingData = data.table(
         y = data[[imputationParameters$imputationValueColumn]],
         byKey = data[[imputationParameters$byKey]],

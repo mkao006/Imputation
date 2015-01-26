@@ -21,25 +21,19 @@ defaultMixedModel = function(data, maxdf = 5, weights = NULL, modelFormula,
                              imputationParameters){
     
     ### Data Quality Checks
-    if(!ensuredImputationParameters)
-        ensureImputationParameters(imputationParameters = imputationParameters)
-    if(!ensuredImputationData)
-        ensureImputationData(data = data,
-                             imputationParameters = imputationParameters)
-    if(!ensuredFlagTable)
-        ensureFlagTable(flagTable = imputationParameters$flagTable,
-                        data = data,
-                        imputationParameters = imputationParameters)
+    if(!exists("ensuredImputationData") || !ensuredImputationData)
+        ensureImputationInputs(data = data,
+                               imputationParameters = imputationParameters)
     uniqueByKey = data[!is.na(get(imputationParameters$imputationValueColumn)),
-                       1, by = imputationParameters$byKey]
+                       1, by = c(imputationParameters$byKey)]
     if(nrow(uniqueByKey) <= 1) # Mixed model invalid if only one level:
         return(rep(NA, nrow(data)))
     
     if(missing(modelFormula)){
         modelFormula =
             as.formula(paste0(imputationParameters$imputationValueColumn,
-                              " ~ -1 + (1 + ", yearValue, "|",
-                              imputationParameters$byKey, ")"))
+                              " ~ -1 + (1 + ", imputationParameters$yearValue,
+                              "|", imputationParameters$byKey, ")"))
         ## print(modelFormula)
         model = try(
             lmer(formula = modelFormula, data = data,
@@ -67,8 +61,9 @@ defaultMixedModel = function(data, maxdf = 5, weights = NULL, modelFormula,
                 ## cat("proposing df:", i, "\n")
                 newModelFormula = as.formula(paste0(
                     imputationParameters$imputationValueColumn,
-                    "~ -1 + (1 + bs(", yearValue, ", df = ", i,
-                    ", degree = 1)|", imputationParameters$byKey, ")"))
+                    "~ -1 + (1 + bs(", imputationParameters$yearValue,
+                    ", df = ", i, ", degree = 1)|", imputationParameters$byKey,
+                    ")"))
                 ## print(newModelFormula)
                 newModel = try(
                     lmer(formula = newModelFormula,

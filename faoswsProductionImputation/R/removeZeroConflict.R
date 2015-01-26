@@ -14,14 +14,14 @@
 ##'     productionFlag, yieldValue, yieldFlag)]
 ##'
 ##' @export
+##' 
 
 removeZeroConflict = function(data, processingParameters){
     
     ### Data Quality Checks
-    if(!ensuredProcessingParameters)
-        ensureProcessingParameters(processingParameters = processingParameters)
-    if(!ensuredProductionData)
-        ensureProductionData(data = data)
+    if(!exists("ensuredProductionData") || !ensuredProductionData)
+        ensureProductionInputs(data = data,
+                               processingParameters = processingParameters)
     
     setnames(x = data,
              old = c(processingParameters$productionValue,
@@ -40,14 +40,14 @@ removeZeroConflict = function(data, processingParameters){
     data[productionValue == 0 & areaHarvestedValue != 0,
          `:=`(areaHarvestedValue = NA,
               yieldValue = NA,
-              areaHarvestedObservationFlag = naFlag,
-              yieldObservationFlag = naFlag)]
+              areaHarvestedObservationFlag = processingParameters$naFlag,
+              yieldObservationFlag = processingParameters$naFlag)]
 
     data[areaHarvestedValue == 0 & productionValue != 0,
          `:=`(productionValue = NA,
               yieldValue = NA,
-              productionObservationFlag = naFlag,
-              yieldObservationFlag = naFlag)]
+              productionObservationFlag = processingParameters$naFlag,
+              yieldObservationFlag = processingParameters$naFlag)]
 
     setnames(x = data,
              old = c("productionValue",

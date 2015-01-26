@@ -31,11 +31,9 @@ plotEnsemble = function(data, modelFits, modelWeights, ensemble,
                         imputationParameters, returnFormat = "faceted"){
     
     ### Data Quality Checks
-    if(!ensuredImputationParameters)
-        ensureImputationParameters(imputationParameters = imputationParameters)
-    if(!ensuredImputationData)
-        ensureImputationData(data = data,
-                             imputationParameters = imputationParameters)
+    if(!exists("ensuredImputationData") || !ensuredImputationData)
+        ensureImputationInputs(data = data,
+                               imputationParameters = imputationParameters)
     stopifnot(is(modelFits, "list"))
     stopifnot(is(modelWeights, "data.table"))
     stopifnot(length(modelFits) == ncol(modelWeights))
@@ -47,8 +45,9 @@ plotEnsemble = function(data, modelFits, modelWeights, ensemble,
     stopifnot(returnFormat %in% c("faceted", "individual", "prompt"))
     
     ### Set up toPlot data.table (holds data for ggplot call)
-    plotKeys = data[, any(is.na(get(imputationValueColumn))),
-                    by = imputationParameters$byKey]
+    plotKeys = data[, any(is.na(get(
+        imputationParameters$imputationValueColumn))),
+        by = c(imputationParameters$byKey)]
     plotKeys = plotKeys[(V1), get(imputationParameters$byKey)]
     filter = data[, get(imputationParameters$byKey) %in% plotKeys]
     toPlot = data[filter, ]
@@ -57,6 +56,8 @@ plotEnsemble = function(data, modelFits, modelWeights, ensemble,
                              imputationParameters$byKey,
                              imputationParameters$imputationValueColumn),
              new = c("year", "byKey", "imputationValueColumn"))
+    toPlot$imputedObservation = ifelse(is.na(toPlot$imputationValueColumn),
+                                       "Ensemble", "Data")
     
     ### Set up toPlotModels data.table
     toPlotModels = lapply(modelFits, function(x) x[filter])
@@ -110,12 +111,9 @@ plotEnsemble = function(data, modelFits, modelWeights, ensemble,
                                               fill = variable)) +
             ggplot2::geom_point(data = toPlot,
                 ggplot2::aes(x = year, y = ensemble,
-                             color = ifelse(is.na(imputationValueColumn),
-                                            "Ensemble", "Data"),
-                             shape = ifelse(is.na(imputationValueColumn),
-                                            "Ensemble", "Data"),
-                             fill = ifelse(is.na(imputationValueColumn),
-                                            "Ensemble", "Data"))) +
+                             color = imputedObservation,
+                             shape = imputedObservation,
+                             fill = imputedObservation)) +
             ggplot2::facet_wrap( ~ byKey, scale = "free") +
             ggplot2::scale_size_continuous(range = c(.5, 2)) +
             ggplot2::scale_color_manual( 
@@ -124,7 +122,8 @@ plotEnsemble = function(data, modelFits, modelWeights, ensemble,
             ggplot2::scale_fill_manual(
                 values = c(NA, NA, plotColors),
                 limits = c("Data", "Ensemble", modelNames)) +
-            ggplot2::labs(x = "Year", y = imputationValueColumn,
+            ggplot2::labs(x = "Year",
+                          y = imputationParameters$imputationValueColumn,
                           size = "Model Weight", color = "", shape = "",
                           fill = "") +
             ggplot2::scale_shape_manual(values = c(16, 4, rep(NA, nModels)),
@@ -145,12 +144,15 @@ plotEnsemble = function(data, modelFits, modelWeights, ensemble,
                                                   fill = variable)) +
                 ggplot2::geom_point(data = toPlot[byKey == i,],
                     ggplot2::aes(x = year, y = ensemble,
-                                 color = ifelse(is.na(imputationValueColumn),
-                                                "Ensemble", "Data"),
-                                 shape = ifelse(is.na(imputationValueColumn),
-                                                "Ensemble", "Data"),
-                                 fill = ifelse(is.na(imputationValueColumn),
-                                                "Ensemble", "Data"))) +
+                                 color = ifelse(is.na(
+                                     imputationParameters$imputationValueColumn),
+                                     "Ensemble", "Data"),
+                                 shape = ifelse(is.na(
+                                     imputationParameters$imputationValueColumn),
+                                     "Ensemble", "Data"),
+                                 fill = ifelse(is.na(
+                                     imputationParameters$imputationValueColumn),
+                                     "Ensemble", "Data"))) +
                 ggplot2::facet_wrap( ~ byKey, scale = "free") +
                 ggplot2::scale_size_continuous(range = c(.5, 2)) +
                 ggplot2::scale_color_manual( 
@@ -159,7 +161,8 @@ plotEnsemble = function(data, modelFits, modelWeights, ensemble,
                 ggplot2::scale_fill_manual(
                     values = c(NA, NA, plotColors),
                     limits = c("Data", "Ensemble", modelNames)) +
-                ggplot2::labs(x = "Year", y = imputationValueColumn,
+                ggplot2::labs(x = "Year",
+                              y = imputationParameters$imputationValueColumn,
                               size = "Model Weight", color = "", shape = "",
                               fill = "") +
                 ggplot2::scale_shape_manual(values = c(16, 4, rep(NA, nModels)),

@@ -31,15 +31,9 @@
 getWeightMatrix = function(data, w, imputationParameters){
 
     ### Data Quality Checks
-    if(!ensuredImputationParameters)
-        ensureImputationParameters(imputationParameters = imputationParameters)
-    if(!ensuredImputationData)
-        ensureImputationData(data = data,
-                             imputationParameters = imputationParameters)
-    if(!ensuredFlagTable)
-        ensureFlagTable(flagTable = imputationParameters$flagTable,
-                        data = data,
-                        imputationParameters = imputationParameters)
+    if(!exists("ensuredImputationData") || !ensuredImputationData)
+        ensureImputationInputs(data = data,
+                               imputationParameters = imputationParameters)
     stopifnot(is(w, "data.table"))
     # w should have one row for each model at each byKey level
     stopifnot(nrow(w) == length(unique(data[[imputationParameters$byKey]])) *

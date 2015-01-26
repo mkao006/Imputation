@@ -9,12 +9,11 @@
 processProductionDomain = function(data, processingParameters){
     
     ### Data Quality Checks
-    if(!ensuredProcessingParameters)
-        ensureProcessingParameters(processingParameters = processingParameters)
-    if(!ensuredProductionData)
-        ensureProductionData(data = data)
-        
-    if(removePriorImputation){
+    if(!exists("ensuredProductionData") || !ensuredProductionData)
+        ensureProductionInputs(data = data,
+                               processingParameters = processingParameters)
+    
+    if(processingParameters$removePriorImputation){
         removeImputation(data = data,
                     value = processingParameters$areaHarvestedValue,
                     flag = processingParameters$areaHarvestedObservationFlag,
@@ -37,16 +36,16 @@ processProductionDomain = function(data, processingParameters){
              naFlag = processingParameters$naFlag)
     
     remove0M(data = data,
-             value = processingParameters$areaHarvestedValue,
-             flag = processingParameters$areaHarvestedObservationFlag,
+             value = processingParameters$yieldValue,
+             flag = processingParameters$yieldObservationFlag,
              naFlag = processingParameters$naFlag)
     
     remove0M(data = data,
-             value = processingParameters$areaHarvestedValue,
-             flag = processingParameters$areaHarvestedObservationFlag,
+             value = processingParameters$productionValue,
+             flag = processingParameters$productionObservationFlag,
              naFlag = processingParameters$naFlag)
     
-    if(removeConflictValues){
+    if(processingParameters$removeConflictValues){
         removeZeroConflict(data = data,
                            processingParameters = processingParameters)
     }

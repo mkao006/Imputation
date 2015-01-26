@@ -8,23 +8,20 @@
 ##' @export
 ##' 
 
-balanceProduction = function(data, imputationParameters){
+balanceProduction = function(data, imputationParameters, processingParameters){
 
     ### Data Quality Checks
-    if(!ensuredImputationParameters)
-        ensureImputationParameters(imputationParameters = imputationParameters)
-    if(!ensuredImputationData)
-        ensureImputationData(data = data,
-                             imputationParameters = imputationParameters)
-    if(!ensuredFlagTable)
-        ensureFlagTable(flagTable = imputationParameters$flagTable,
-                        data = data,
-                        imputationParameters = imputationParameters)
+    if(!exists("ensuredImputationData") || !ensuredImputationData)
+        ensureImputationInputs(data = data,
+                               imputationParameters = imputationParameters)
     
-    origName = c(productionValue, productionObservationFlag,
-        productionMethodFlag, areaHarvestedValue,
-        areaHarvestedObservationFlag, 
-        yieldValue, yieldObservationFlag)
+    origName = c(processingParameters$productionValue,
+                 processingParameters$productionObservationFlag,
+                 processingParameters$productionMethodFlag,
+                 processingParameters$areaHarvestedValue,
+                 processingParameters$areaHarvestedObservationFlag,
+                 processingParameters$yieldValue,
+                 processingParameters$yieldObservationFlag)
     tmpName = c("pValue", "pObsFlag", "pMetFlag", "aValue", "aObsFlag",
         "yValue", "yObsFlag")
     setnames(data, old = origName, new = tmpName)
@@ -38,8 +35,8 @@ balanceProduction = function(data, imputationParameters){
          c("pValue", "pObsFlag", "pMetFlag") :=
          list(aValue * yValue,
               aggregateObservationFlag(aObsFlag, yObsFlag,
-                                       flagTable = flagTable),
-              newMethodFlag)
+                                       flagTable = imputationParameters$flagTable),
+              imputationParameters$newMethodFlag)
          ]
     setnames(data, old = tmpName, new = origName)
 }

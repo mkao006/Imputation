@@ -13,21 +13,9 @@
 imputeVariable = function(data, imputationParameters){
 
     ### Data Quality Checks
-    if(!ensuredImputationParameters)
-        ensureImputationParameters(imputationParameters = imputationParameters)
-    if(!ensuredImputationData)
-        ensureImputationData(data = data,
-                             imputationParameters = imputationParameters)
-    if(!ensuredFlagTable)
-        ensureFlagTable(flagTable = imputationParameters$flagTable,
-                        data = data,
-                        imputationParameters = imputationParameters)
-    
-    ## By balancing first, if variable == "production"
-    if(imputationParameters$variable == "production"){
-        balanceProduction(data = data,
-                          imputationParameters = imputationParameters)
-    }
+    if(!exists("ensuredImputationData") || !ensuredImputationData)
+        ensureImputationInputs(data = data,
+                               imputationParameters = imputationParameters)
 
     missingIndex = is.na(
         data[, get(imputationParameters$imputationValueColumn)])
@@ -35,7 +23,7 @@ imputeVariable = function(data, imputationParameters){
              ensembleImpute(data = data,
                             imputationParameters = imputationParameters)]
     imputedIndex = missingIndex &
-        !is.na(get(imputationParameters$imputationValueColumn))
+        !is.na(data[[imputationParameters$imputationValueColumn]])
     data[imputedIndex,
          c(imputationParameters$imputationFlagColumn,
            imputationParameters$imputationMethodColumn) :=

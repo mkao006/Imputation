@@ -18,15 +18,14 @@
 computeLoocvFits = function(data, cvGroup, imputationParameters){
     
     ### Data Quality Checks
-    if(!ensuredImputationParameters)
-        ensureImputationParameters(imputationParameters = imputationParameters)
-    if(!ensuredImputationData)
-        ensureImputationData(data = data,
-                             imputationParameters = imputationParameters)
+    if(!exists("ensuredImputationData") || !ensuredImputationData)
+        ensureImputationInputs(data = data,
+                               imputationParameters = imputationParameters)
     stopifnot(length(cvGroup) == nrow(data))
     
-    fits = lapply(1:length(ensembleModels), FUN = function(i){
-        model = imputationParameters$ensembleModels[[i]]
+    ensemModels = imputationParameters$ensembleModels
+    fits = lapply(1:length(ensemModels), FUN = function(i){
+        model = ensemModels[[i]]
         fit = rep(NA, nrow(data))
         for(j in unique(cvGroup[!is.na(cvGroup)])){
             #Copy x and remove the ith observation to fit the model
@@ -34,7 +33,9 @@ computeLoocvFits = function(data, cvGroup, imputationParameters){
             dataTemporary[cvGroup == j,
                           c(imputationParameters$imputationValueColumn) := NA]
             if(model@level == "commodity"){
-                fitTemporary = model@model(data = dataTemporary)
+                fitTemporary = model@model(data = dataTemporary,
+                                           imputationParameters =
+                                               imputationParameters)
             } else if(model@level == "countryCommodity"){
                 fitTemporary = extendSimpleModel(data = dataTemporary,
                                                  model = model@model,
@@ -46,6 +47,6 @@ computeLoocvFits = function(data, cvGroup, imputationParameters){
         }
         return(fit)
     })
-    names(fits) = names(imputationParameters$ensembleModels)
+    names(fits) = names(ensemModels)
     return(fits)
 }

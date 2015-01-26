@@ -26,16 +26,15 @@ removeNoInfo = function (data, value, flag, processingParameters,
     environment = parent.frame(1)){
     
     ### Data Quality Checks
-    if(!ensuredProcessingParameters)
-        ensureProcessingParameters(processingParameters = processingParameters)
-    if(!ensuredProductionData)
-        ensureProductionData(data = data)
+    if(!exists("ensuredProductionData") || !ensuredProductionData)
+        ensureProductionInputs(data = data,
+                               processingParameters = processingParameters)
     stopifnot(c(value, flag) %in% colnames(data))
     stopifnot(is(environment, "environment"))
     
     info = data[, rep(containInfo(value = get(value), flag = get(flag),
                                   processingParameters = processingParameters),
-        NROW(.SD)), by = processingParameters$byKey]$V1
+        NROW(.SD)), by = c(processingParameters$byKey)]$V1
     
     #Assign the new data.table to environment
     dataTableName = as.character(match.call()$data)

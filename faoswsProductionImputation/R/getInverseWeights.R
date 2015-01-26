@@ -18,18 +18,19 @@
 ##' @export
 ##' 
 
-getInverseWeights = function(data, fits){
+getInverseWeights = function(data, fits, imputationParameters){
     
     ### Data Quality Checks
-    if(!ensuredImputationData)
-        ensureImputationData(data = data,
-                             imputationParameters = imputationParameters)
+    if(!exists("ensuredImputationData") || !ensuredImputationData)
+        ensureImputationInputs(data = data,
+                               imputationParameters = imputationParameters)
     stopifnot(nrow(data) == sapply(fits, length))
 
     ### Compute errors from each model
     error = lapply(1:length(fits),
            FUN = function(i){
-               out = computeErrorRate(data = data, fit = fits[[i]])
+               out = computeErrorRate(data = data, fit = fits[[i]],
+                                imputationParameters = imputationParameters)
                out = data.table( model = names(fits)[i],
                                  byKey = data[[imputationParameters$byKey]],
                                  missingValue = is.na(
@@ -48,7 +49,7 @@ getInverseWeights = function(data, fits){
     ## Errors should never be infinity, so this signals some sort of problem:
     if(error[!(missingValue), max(abs(error))] == Inf){
         badKeys = error[!(missingValue) & abs(error) == Inf,
-                        unique(imputationParameters$byKey)]
+                        unique(byKey)]
         warning("Model fitting failed for keys: ", paste(badKeys, collapse=" "),
             "\nSome countries may have only one observation, and thus no",
             "cross-validation models worked.  Have you tried a global model",
@@ -62,14 +63,14 @@ getInverseWeights = function(data, fits){
     # we must exclude values which are missing, as loocv won't estimate those
     # and they won't influence error calcs anyways).
     error[, modelFailed := any(is.na(fit) & !missingValue),
-          by = list(imputationParameters$byKey, model)]
+          by = list(byKey, model)]
     error[(modelFailed), error := NA]
     
     ### Create the weights data.table using the errors
     # Aggregate the errors using the provided error function, applying to each
     # byKey group and model individually.
-    weights = error[!(missingValue), errorFunction(error),
-                    by = list(imputationParameters$byKey, model)]
+    weights = error[!(missingValue), imputationParameters$errorFunction(error),
+                    by = list(byKey, model)]
     setnames(weights, old = "V1", new = "averageError")
     if(imputationParameters$errorType == "raw"){
         # Perfect fits can give really small errors but actually be overfitting
@@ -79,10 +80,10 @@ getInverseWeights = function(data, fits){
         ## NOTE (Michael): Maybe change this to uniform weight
         weights[, averageErrorByKey :=
                     mean(averageError[averageError > 1e-3], na.rm = TRUE),
-                by = imputationParameters$byKey]
+                by = byKey]
         weights[, averageError := ifelse(averageError < 1e-3 &
                 !is.na(averageErrorByKey), averageErrorByKey,
-            averageError), by = imputationParameters$byKey]
+            averageError), by = byKey]
         ## If we still haven't corrected averageError, then all weights for a
         ## particular key are < 1e-3.  In this case, assign errors of 1 to all.
         weights[, averageError := ifelse(averageError < 1e-3,
@@ -93,10 +94,10 @@ getInverseWeights = function(data, fits){
         # small the errors can be:
         weights[, averageErrorByKey :=
                     mean(averageError[averageError > 1e-16], na.rm = TRUE),
-                by = imputationParameters$byKey]
+                by = byKey]
         weights[, averageError := ifelse(averageError < 1e-16 &
                 !is.na(averageErrorByKey), averageErrorByKey,
-            averageError), by = imputationParameters$byKey]
+            averageError), by = byKey]
         ## If we still haven't corrected averageError, then all weights for a
         ## particular key are < 1e-16.  In this case, assign the same errors to
         ## all.
@@ -105,6 +106,6 @@ getInverseWeights = function(data, fits){
     }
     weights[, weight := (1/averageError^2) /
                 sum(1/averageError^2, na.rm = TRUE),
-            by = imputationParameters$byKey]
+            by = byKey]
     return(weights)
 }
