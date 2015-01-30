@@ -1,0 +1,513 @@
+%\VignetteIndexEntry{faoswsProduction: A package for the imputation of the production domain of the Statistical Working System}
+%\VignetteEngine{knitr::knitr}
+\documentclass[nojss]{jss}
+\usepackage{url}
+\usepackage[sc]{mathpazo}
+\usepackage{geometry}
+\geometry{verbose,tmargin=2.5cm,bmargin=2.5cm,lmargin=2.5cm,rmargin=2.5cm}
+\setcounter{secnumdepth}{2}
+\setcounter{tocdepth}{2}
+\usepackage{breakurl}
+\usepackage{hyperref}
+\usepackage[ruled, vlined]{algorithm2e}
+\usepackage{mathtools}
+\usepackage{draftwatermark}
+\usepackage{float}
+\usepackage{placeins}
+\usepackage{mathrsfs}
+\usepackage{multirow}
+%% \usepackage{mathbbm}
+\DeclareMathOperator{\sgn}{sgn}
+\DeclareMathOperator*{\argmax}{\arg\!\max}
+
+
+
+\title{\bf faoswsProduction: A package for the imputation of
+  the production domain of the Statistical Working System}
+
+\author{Michael. C. J. Kao and Joshua M. Browning\\ Food and Agriculture
+    Organization \\ of the United Nations\\}
+
+\Plainauthor{Michael. C. J. Kao, Joshua M. Browning}
+
+\Plaintitle{faoswsProduction: Package for imputation of the
+  production domain of the ESS Statistical Working System}
+
+\Shorttitle{Imputation Module}
+
+\Abstract{ 
+
+  This vignette provides detailed description of the usage of
+  functions in the \pkg{faoswsProduction} package. \\
+  
+  There are three sections to this paper. The opening will describe
+  the essential setups required for the package to operate. This is
+  then followed by the step-by-step description of each function which
+  consist of the whole entire imputation procedure described in the
+  methodology paper. Arguements and default setting for each function
+  is explained with illustrating example. The final section is for
+  technical readers who are interested in building their ensemble
+  model, from how to design sensible component model to how to build
+  the ensemble.
+  
+}
+
+\Keywords{Imputation, Linear Mixed Model, Agricultural Production, Ensemble Learning}
+\Plainkeywords{Imputation, Linear Mixed Model, Agricultural Production, Ensemble Learning}
+
+\Address{
+  Michael. C. J. Kao and Joshua M. Browning\\
+  Economics and Social Statistics Division (ESS)\\
+  Economic and Social Development Department (ES)\\
+  Food and Agriculture Organization of the United Nations (FAO)\\
+  Viale delle Terme di Caracalla 00153 Rome, Italy\\
+  E-mail: \email{michael.kao@fao.org, joshua.browning@fao.org}\\
+  URL: \url{https://github.com/mkao006/sws_imputation}
+}
+
+
+\begin{document}
+
+<<setup, include=FALSE, cache=FALSE>>=
+library(knitr)
+opts_chunk$set(fig.path='figure/', fig.align='center', fig.show='hold',
+               warning=FALSE, message=FALSE, error=FALSE, tidy=FALSE, 
+               results='markup', eval=TRUE, echo=TRUE, cache=FALSE, dpi=200)
+options(replace.assign=TRUE,width=80)
+assign("depthtrigger", 10, data.table:::.global)
+@ 
+
+
+\section{Setup}
+
+
+Before we begin, we will need to load the required library
+
+<<loda-library>>=
+## Load libraries
+library(faoswsProduction)
+library(faoswsImputation)
+library(faoswsUtil)
+library(data.table)
+library(lattice)
+@ 
+
+
+
+To illustrate the functionality of the package, we take the Okra data
+set for example. The implementation requires the data to be loaded as
+a \textit{data.table} object. This is also the default when data are
+queried from the API of the Statistical Working System which we will
+refer to as SWS from hereon.
+
+<<read-data, results='markup'>>=
+str(okrapd)
+@
+
+Note: the okrapd dataset is a good example of the data available in the SWS.
+However, as such, the column names aren't very clear.  As a quick explanation,
+5312 refers to area harvested, 5416 refers to yield, and 5510 refers to
+production.  Each variable has three columns for it's value and the two status
+flags.
+
+In addition to the data, the implementation also require a table to
+map the hierachical relation of the observation flags. In brief, it
+provides a rule for flag aggregation, an example of the table is given
+below. For detail treatment and how to create such a table, please see
+the vignette of the \pkg{faoswsFlag} package.
+
+%<<create-flagt-table, results='markup'>>=
+<<create-flagt-table>>=
+swsOldFlagTable = faoswsFlagTable
+swsOldFlagTable
+@ 
+
+
+\section{Functions}
+This section provides the step-by-step usage of functions which are
+used to perform imputation, the steps illustrated here replicates the
+one-step imputation function \code{imputeProductionDomain}.
+
+
+\subsection{Data processing}
+
+The first step of the imputation is to remove any previous attempt of
+imputation. Even for the same methodology and exact setting, prior
+imputation will vary as more information are received over time. This
+step is highly recommended but optional and depends on the judgement
+of the analyst. \\
+
+To remove the prior imputation, one will need to specify the column
+name of the value and correspinding flag; further the flag which
+represents prior imputation and a flag representing missing
+values. The function will convert the previously imputed value to NA
+and the flag from previous imputation to a missing flag.
+
+<<remove-prior-imputation>>=
+okraProcessed = copy(okrapd)
+
+## Removing prior imputation for production
+table(okraProcessed$flagObservationStatus_measuredElement_5510)
+removeImputation(data = okraProcessed,
+                 value = "Value_measuredElement_5510",
+                 observationFlag =
+                     "flagObservationStatus_measuredElement_5510",
+                 methodFlag = "flagMethod_measuredElement_5510",
+                 imputedFlag = "E",
+                 missingObservationFlag = "M",
+                 missingMethodFlag = "u")
+table(okraProcessed$flagObservationStatus_measuredElement_5510)
+
+## Removing prior imputation for area harvested
+table(okraProcessed$flagObservationStatus_measuredElement_5312)
+removeImputation(data = okraProcessed,
+                 value = "Value_measuredElement_5312",
+                 observationFlag =
+                     "flagObservationStatus_measuredElement_5312",
+                 methodFlag = "flagMethod_measuredElement_5312",
+                 imputedFlag = "E",
+                 missingObservationFlag = "M",
+                 missingMethodFlag = "u")
+table(okraProcessed$flagObservationStatus_measuredElement_5312)
+
+## Removing prior imputation for yield
+table(okraProcessed$flagObservationStatus_measuredElement_5416)
+removeImputation(data = okraProcessed,
+                 value = "Value_measuredElement_5416",
+                 observationFlag =
+                     "flagObservationStatus_measuredElement_5416",
+                 methodFlag = "flagMethod_measuredElement_5416",
+                 imputedFlag = "E",
+                 missingObservationFlag = "M",
+                 missingMethodFlag = "u")
+table(okraProcessed$flagObservationStatus_measuredElement_5416)
+
+@ 
+
+
+
+After removing prior imputation, the next step is to replace zero
+values associating with flag "M" to NA. This is due to the fact that
+missing values were represented with a value of zero with a flag of
+"M".
+
+<<remove-zero-values>>=
+okraProcessed[geographicAreaM49 == 12 & timePointYears >= 2005,
+              .(Value_measuredElement_5312,
+                flagObservationStatus_measuredElement_5312)]
+remove0M(data = okraProcessed,
+         value = "Value_measuredElement_5312",
+         flag = "flagObservationStatus_measuredElement_5312",
+         naFlag = "M")
+okraProcessed[geographicAreaM49 == 12 & timePointYears >= 2005,
+              .(Value_measuredElement_5312,
+                flagObservationStatus_measuredElement_5312)]
+@
+
+Note how the zeroes have been changed into NA's above.  Let's do the same for
+production and area harvested:
+
+<<more-remove-zero-values>>=
+remove0M(data = okraProcessed,
+         value = "Value_measuredElement_5416",
+         flag = "flagObservationStatus_measuredElement_5416",
+         naFlag = "M")
+
+remove0M(data = okraProcessed,
+         value = "Value_measuredElement_5510",
+         flag = "flagObservationStatus_measuredElement_5510",
+         naFlag = "M")
+
+@ 
+
+
+In order for the linear mixed model to fit successfully, at least one
+observation is required for each country. Thus, this function removes
+countries which contains no information or no observation at all.
+
+<<remove-info>>=
+okraProcessed[geographicAreaM49 == 245,
+              .(Value_measuredElement_5416,
+                flagObservationStatus_measuredElement_5416)]
+removeNoInfo(data = okraProcessed,
+             value = "Value_measuredElement_5416",
+             observationFlag = "flagObservationStatus_measuredElement_5416",
+             byKey = "geographicAreaM49")
+okraProcessed[geographicAreaM49 == 245,
+              .(Value_measuredElement_5416,
+                flagObservationStatus_measuredElement_5416)]
+@ 
+
+Note for advanced users: All other remove* functions from the utils package
+perform by modifying the data.table in place (and thus you do not need to
+assign a new data.table to the result of a function).  removeNoInfo should work
+in the same way, but there is currently not a way to delete rows in a
+data.table without copying the data.table.  Thus, the object cannot be modified
+in place.  For this function to behave like the other functions, then, we
+assign the data.table object in an environment (by default, the calling
+environment of removeNoInfo).
+
+Next, we must create a list that contains specific parameters on how the
+processing should be performed.
+
+<<processingParams>>=
+processingParams = defaultProcessingParameters()
+@
+
+Now, we will pass processingParams through all of the individual processing
+fucntions.  The function \code{processProductionDomain} is a wrapper that
+executes all the data processing above with just the processingParams argument.
+
+<<processProductionDomain>>=
+okraProcessed = copy(okrapd)
+processProductionDomain(data = okraProcessed,
+                        processingParameters = processingParams)
+@ 
+
+
+\subsection{Imputation}
+
+Now we are ready to perform the imputation. Recalling the methodology
+paper, the yield is imputed first. The function \code{imputeVariable}
+allows the user to specify a desirable formula for the linear mixed
+model; otherwise the default linear mixed model with spline will be
+used.
+
+To run the imputation, we need to construct a list with the default imputation
+parameters (similar to the list with the processing parameters).  The
+documentation page for defaultImputationParameters() provides some detail on
+what each of the different elements of this list are.  Also, let's delete some
+of the data (having too many countries can clog up some of the later plots).
+
+<<imputationParams>>=
+okraProcessed = okraProcessed[geographicAreaM49 <= 55, ]
+imputationParams = defaultImputationParameters(variable = "yield")
+names(imputationParams)
+@
+
+One very important part of this list is the ensembleModels element.  This
+element specifies all of the models which should be used to form the final
+ensemble.  Let's just use three models to simplify the process:
+
+<<ensembleModels>>=
+names(imputationParams$ensembleModels)
+imputationParams$ensembleModels =
+    imputationParams$ensembleModels[1:3]
+@
+
+<<impute-yield>>=
+imputeVariable(data = okraProcessed, imputationParameters = imputationParams)
+@ 
+
+The graphs contain a lot of information.  First, the dots represent observed
+values, and the crosses represent the imputations.  The different colored lines
+show the different fits, and the thickness of the line is proportional to the
+weight it received in the ensemble.  Of course, if the data point is an
+observation then no imputation is done, so all lines have the same thickness
+there.  Also, the computed weights will be constant for all imputed values with
+one exception: models that are not allowed to extrapolate may have positive
+weights for some imputations and 0 for others.  Moreover, if an observation
+is outside the extrapolation range of a model, then the weight of all other
+models will need to be rescaled so all values add to 1.
+
+After the imputation of yield, we proceed to impute the production.  The
+function \code{imputeProduction} function is actually composed of two
+steps. During the first step, the entries where the imputed yield can
+be matched with an existing area harvested value are identified; this
+in turn enables us to compute the production. If no value for area
+harvested is available, then the function proceeds to impute the
+remaining production values with ensemble learning.  Let's use some different
+models this time, just for the purpose of showing what's available:
+
+<<impute-production>>=
+balanceProduction(data = okraProcessed,
+                  imputationParameters = imputationParams,
+                  processingParameters = processingParams)
+imputationParams = defaultImputationParameters("production")
+imputationParams$ensembleModels =
+    imputationParams$ensembleModels[4:9]
+imputeVariable(data = okraProcessed,
+               imputationParameters = imputationParams)
+@ 
+
+Note: imputations that are interpolations are always present, but some
+extrapolations are not imputed.  The reason for this is that some models are
+not reasonable to extrapolate with (such as LOESS, Splines, etc.).  For these
+models, an "extrapolation range" is defined, and this value dictates how far
+outside the range of the data a particular model is allowed to extrapolate.  In
+our case, we have:
+
+<<>>=
+for(model in imputationParams$ensembleModels)
+    print(model@extrapolationRange)
+@
+
+Thus, the Logistic, Arima, and Mars models are the only models that are allowed
+to extrapolate more than one observation away from the data.  For most of the
+examples provided here, those three models all failed to fit to the data, and
+so imputations were not available.
+
+Finally, we can balance the area harvested after both production and
+yield have been imputed.
+
+<<balance-area-harvested>>=
+balanceAreaHarvested(data = okraProcessed,
+                     imputationParameters = imputationParams,
+                     processingParameters = processingParams)
+@ 
+
+
+The full procedure outlined in this section can be performed by a
+single function \code{imputeProductionDomain}.  You will need to specify three
+parameter lists: the processing parameters (1) and the imputation parameters
+for both yield and production (2).
+
+
+<<one-step-imputation>>=
+yieldParams = defaultImputationParameters("yield")
+yieldParams$ensembleModels = yieldParams$ensembleModels[1:3]
+productionParams = defaultImputationParameters("production")
+productionParams$ensembleModels = productionParams$ensembleModels[1:3]
+okraProcessed = okrapd[geographicAreaM49 <= 55, ]
+system.time(
+    {        
+        imputeProductionDomain(data = okraProcessed,
+                               processingParameters = processingParams,
+                               yieldImputationParameters = yieldParams,
+                               productionImputationParameters =
+                                   productionParams)
+    })
+@ 
+
+
+\section{Ensemble model}
+Here we provide some details of how to implement user specific
+ensemble models.\\
+
+First of all, the component models need to take a vector of values and
+return the fitted values. If the model failed, then a vector of NAs equal to
+the length of the input should be returned.\\
+
+Shown below is the default linear model in the package.  It is the analyst's
+job to ensure the component models return sensible values. For example,
+negative values are nonsensical for production, and in the current
+implementation negative values are replaced with zero.
+
+<<default-linear>>=
+defaultLogistic = function (x){
+    stopifnot(is.numeric(x))
+    stopifnot(length(x) > 1)
+    time = 1:length(x)
+    if (all(is.na(x))) 
+        return(as.numeric(rep(NA, length(x))))
+    lmFit = predict(lm(formula = x ~ time), newdata = data.frame(time = time))
+    lmFit[lmFit < 0] = 0
+    lmFit
+}
+
+@
+
+Now, to create an \code{ensembleModel} object, two other pieces of information
+must be provided: the extrapolation range of the model (i.e. how many years
+it can extrapolate outside the support of the data) and the ``level'' of the
+model (see the class documentation):
+
+<<ensemble-model>>=
+mod = ensembleModel(model = defaultLogistic, extrapolationRange = 1,
+                    level = "countryCommodity")
+is(mod)
+@
+
+Now, \code{mod} is an object of type ensembleModel.  We can construct a list of
+several of these models, but there are also some default models implemented.
+Calling allDefaultModels() returns a list of all of these models.
+
+<<default-models>>=
+names(allDefaultModels())
+sapply(allDefaultModels(), is)
+@
+
+Here we take the Okra production value of Bahrain as an
+illustration. After the component models have been designed and
+inserted into a list, we can compute the fits and weights then
+combine it to form the ensemble with the following functions.
+
+First, we have to make sure we've correctly labeled any missing values as NA
+and not 0:
+
+<<ensemble-illustration>>=
+bahrainExample = okrapd[areaName == "Bahrain", ]
+bahrainExample[1:4, .(areaName, timePointYears,
+                      production = Value_measuredElement_5510,
+                      productionFlag =
+                          flagObservationStatus_measuredElement_5510)]
+remove0M(data = bahrainExample, value = "Value_measuredElement_5510",
+         flag = "flagObservationStatus_measuredElement_5510")
+bahrainExample[1:4, .(areaName, timePointYears,
+                      production = Value_measuredElement_5510,
+                      productionFlag =
+                          flagObservationStatus_measuredElement_5510)]
+@
+
+Next, we compute the model fits.  We'll print the first three fits:
+
+<<>>=
+## Compute fit for all component models
+imputationParameters = defaultImputationParameters("production")
+modelFits = computeEnsembleFit(data = bahrainExample,
+                               imputationParameters = imputationParameters)
+modelFits[1:3]
+length(modelFits)
+@
+
+To compute weights, we need to use cross-validation.  Each observation is
+assigned a cross-validation group.  To compute the error of a particular model,
+we estimate the observed values in group i with all values not in group i.
+This allows us to measure how well a model predicts the data, and can help
+prevent overfitting.  The model weights are then computed.  Note the NA's;
+these exist when observations are real and values are not being imputed.
+
+<<>>=
+## Calculate the weight for each component model
+cvGroup = makeCvGroup(data = bahrainExample,
+                      imputationParameters = imputationParameters,
+                      groupCount = 10)
+cvGroup
+modelWeights = computeEnsembleWeight(data = bahrainExample,
+                                     cvGroup = cvGroup,
+                                     fits = modelFits,
+                                     method = "inverse",
+                                     imputationParameters =
+                                         imputationParameters)
+modelWeights[, .(defaultArima, defaultExp, defaultLm)]
+dim(modelWeights)
+@
+
+Lastly, combine the fits with the estimated weights to produce the final
+ensemble, and then plot it!
+
+<<dpi=100>>=
+## Combine the models to obtain the ensemble
+ensemble = bahrainExample[, Value_measuredElement_5510]
+imputationFit = computeEnsemble(modelFits, modelWeights)
+ensemble[is.na(ensemble)] = imputationFit[is.na(ensemble)]
+plotEnsemble(data = bahrainExample, modelFits = modelFits,
+             modelWeights = modelWeights, ensemble = ensemble,
+             imputationParameters = imputationParameters)
+@ 
+
+A one-step wrapper function is also available.  There are also many other
+options you can specify when constructing an ensemble, such as the maximum
+weight that may be given to a model or a custom error function for choosing
+weights.  See defaultImputationParameters for a description of all the options.
+
+<<ensemble-imputation, dpi=100>>=
+bahamasExample = okrapd[areaName == "Bahamas", ]
+remove0M(data = bahamasExample, value = "Value_measuredElement_5510",
+         flag = "flagObservationStatus_measuredElement_5510")
+ensembleFit = ensembleImpute(data = bahamasExample,
+                             imputationParameters = imputationParameters)
+@ 
+
+
+\end{document}
