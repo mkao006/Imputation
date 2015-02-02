@@ -5,13 +5,17 @@
 \title{Function to compute production when new area harvested and yield
 are given.}
 \usage{
-balanceProduction(data, imputationParameters)
+balanceProduction(data, imputationParameters, processingParameters)
 }
 \arguments{
 \item{data}{The data.table object containing the data.}
 
 \item{imputationParameters}{A list of the parameters for the imputation
 algorithms.  See defaultImputationParameters() for a starting point.}
+
+\item{processingParameters}{A list of the parameters for the production
+processing algorithms.  See defaultProductionParameters() for a starting
+point.}
 }
 \description{
 Function to compute production when new area harvested and yield

@@ -4,16 +4,13 @@
 \alias{makeCvGroup}
 \title{Make Cross-Validation Groups}
 \usage{
-makeCvGroup(data, imputationParameters)
+makeCvGroup(data, imputationParameters, groupCount = 10)
 }
 \arguments{
 \item{data}{A data.table object containing the data.}
 
-\item{value}{The column name of data corresponding to the value to be
-imputed.}
-
-\item{byKey}{The column name of data corresponding to the grouping
-variable, typically "areaCode".}
+\item{imputationParameters}{A list of the parameters for the imputation
+algorithms.  See defaultImputationParameters() for a starting point.}
 
 \item{groupCount}{How many cross-validation groups should be used?}
 }

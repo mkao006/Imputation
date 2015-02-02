@@ -10,6 +10,9 @@ computeErrorRate(data, fit, imputationParameters)
 \item{data}{A data.table containing the data.}
 
 \item{fit}{The fitted value from the model.}
+
+\item{imputationParameters}{A list of the parameters for the imputation
+algorithms.  See defaultImputationParameters() for a starting point.}
 }
 \value{
 A vector of (the absolute value of the) errors corresponding to the

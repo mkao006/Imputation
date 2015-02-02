@@ -1,5 +1,0 @@
-%\VignetteIndexEntry{Statistical Working Paper on Imputation Methodology for the FAOSTAT Production Domain}
-%\VignetteEngine{knitr::knitr}
-\documentclass{article}
-\begin{document}
-\end{document}

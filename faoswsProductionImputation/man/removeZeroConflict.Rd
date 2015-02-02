@@ -9,6 +9,10 @@ removeZeroConflict(data, processingParameters)
 }
 \arguments{
 \item{data}{The data table objest}
+
+\item{processingParameters}{A list of the parameters for the production
+processing algorithms.  See defaultProductionParameters() for a starting
+point.}
 }
 \value{
 No value is returned.  However, the object "data" which was passed

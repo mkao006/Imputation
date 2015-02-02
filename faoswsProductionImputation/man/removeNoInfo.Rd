@@ -14,6 +14,10 @@ removeNoInfo(data, value, flag, processingParameters,
 
 \item{flag}{The flag/symbol of production.}
 
+\item{processingParameters}{A list of the parameters for the production
+processing algorithms.  See defaultProductionParameters() for a starting
+point.}
+
 \item{environment}{The functions in this package generally work by
 passing the data.table by reference and modifying it in place.  In place
 row deletion is currently not supported by data.table.  Thus, to make this

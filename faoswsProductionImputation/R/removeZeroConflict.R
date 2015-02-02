@@ -2,6 +2,9 @@
 ##' area harvested.
 ##'
 ##' @param data The data table objest
+##' @param processingParameters A list of the parameters for the production
+##' processing algorithms.  See defaultProductionParameters() for a starting
+##' point.
 ##'
 ##' @return No value is returned.  However, the object "data" which was passed
 ##' to this function is modified.
@@ -23,44 +26,18 @@ removeZeroConflict = function(data, processingParameters){
         ensureProductionInputs(data = data,
                                processingParameters = processingParameters)
     
-    setnames(x = data,
-             old = c(processingParameters$productionValue,
-                     processingParameters$areaHarvestedValue,
-                     processingParameters$yieldValue,
-                     processingParameters$productionObservationFlag,
-                     processingParameters$areaHarvestedObservationFlag,
-                     processingParameters$yieldObservationFlag),
-             new = c("productionValue",
-                     "areaHarvestedValue",
-                     "yieldValue",
-                     "productionObservationFlag",
-                     "areaHarvestedObservationFlag",
-                     "yieldObservationFlag"))
-             
-    data[productionValue == 0 & areaHarvestedValue != 0,
-         `:=`(areaHarvestedValue = NA,
-              yieldValue = NA,
-              areaHarvestedObservationFlag = processingParameters$naFlag,
-              yieldObservationFlag = processingParameters$naFlag)]
-
-    data[areaHarvestedValue == 0 & productionValue != 0,
-         `:=`(productionValue = NA,
-              yieldValue = NA,
-              productionObservationFlag = processingParameters$naFlag,
-              yieldObservationFlag = processingParameters$naFlag)]
-
-    setnames(x = data,
-             old = c("productionValue",
-                     "areaHarvestedValue",
-                     "yieldValue",
-                     "productionObservationFlag",
-                     "areaHarvestedObservationFlag",
-                     "yieldObservationFlag"),
-             new = c(processingParameters$productionValue,
-                     processingParameters$areaHarvestedValue,
-                     processingParameters$yieldValue,
-                     processingParameters$productionObservationFlag,
-                     processingParameters$areaHarvestedObservationFlag,
-                     processingParameters$yieldObservationFlag))
+    ### Abbreviate "processingParameters" with "p" to reduce clutter
+    p = processingParameters
     
+    ### Identify points where area = 0 and production != 0 (or vice versa)
+    filter1 = data[get(p$productionValue) == 0 &
+                   get(p$areaHarvestedValue) != 0,]
+    filter2 = data[get(p$productionValue) != 0 &
+                   get(p$areaHarvestedValue) == 0,]
+    
+    ### For problematic observations, set both vals to NA and flags to missing
+    data[filter1 | filter2, c(p$areaHarvestedValue, p$yieldValue,
+                              p$areaHarvestObservationFlag,
+                              p$yieldObservationFlag) :=
+             as.list(rep(c(NA, processingParameters$naFlag), each = 2))]
 }

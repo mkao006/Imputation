@@ -2,6 +2,9 @@
 ##' preparation of the imputation.
 ##'
 ##' @param data The data
+##' @param processingParameters A list of the parameters for the production
+##' processing algorithms.  See defaultProductionParameters() for a starting
+##' point.
 ##' 
 ##' @export
 ##' 

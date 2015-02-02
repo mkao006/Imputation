@@ -23,6 +23,9 @@ matched.}
 \item{ensemble}{A numeric vector containing either the original data (if it
 was not missing) or the imputed value (if the original data was missing).}
 
+\item{imputationParameters}{A list of the parameters for the imputation
+algorithms.  See defaultImputationParameters() for a starting point.}
+
 \item{returnFormat}{In what format should the plots be returned?  If "faceted", a
 single plot showing with all countries is returned.  If "individual", a
 list with ggplot objects is returned.  If "prompt", the first country's

@@ -8,6 +8,33 @@
 ##' @return Returns a list of the default parameters used in the data
 ##' pre-processing algorithm.
 ##' 
+##' @details Below is a description of the parameters:
+##' \itemize{
+##'   \item productionValue: The column name of the production variable.
+##'   \item productionObservationFlag: The column name of the observation flag
+##'    corresponding to the production variable.
+##'   \item productionMethodFlag: The column name of the method flag
+##'   corresponding to the production variable.
+##'   \item yieldValue: The column name of the yield variable.
+##'   \item yieldObservationFlag: The column name of the observation flag
+##'   corresponding to the yield variable.
+##'   \item yieldMethodFlag: The column name of the method flag corresponding
+##'   to the yield variable.
+##'   \item areaHarvestedValue: The column name of the area harvested variable.
+##'   \item areaHarvestedObservationFlag: The column name of the observation
+##'   flag corresponding to the area harvested variable.
+##'   \item areaHarvestedMethodFlag: The column name of the method flag
+##'   corresponding to the area harvested variable.
+##'   \item yearValue: The column name for the year variable in data.
+##'   \item byKey: The column name for the variable representing the splitting
+##'   group.  Usually, this is the country variable.
+##'   \item removePriorImputation: 
+##'   \item removeConflictValues: 
+##'   \item imputedFlag: 
+##'   \item naFlag: How are missing values specified in the database? Usually,
+##'   this is "M".
+##' }
+##' 
 ##' @export
 ##' 
 

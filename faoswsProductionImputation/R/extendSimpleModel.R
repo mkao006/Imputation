@@ -23,17 +23,14 @@ extendSimpleModel = function(data, model, imputationParameters){
         ensureImputationInputs(data = data,
                                imputationParameters = imputationParameters)
     
-    setnames(data, old = imputationParameters$imputationValueColumn,
-             new = "imputationValueColumn")
-    missingIndex = is.na(data[, imputationParameters$imputationValueColumn])
+    impName = imputationParameters$imputationValueColumn
+    missingIndex = is.na(data[, get(impName)])
     modelFit = data[,
         # Apply the model if there is a missing value.  Else, return the data
-        if(any(is.na(imputationValueColumn))){
-            model(imputationValueColumn)
+        if(any(is.na(get(impName)))){
+            model(get(impName))
         } else {
-            imputationValueColumn
+            get(impName)
         }, by = c(imputationParameters$byKey)]
-    setnames(data, old = "imputationValueColumn",
-             new = imputationParameters$imputationValueColumn)
     return(modelFit$V1)
 }

@@ -2,6 +2,8 @@
 ##'
 ##' @param data A data.table containing the data.
 ##' @param fit The fitted value from the model.
+##' @param imputationParameters A list of the parameters for the imputation
+##' algorithms.  See defaultImputationParameters() for a starting point.
 ##' 
 ##' @return A vector of (the absolute value of the) errors corresponding to the
 ##' non-missing entries in data's "value" column.

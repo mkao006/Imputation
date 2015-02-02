@@ -4,10 +4,12 @@
 ##' @param data The data.table object containing the data.
 ##' @param imputationParameters A list of the parameters for the imputation
 ##' algorithms.  See defaultImputationParameters() for a starting point.
+##' @param processingParameters A list of the parameters for the production
+##' processing algorithms.  See defaultProductionParameters() for a starting
+##' point.
 ##'
 ##' @export
 ##' 
-
 
 balanceAreaHarvested = function(data, imputationParameters,
                                 processingParameters){
@@ -20,23 +22,20 @@ balanceAreaHarvested = function(data, imputationParameters,
         ensureProductionInputs(data = data,
                                processingParameters = processingParameters)
 
-    origName = c(processingParameters$productionValue,
-                 processingParameters$productionObservationFlag,
-                 processingParameters$areaHarvestedValue,
-                 processingParameters$areaHarvestedObservationFlag,
-                 processingParameters$areaHarvestedMethodFlag,
-                 processingParameters$yieldValue,
-                 processingParameters$yieldObservationFlag)
-    tmpName = c("pValue", "pObsFlag", "aValue", "aObsFlag",
-        "aMetFlag", "yValue", "yObsFlag")
-    setnames(data, old = origName, new = tmpName)
+    ### Save clutter by renaming "processingParameters" to "p" locally.
+    p = processingParameters
     
-    data[!is.na(pValue) & is.na(aValue) & !is.na(yValue),
-         c("aValue", "aObsFlag", "aMetFlag") :=
-         list(computeRatio(pValue, yValue),
-              aggregateObservationFlag(pObsFlag, yObsFlag,
-                                       Table = imputationParameters$flagTable),
-              imputationParameters$newMethodFlag)
-         ]
-    setnames(data, old = tmpName, new = origName)
+    ### Impute only when area and yield are available and production isn't
+    filter = data[,is.na(get(p$areaHarvestedValue)) & # area is missing
+                  !is.na(get(p$yieldValue)) &         # yield is available
+                  !is.na(get(p$productionValue))]     # production is available
+    
+    data[filter, c(p$areaHarvestedValue) :=
+             computeRatio(get(p$productionValue), get(p$yieldValue))]
+    data[filter, c(p$areaHarvestedObservationFlag) := aggregateObservationFlag(
+        get(p$productionObservationFlag), get(p$yieldObservationFlag),
+        flagTable = imputationParameters$flagTable)]
+    ## Wrap last call in invisible() so no data.table is returned
+    invisible(data[filter, c(p$areaHarvestedMethodFlag) :=
+                       imputationParameters$newMethodFlag])
 }

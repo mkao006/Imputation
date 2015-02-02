@@ -4,13 +4,16 @@
 \alias{getInverseWeights}
 \title{Get Ensemble Weights via Inverse Errors}
 \usage{
-getInverseWeights(data, fits)
+getInverseWeights(data, fits, imputationParameters)
 }
 \arguments{
 \item{data}{The data object containing the observations to impute.}
 
 \item{fits}{A list of the fitted values.  These may be estimated via leave
 one out cross-validation or directly.}
+
+\item{imputationParameters}{A list of the parameters for the imputation
+algorithms.  See defaultImputationParameters() for a starting point.}
 }
 \value{
 A data.table containing the weight for each model within each byKey

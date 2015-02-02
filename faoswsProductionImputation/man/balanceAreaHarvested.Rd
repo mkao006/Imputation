@@ -12,6 +12,10 @@ balanceAreaHarvested(data, imputationParameters, processingParameters)
 
 \item{imputationParameters}{A list of the parameters for the imputation
 algorithms.  See defaultImputationParameters() for a starting point.}
+
+\item{processingParameters}{A list of the parameters for the production
+processing algorithms.  See defaultProductionParameters() for a starting
+point.}
 }
 \description{
 Function to compute area harvested when new production and yield

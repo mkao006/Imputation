@@ -13,10 +13,9 @@ removeImputation(data, value, flag, processingParameters)
 
 \item{flag}{The flag of the observation.}
 
-\item{imputedFlag}{The value of the flag which denotes the value
-was imputed.}
-
-\item{naFlag}{The value of the flag which denotes missing value.}
+\item{processingParameters}{A list of the parameters for the production
+processing algorithms.  See defaultProductionParameters() for a starting
+point.}
 }
 \value{
 No value is returned.  However, the object "data" which was passed

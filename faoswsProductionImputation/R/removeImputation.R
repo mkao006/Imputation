@@ -3,9 +3,9 @@
 ##' @param data The data.table object containing the values.
 ##' @param value The value of the observation.
 ##' @param flag The flag of the observation.
-##' @param imputedFlag The value of the flag which denotes the value
-##' was imputed.
-##' @param naFlag The value of the flag which denotes missing value.
+##' @param processingParameters A list of the parameters for the production
+##' processing algorithms.  See defaultProductionParameters() for a starting
+##' point.
 ##' 
 ##' @return No value is returned.  However, the object "data" which was passed
 ##' to this function is modified.

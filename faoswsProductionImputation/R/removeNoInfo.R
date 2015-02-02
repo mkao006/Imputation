@@ -15,6 +15,9 @@
 ##' is passed to specify where the modified data.table should be placed.  The
 ##' default of parent.frame(1) gives the calling environment and this should be
 ##' satisfactory for most, if not all, use cases.
+##' @param processingParameters A list of the parameters for the production
+##' processing algorithms.  See defaultProductionParameters() for a starting
+##' point.
 ##'
 ##' @return No value is returned.  However, the object "data" which was passed
 ##' to this function is modified.

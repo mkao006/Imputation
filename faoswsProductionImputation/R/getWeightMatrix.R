@@ -15,9 +15,9 @@
 ##'
 ##' @param data The data.table containing the data.
 ##' @param w The weights data.table, typically as produced in
-##' computeEnsembleWeight.  There should be at least three columns: byKey,
-##' model, and weight.  Weight gives the model weight for model within the
-##' byKey group.
+##' computeEnsembleWeight.  There should be three columns: byKey, model, and
+##' weight.  Weight gives the model weight for model within the byKey group,
+##' and exactly one row should exist for each byKey/model pair.
 ##' @param imputationParameters A list of the parameters for the imputation
 ##' algorithms.  See defaultImputationParameters() for a starting point.
 ##' 

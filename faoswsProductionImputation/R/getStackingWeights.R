@@ -29,6 +29,8 @@
 ##' @param data The data object containing the observations to impute.
 ##' @param fits A list of the fitted values.  These may be estimated via leave
 ##' one out cross-validation or directly.
+##' @param imputationParameters A list of the parameters for the imputation
+##' algorithms.  See defaultImputationParameters() for a starting point.
 ##' 
 ##' @return A data.table containing the weight for each model within each byKey
 ##' group, as well as a few other (currently unused) statistics.

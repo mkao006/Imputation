@@ -4,10 +4,8 @@
 ##' cross-validation in later models.
 ##' 
 ##' @param data A data.table object containing the data.
-##' @param value The column name of data corresponding to the value to be
-##' imputed.
-##' @param byKey The column name of data corresponding to the grouping
-##' variable, typically "areaCode".
+##' @param imputationParameters A list of the parameters for the imputation
+##' algorithms.  See defaultImputationParameters() for a starting point.
 ##' @param groupCount How many cross-validation groups should be used?
 ##' 
 ##' @return A numeric vector taking values in 1:groupCount, or NA if the
@@ -23,13 +21,10 @@ makeCvGroup = function(data, imputationParameters, groupCount = 10){
                                imputationParameters = imputationParameters)
     
     cvGroup = rep(NA, nrow(data))
-    setnames(data, old = imputationParameters$imputationValueColumn,
-             new = "imputationValueColumn")
-    cvGroup[!is.na(data[,imputationValueColumn])] =
-        data[!is.na(imputationValueColumn),
+    impName = imputationParameters$imputationValueColumn
+    cvGroup[!is.na(data[,get(impName)])] =
+        data[!is.na(get(impName)),
              sampleEqually(n = .N, k = groupCount),
              by = c(imputationParameters$byKey)]$V1
-    setnames(data, old = "imputationValueColumn",
-             new = imputationParameters$imputationValueColumn)
     return(cvGroup)
 }
