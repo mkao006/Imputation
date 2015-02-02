@@ -82,9 +82,10 @@ defaultImputationParameters = function(variable){
         out$imputationFlagColumn = "flagObservationStatus_measuredElement_5416"
         out$imputationMethodColumn = "flagMethod_measuredElement_5416"
     } else if(variable == "seed"){
-        out$imputationValueColumn = "Value_measuredElement_5525"
-        out$imputationFlagColumn = "flagObservationStatus_measuredElement_5525"
-        out$imputationMethodColumn = "flagMethod_measuredElement_5525"
+        #Columns below are defined within faoswsSeed::imputeAreaSown()
+        out$imputationValueColumn = "Value_areaSownRatio"
+        out$imputationFlagColumn = "flagObservationStatus_areaSownRatio"
+        out$imputationMethodColumn = "flagMethod_areaSownRatio"
     } else {
         stop("This variable has not yet been implemented!")
     }

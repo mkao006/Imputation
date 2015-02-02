@@ -63,11 +63,9 @@ computeEnsembleWeight = function(data, cvGroup, fits, method = "inverse",
         # to re-normalize the weights so they sum to 1.  The (1-weight)/(1-max)
         # factor ensures the final weight for this maximum case will be
         # maximumWeights.
-        weights[weight > maxWt,
-                weight := maxWt * (1 - weight) / (1 - maxWt)]
+        weights[weight > maxWt, weight := maxWt * (1 - weight) / (1 - maxWt)]
         # Re-normalize the weights so they sum to 1:
-        weights[, weight := weight / sum(weight),
-                by = byKey]
+        weights[, weight := weight / sum(weight), by = byKey]
     }
     
     ### Convert weights to a matrix

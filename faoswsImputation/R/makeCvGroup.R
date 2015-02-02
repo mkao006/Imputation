@@ -6,7 +6,6 @@
 ##' @param data A data.table object containing the data.
 ##' @param imputationParameters A list of the parameters for the imputation
 ##' algorithms.  See defaultImputationParameters() for a starting point.
-##' @param groupCount How many cross-validation groups should be used?
 ##' 
 ##' @return A numeric vector taking values in 1:groupCount, or NA if the
 ##' corresponding observation is missing.  All groups are represented within
@@ -15,7 +14,7 @@
 ##' @export
 ##' 
 
-makeCvGroup = function(data, imputationParameters, groupCount = 10){
+makeCvGroup = function(data, imputationParameters){
 
     ### Data Quality Checks
     if(!exists("ensuredImputationData") || !ensuredImputationData)
@@ -26,7 +25,7 @@ makeCvGroup = function(data, imputationParameters, groupCount = 10){
     impName = imputationParameters$imputationValueColumn
     cvGroup[!is.na(data[,get(impName)])] =
         data[!is.na(get(impName)),
-             sampleEqually(n = .N, k = groupCount),
+             sampleEqually(n = .N, k = imputationParameters$groupCount),
              by = c(imputationParameters$byKey)]$V1
     return(cvGroup)
 }

@@ -38,6 +38,14 @@ getWeightMatrix = function(data, w, imputationParameters){
     # w should have one row for each model at each byKey level
     stopifnot(nrow(w) == length(unique(data[[imputationParameters$byKey]])) *
                   length(imputationParameters$ensembleModels))
+    # There should only be one observation per byKey/year pair.
+    uniqueLevels = nrow(unique(data[, .(get(imputationParameters$byKey),
+                                        get(imputationParameters$yearValue))]))
+    if(nrow(data) != uniqueLevels)
+        stop("data has ",nrow(data), " rows but only ", uniqueLevels,
+             " unique levels!  This suggests that byKey does not truly ",
+             "partition the dataset.  You may need a different byKey, or you ",
+             "may need to loop over each commodity, for example.")
     
     ### Run the function:
     setnames(data, old = c(imputationParameters$imputationValueColumn,
@@ -64,7 +72,7 @@ getWeightMatrix = function(data, w, imputationParameters){
     # Renormalize weights so all columns add to 1
     weightMatrix[, weight := weight / sum(weight),
                  by = list(byKey, yearValue)]
-    weightMatrix = dcast.data.table(weightMatrix, byKey + yearValue ~ model,
+    weightMatrix = dcast.data.table(weightMatrix, byKey + yearValue ~ model, 
                                      value.var = "weight")
     weightMatrix[, c("byKey", "yearValue") := list(NULL, NULL)]
     weightMatrix[!is.na(data[[imputationParameters$imputationValueColumn]])] =
