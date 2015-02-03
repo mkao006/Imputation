@@ -1,65 +1,44 @@
 ##' Function to compute and update yield
 ##'
-##' @param productionValue The column name corresponding to production
-##' value.
-##' @param productionObservationFlag The column name corresponding to
-##' the observation flag of production.
-##' @param areaHarvestedValue The column name corresponding to area
-##' harvested value.
-##' @param areaHarvestedObservationFlag The column name corresponding
-##' to the observation flag of area harvested.
-##' @param yieldValue The columne name corresponding to yield value.
-##' @param yieldObservationFlag The column name corresponding to the
-##' observation flag of yield.
-##' @param yieldMethodFlag
-##' @param newMethodFlag 
-##' @param flagTable see data(faoswsFlagTable) in \pkg{faoswsFlag}
 ##' @param data The data.table object containing the data.
+##' @param newMethodFlag The flag to be used to update the yield method flag
+##' when imputation occurs.
+##' @param flagTable see data(faoswsFlagTable) in \pkg{faoswsFlag}
 ##' @param unitConversion Yield is computed as (production) / (area) and
 ##' multiplied by unitConversion.  This parameter defaults to 1.
+##' @param processingParameters A list of the parameters for the production
+##' processing algorithms.  See defaultProductionParameters() for a starting
+##' point.
 ##'
 ##' @export
+##' 
 
+computeYield = function(data, newMethodFlag, flagTable = faoswsFlagTable,
+                        unitConversion = 1, processingParameters){
 
-computeYield = function(productionValue, productionObservationFlag,
-    areaHarvestedValue, areaHarvestedObservationFlag, yieldValue,
-    yieldObservationFlag, yieldMethodFlag, newMethodFlag,
-    flagTable = faoswsFlagTable, data, unitConversion = 1){
+    if(!exists("ensuredProductionData") || !ensuredProductionData)
+        ensureProductionInputs(data = data,
+                               processingParameters = processingParameters)
+    stopifnot(faoswsUtil::checkMethodFlag(newMethodFlag))
+    stopifnot(faoswsUtil::checkObservationFlag(
+        flagTable$flagObservationStatus))
 
-    if(!yieldValue %in% colnames(data))
-        data[, c(yieldValue) := NA]
-    if(!yieldObservationFlag %in% colnames(data))
-        data[, c(yieldObservationFlag) := NA]
-    if(!yieldMethodFlag %in% colnames(data))
-        data[, c(yieldMethodFlag) := NA]
-
-    setnames(x = data,
-             old = c(productionValue, productionObservationFlag,
-                     areaHarvestedValue, areaHarvestedObservationFlag,
-                     yieldValue, yieldObservationFlag, yieldMethodFlag),
-             new = c("productionValue", "productionObservationFlag",
-                 "areaHarvestedValue", "areaHarvestedObservationFlag",
-                 "yieldValue", "yieldObservationFlag", "yieldMethodFlag"))
-
+    ## Abbreviate processingParameters since it is used alot
+    pp = processingParameters
+    
     ## Balance yield values only when they're missing
-    missingYield = is.na(data[, yieldValue]) |
-        data[, yieldObservationFlag] == "M"
-    data[missingYield, yieldValue :=
-         computeRatio(productionValue, areaHarvestedValue) * unitConversion]
-    data[missingYield, yieldObservationFlag :=
-         aggregateObservationFlag(productionObservationFlag,
-                                  areaHarvestedObservationFlag,
+    missingYield = is.na(data[[pp$yieldValue]]) |
+        data[[pp$yieldObservationFlag]] == "M"
+    data[missingYield, c(pp$yieldValue) :=
+         faoswsUtil::computeRatio(get(pp$productionValue),
+                                  get(pp$areaHarvestedValue)) * unitConversion]
+    data[missingYield, c(pp$yieldObservationFlag) :=
+         aggregateObservationFlag(get(pp$productionObservationFlag),
+                                  get(pp$areaHarvestedObservationFlag),
                                   flagTable = flagTable)]
-    data[missingYield, yieldMethodFlag := newMethodFlag]
+    data[missingYield, c(pp$yieldMethodFlag) := newMethodFlag]
     ## If yieldValue is still NA, make sure observation flag is "M".  Note:
     ## this can happen by taking 0 production / 0 area.
-    data[is.na(yieldValue), yieldObservationFlag := "M"]
+    data[is.na(get(pp$yieldValue)), c(pp$yieldObservationFlag) := "M"]
 
-    setnames(x = data,
-             old = c("productionValue", "productionObservationFlag",
-                 "areaHarvestedValue", "areaHarvestedObservationFlag",
-                 "yieldValue", "yieldObservationFlag", "yieldMethodFlag"),
-             new = c(productionValue, productionObservationFlag,
-                 areaHarvestedValue, areaHarvestedObservationFlag,
-                 yieldValue, yieldObservationFlag, yieldMethodFlag))
 }
