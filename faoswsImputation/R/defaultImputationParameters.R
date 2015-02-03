@@ -70,7 +70,7 @@ defaultImputationParameters = function(variable){
          groupCount = 10,
          missingFlag = "M",
          imputationFlag = "I",
-         newMethodFlag = "E",
+         newMethodFlag = "e",
          flagTable = faoswsFlagTable)
     out$variable = variable
     if(variable == "production"){
