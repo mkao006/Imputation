@@ -4,39 +4,23 @@
 \alias{computeYield}
 \title{Function to compute and update yield}
 \usage{
-computeYield(productionValue, productionObservationFlag, areaHarvestedValue,
-  areaHarvestedObservationFlag, yieldValue, yieldObservationFlag,
-  yieldMethodFlag, newMethodFlag, flagTable = faoswsFlagTable, data,
-  unitConversion = 1)
+computeYield(data, newMethodFlag, flagTable = faoswsFlagTable,
+  unitConversion = 1, processingParameters)
 }
 \arguments{
-\item{productionValue}{The column name corresponding to production
-value.}
+\item{data}{The data.table object containing the data.}
 
-\item{productionObservationFlag}{The column name corresponding to
-the observation flag of production.}
-
-\item{areaHarvestedValue}{The column name corresponding to area
-harvested value.}
-
-\item{areaHarvestedObservationFlag}{The column name corresponding
-to the observation flag of area harvested.}
-
-\item{yieldValue}{The columne name corresponding to yield value.}
-
-\item{yieldObservationFlag}{The column name corresponding to the
-observation flag of yield.}
-
-\item{yieldMethodFlag}{}
-
-\item{newMethodFlag}{}
+\item{newMethodFlag}{The flag to be used to update the yield method flag
+when imputation occurs.}
 
 \item{flagTable}{see data(faoswsFlagTable) in \pkg{faoswsFlag}}
 
-\item{data}{The data.table object containing the data.}
-
 \item{unitConversion}{Yield is computed as (production) / (area) and
 multiplied by unitConversion.  This parameter defaults to 1.}
+
+\item{processingParameters}{A list of the parameters for the production
+processing algorithms.  See defaultProductionParameters() for a starting
+point.}
 }
 \description{
 Function to compute and update yield

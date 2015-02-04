@@ -28,7 +28,9 @@ extendSimpleModel = function(data, model, imputationParameters){
     modelFit = data[,
         # Apply the model if there is a missing value.  Else, return the data
         if(any(is.na(get(impName)))){
-            model(get(impName))
+            # If all NA's are returned, sometimes type is logical.  Avoid this
+            # by using the as.numeric below
+            as.numeric(model(get(impName)))
         } else {
             get(impName)
         }, by = c(imputationParameters$byKey)]

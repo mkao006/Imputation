@@ -21,19 +21,19 @@ processProductionDomain = function(data, processingParameters){
     
     ### Remove prior imputations
     if(processingParameters$removePriorImputation){
-        removeImputation(data = data,
+        faoswsUtil::removeImputation(data = data,
                     value = p$areaHarvestedValue,
                     observationFlag = p$areaHarvestedObservationFlag,
                     methodFlag = p$areaHarvestedMethodFlag,
                     missingObservationFlag = p$naFlag,
                     imputedFlag = p$imputedFlag)
-        removeImputation(data = data,
+        faoswsUtil::removeImputation(data = data,
                     value = p$yieldValue,
                     observationFlag = p$yieldObservationFlag,
                     methodFlag = p$yieldMethodFlag,
                     missingObservationFlag = p$naFlag,
                     imputedFlag = p$imputedFlag)
-        removeImputation(data = data,
+        faoswsUtil::removeImputation(data = data,
                     value = p$productionValue,
                     observationFlag = p$productionObservationFlag,
                     methodFlag = p$productionMethodFlag,
@@ -42,22 +42,22 @@ processProductionDomain = function(data, processingParameters){
     }
 
     ### Assign NA's when the flag is missing
-    remove0M(data = data,
+    faoswsUtil::remove0M(data = data,
              value = p$areaHarvestedValue,
              flag = p$areaHarvestedObservationFlag,
              naFlag = p$naFlag)
-    remove0M(data = data,
+    faoswsUtil::remove0M(data = data,
              value = p$yieldValue,
              flag = p$yieldObservationFlag,
              naFlag = p$naFlag)
-    remove0M(data = data,
+    faoswsUtil::remove0M(data = data,
              value = p$productionValue,
              flag = p$productionObservationFlag,
              naFlag = p$naFlag)
     
     ### Remove conflicting/illogical zeros
     if(p$removeConflictValues){
-        removeZeroConflict(data = data,
+        faoswsUtil::removeZeroConflict(data = data,
                            value1 = p$areaHarvestedValue,
                            value2 = p$productionValue,
                            observationFlag1 = p$areaHarvestedObservationValue,
@@ -68,7 +68,7 @@ processProductionDomain = function(data, processingParameters){
     }
 
     ### Remove byKey groups that have no data
-    removeNoInfo(data = data,
+    faoswsUtil::removeNoInfo(data = data,
                  value = p$yieldValue,
                  observationFlag = p$yieldObservationFlag,
                  byKey = p$byKey)

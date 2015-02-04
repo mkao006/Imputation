@@ -470,7 +470,8 @@ these exist when observations are real and values are not being imputed.
 <<>>=
 ## Calculate the weight for each component model
 cvGroup = makeCvGroup(data = bahrainExample,
-                      imputationParameters = imputationParameters)
+                      imputationParameters = imputationParameters,
+                      groupCount = 10)
 cvGroup
 modelWeights = computeEnsembleWeight(data = bahrainExample,
                                      cvGroup = cvGroup,

@@ -4,15 +4,13 @@
 \alias{makeCvGroup}
 \title{Make Cross-Validation Groups}
 \usage{
-makeCvGroup(data, imputationParameters, groupCount = 10)
+makeCvGroup(data, imputationParameters)
 }
 \arguments{
 \item{data}{A data.table object containing the data.}
 
 \item{imputationParameters}{A list of the parameters for the imputation
 algorithms.  See defaultImputationParameters() for a starting point.}
-
-\item{groupCount}{How many cross-validation groups should be used?}
 }
 \value{
 A numeric vector taking values in 1:groupCount, or NA if the
