@@ -27,7 +27,7 @@ defaultMixedModel = function(data, maxdf = 5, weights = NULL, modelFormula,
     uniqueByKey = data[!is.na(get(imputationParameters$imputationValueColumn)),
                        1, by = c(imputationParameters$byKey)]
     if(nrow(uniqueByKey) <= 1) # Mixed model invalid if only one level:
-        return(rep(NA, nrow(data)))
+        return(rep(NA_real_, nrow(data)))
     
     if(missing(modelFormula)){
         modelFormula =
@@ -36,10 +36,10 @@ defaultMixedModel = function(data, maxdf = 5, weights = NULL, modelFormula,
                               "|", imputationParameters$byKey, ")"))
         ## print(modelFormula)
         model = try(
-            lmer(formula = modelFormula, data = data,
-                 ## weights = data[, productionValue],
-                 weights = weights,
-                 REML = FALSE)
+            lme4::lmer(formula = modelFormula, data = data,
+                       ## weights = data[, productionValue],
+                       weights = weights,
+                       REML = FALSE)
             )
                     
         predictError = function(x, y, newdata){
@@ -49,7 +49,7 @@ defaultMixedModel = function(data, maxdf = 5, weights = NULL, modelFormula,
             amse
         }
 
-        benchmarkError = bootMer(model,
+        benchmarkError = lme4::bootMer(model,
             FUN = function(x){
                 predictError(x = x,
                     y = data[[imputationParameters$imputationValueColumn]],
@@ -66,15 +66,15 @@ defaultMixedModel = function(data, maxdf = 5, weights = NULL, modelFormula,
                     ")"))
                 ## print(newModelFormula)
                 newModel = try(
-                    lmer(formula = newModelFormula,
-                         data = data,
-                         ## weights = data[, productionValue],
-                         weights = weights,
-                         REML = FALSE)
+                    lme4::lmer(formula = newModelFormula,
+                               data = data,
+                               ## weights = data[, productionValue],
+                               weights = weights,
+                               REML = FALSE)
                     )
                 if(!inherits(newModel, "try-error")){
 
-                    newModelError = bootMer(newModel,
+                    newModelError = lme4::bootMer(newModel,
                         FUN = function(x){
                             predictError(x = x,
                                 y = data[[imputationParameters$imputationValueColumn]],
@@ -107,10 +107,10 @@ defaultMixedModel = function(data, maxdf = 5, weights = NULL, modelFormula,
         }
     } else {
         model = try(
-            lmer(formula = modelFormula, data = data,
-                 ## weights = data[, productionValue],
-                 weights = weights,
-                 REML = FALSE)
+            lme4::lmer(formula = modelFormula, data = data,
+                       ## weights = data[, productionValue],
+                       weights = weights,
+                       REML = FALSE)
             )
     }
                 

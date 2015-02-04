@@ -12,7 +12,7 @@ defaultMedian = function(x){
 
     yearCount = length(x)
     if(all(is.na(x)))
-        return(as.numeric(rep(NA, yearCount)))
+        return(as.numeric(rep(NA_real_, yearCount)))
     medianFit = rep(median(x, na.rm = !all(is.na(x))), yearCount)
     medianFit
 }

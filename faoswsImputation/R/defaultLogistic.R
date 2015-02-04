@@ -21,7 +21,7 @@ defaultLogistic = function(x){
 
     time = 1:length(x)
     if(all(is.na(x)))
-        return(as.numeric(rep(NA, length(x))))
+        return(as.numeric(rep(NA_real_, length(x))))
     #Try most complex model first:
     logisticFit = try(logisticNlsIntercept(x), silent = TRUE)
     #If most complex model failed, try simpler model (intercept=0)

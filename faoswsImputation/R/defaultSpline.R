@@ -13,7 +13,7 @@ defaultSpline = function(x){
     yearCount = length(x)
     time = 1:length(x)
     if(all(is.na(x)))
-        return(as.numeric(rep(NA, yearCount)))
+        return(as.numeric(rep(NA_real_, yearCount)))
     splineFit = spline(time, x, n = yearCount * 5 - 4, xout = time,
         method = "natural")$y
     splineFit[splineFit < 0] = 0

@@ -24,6 +24,7 @@ defaultGlobalMean = function(data, imputationParameters){
     modelFit = mean(data[[imputationParameters$imputationValueColumn]],
                     na.rm = TRUE)
     modelFit = rep(modelFit, nrow(data))
-    modelFit[!is.na(data[[imputationParameters$imputationValueColumn]])] = NA
+    modelFit[!is.na(data[[imputationParameters$imputationValueColumn]])] =
+        NA_real_
     return(modelFit)
 }

@@ -13,7 +13,7 @@ defaultMars = function(x){
     time = 1:length(x)
     yearCount = length(x)
     if(all(is.na(x)))
-        return(as.numeric(rep(NA, yearCount)))
+        return(as.numeric(rep(NA_real_, yearCount)))
     obs.x = na.omit(x)
     if(any(is.na(x)))
         obs.time = time[-attr(obs.x, "na.action")]
@@ -25,7 +25,7 @@ defaultMars = function(x){
         marsFit = c(marsFit)
         marsFit[marsFit < 0] = 0
     } else {
-        marsFit = as.numeric(rep(NA, yearCount))
+        marsFit = as.numeric(rep(NA_real_, yearCount))
     }
     marsFit
 }

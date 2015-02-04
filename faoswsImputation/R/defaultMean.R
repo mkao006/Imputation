@@ -12,7 +12,7 @@ defaultMean = function(x){
 
     yearCount = length(x)
     if(all(is.na(x)))
-        return(as.numeric(rep(NA, yearCount)))
+        return(as.numeric(rep(NA_real_, yearCount)))
     meanFit = rep(mean(x, na.rm = !all(is.na(x))), yearCount)
     meanFit
 }
