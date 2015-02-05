@@ -57,12 +57,12 @@ ensureImputationInputs = function(data, imputationParameters){
              paste(columnNames[missingColumns], collapse="\n\t"))
     
     ### Coerce columns to appropriate type:
-    for(name in c(p$imputationValueColumn)){
-        data[, c(name) := as.numeric(get(name))]
-    }
-    for(name in c(p$imputationFlagColumn, p$imputationMethodColumn)){
-        data[, c(name) := as.character(get(name))]
-    }
+    data[, c(p$imputationValueColumn) :=
+             as.numeric(get(p$imputationValueColumn))]
+    data[, c(p$imputationFlagColumn) :=
+             as.character(get(p$imputationFlagColumn))]
+    data[, c(p$imputationMethodColumn) :=
+             as.character(get(p$imputationMethodColumn))]
 
     ############################# Flag checks #############################
     
